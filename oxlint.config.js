@@ -1,0 +1,26 @@
+export default {
+  settings: {
+    tsconfig: './tsconfig.json',
+  },
+  rules: {
+    recommended: true,
+    'no-unused-vars': 'error',
+    'no-console': 'off',
+    'prefer-const': 'error',
+    'no-empty': 'error',
+    eqeqeq: ['error', 'always'],
+    curly: ['error', 'all'],
+    'no-duplicate-imports': 'error',
+    'no-shadow': 'error',
+    'prefer-template': 'error',
+    'no-unreachable': 'error',
+    'no-unused-expressions': 'error',
+    'no-var': 'error',
+    'prefer-arrow-callback': 'error',
+    'object-shorthand': 'error',
+    'prefer-destructuring': ['error', { array: false, object: true }],
+    'no-useless-rename': 'error',
+    'no-return-await': 'error',
+  },
+  ignorePatterns: ['node_modules', 'dist', '*.config.*', '*.lock'],
+};

@@ -1,0 +1,31 @@
+{
+  "name": "lumpscode",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build": "bun build --compile --outfile=dist/lumpscode packages/cli/src/index.ts",
+    "dev": "bun run packages/cli/src/index.ts"
+  },
+  "devDependencies": {
+    "oxlint": "^0.15.0",
+    "prettier": "^3.3.0",
+    "vitest": "^2.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  },
+  "engines": {
+    "bun": ">=1.1"
+  },
+  "packageManager": "bun@1.1"
+}

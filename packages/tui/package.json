@@ -1,0 +1,24 @@
+{
+  "name": "@lumpscode/tui",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "ink": "^5.0.0",
+    "react": "^18.3.0",
+    "@lumpscode/core": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "vitest": "^2.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  }
+}

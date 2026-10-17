@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true,
+    "declaration": true,
+    "declarationMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@lumpscode/core": ["packages/core/src"],
+      "@lumpscode/tui": ["packages/tui/src"],
+      "@lumpscode/cli": ["packages/cli/src"],
+      "@lumpscode/server": ["packages/server/src"],
+      "@lumpscode/gateway": ["packages/gateway/src"],
+      "@lumpscode/sdk": ["packages/sdk/src"],
+      "@lumpscode/skills": ["packages/skills/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "**/dist/**"]
+}
