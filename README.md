@@ -2,8 +2,8 @@
 
 > Every agent's best, in one CLI.
 
-Lumps Code is an open-source, provider-neutral AI coding agent for the terminal —
-combining the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI,
+Lumps Code is an open-source, provider-neutral AI coding agent for the terminal.
+It combines the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI,
 and Hermes Agent into one coherent, local-first CLI.
 
 **Status:** early development (M0).
@@ -40,5 +40,5 @@ The PRD splits the build into 32 independent tasks across 5 milestones:
 | M4        | Polish & distribution                                           | T-29 – T-32 |
 
 Each task lists its scope, dependencies, and acceptance criteria in
-[PRD.md § 9](PRD.md#9-execution-model--task-splitting-rules-mandatory). One task
-per focused session — never the whole build in one process.
+[PRD.md § 9](PRD.md#9-execution-model-task-splitting-rules-mandatory). One task
+per focused session: never the whole build in one process.

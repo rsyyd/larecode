@@ -1,4 +1,4 @@
-# Lumps Code — Product Requirements Document
+# Lumps Code: Product Requirements Document
 
 **Repo:** `github.com/rsyyd/lumpscode`
 **Version:** 1.0.0-draft · **Date:** 2026-10-17 · **Status:** PRD stage · **License:** MIT
@@ -7,54 +7,54 @@
 
 ## 1. Executive Summary
 
-Lumps Code is an open-source, provider-neutral AI coding agent for the terminal. Its goal is simple and ambitious: **combine the proven advantages of every leading coding agent CLI — opencode, Claude Code, Codex CLI, Gemini CLI, and Hermes Agent — into one coherent, local-first CLI**, while keeping the architecture small enough that each capability can be built, tested, and shipped independently.
+Lumps Code is an open-source, provider-neutral AI coding agent for the terminal. It combines the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI, and Hermes Agent into one coherent, local-first CLI, and keeps the architecture small enough that each capability can be built, tested, and shipped independently.
 
-This document is the complete product specification. Implementation is deliberately broken into **32 independently executable tasks** (Section 9): each task is scoped to be completed by a single focused AI session or engineer, with explicit dependencies and acceptance criteria. Nothing is built "all at once."
+This document is the complete product specification. Implementation is deliberately split into 32 independently executable tasks (Section 9), each scoped for a single focused AI session or engineer, with explicit dependencies and acceptance criteria.
 
 ## 2. Vision & Positioning
 
 > **"Every agent's best, in one CLI."**
 
 - One binary: `lumpscode`. Config: `~/.lumpscode/`. Project instructions: `AGENTS.md` (compatible with `CLAUDE.md` & friends).
-- **Local-first, no lock-in:** any model — OpenAI-compatible endpoints, Anthropic, Google, Ollama, OpenRouter, Z.ai/GLM, or a custom base URL.
+- **Local-first, no lock-in:** any model, from OpenAI-compatible endpoints to Anthropic, Google, Ollama, OpenRouter, Z.ai/GLM, or a custom base URL.
 - **Full parity goal:** TUI, plan mode, subagents, skills, plugins, hooks, MCP, LSP, learning loop, session sharing, cron automation, and a multi-platform gateway.
 - **Safety by default:** every tool call is permission-checked; destructive and secret access is never auto-approved.
 
 What would make this a failure even if it works (anti-goals):
 
-- One monolithic core where every feature lives inside the agent loop (the Hermes AGENTS.md calls this the "narrow waist" — we adopt the same rule).
+- One monolithic core where every feature lives inside the agent loop (the Hermes AGENTS.md calls this the "narrow waist", a rule we adopt).
 - Telemetry or data egress without explicit opt-in.
 - Breaking per-conversation prompt caching (cost discipline inherited from Hermes).
 
 ## 3. Competitive Analysis
 
-| Capability                                    | opencode      | Claude Code    | Codex CLI  | Gemini CLI | Hermes     | **Lumps Code** |
-| --------------------------------------------- | ------------- | -------------- | ---------- | ---------- | ---------- | -------------- |
-| Full TUI (multiline, autocomplete, streaming) | ✅            | ➖ (read-line) | ➖         | ➖         | ✅         | ✅ T-10        |
-| Plan mode (read-only agent, Tab switch)       | ✅            | ✅             | ✅         | ✅         | ➖         | ✅ T-15        |
-| Subagents (parallel research)                 | ✅ `@general` | ✅ Task tool   | ➖         | ➖         | ✅         | ✅ T-15        |
-| Permission engine (grouped, policy-scoped)    | ✅            | ✅             | ✅ sandbox | ✅         | ➖ (light) | ✅ T-09        |
-| Multi-provider (75+, catalog)                 | ✅            | Anthropic only | OpenAI     | Google     | ✅         | ✅ T-04/05     |
-| LSP integration                               | ✅            | ➖             | ➖         | ➖         | ➖         | ✅ T-13        |
-| MCP client + server                           | ✅            | ✅             | ✅         | ✅         | ✅         | ✅ T-14        |
-| Skills (auto-load, SKILL.md)                  | ➖            | ✅             | ➖         | ✅         | ✅         | ✅ T-16        |
-| Hooks / plugins                               | ➖ plugins    | ✅ hooks       | ➖         | ➖         | ✅ plugins | ✅ T-17        |
-| Learning loop (curated memory, auto-skills)   | ➖            | ➖             | ➖         | ➖         | ✅         | ✅ T-22        |
-| Session sharing / HTTP server                 | ✅ share      | ➖             | ➖         | ➖         | ➖         | ✅ T-23/24     |
-| Cron / scheduled automations                  | ➖            | ➖             | ➖         | ➖         | ✅         | ✅ T-25        |
-| Messaging gateway (Telegram/Slack/…)          | ➖            | ➖             | ➖         | ➖         | ✅ ~20     | ✅ T-26        |
-| Execution backends (Docker/SSH/sandbox)       | ➖            | ➖             | ✅         | ✅         | ✅ 7       | ✅ T-27        |
-| Checkpoints / rewind                          | ➖            | ✅             | ➖         | ➖         | ✅         | ✅ T-20        |
-| Cost/usage tracking, per-conversation caching | partial       | ✅             | ➖         | ➖         | ✅         | ✅ T-28        |
+| Capability                                    | opencode     | Claude Code    | Codex CLI | Gemini CLI | Hermes    | **Lumps Code** |
+| --------------------------------------------- | ------------ | -------------- | --------- | ---------- | --------- | -------------- |
+| Full TUI (multiline, autocomplete, streaming) | ✓            | ✗ (read-line)  | ✗         | ✗          | ✓         | ✓ T-10         |
+| Plan mode (read-only agent, Tab switch)       | ✓            | ✓              | ✓         | ✓          | ✗         | ✓ T-15         |
+| Subagents (parallel research)                 | ✓ `@general` | ✓ Task tool    | ✗         | ✗          | ✓         | ✓ T-15         |
+| Permission engine (grouped, policy-scoped)    | ✓            | ✓              | ✓ sandbox | ✓          | ✗ (light) | ✓ T-09         |
+| Multi-provider (75+, catalog)                 | ✓            | Anthropic only | OpenAI    | Google     | ✓         | ✓ T-04/05      |
+| LSP integration                               | ✓            | ✗              | ✗         | ✗          | ✗         | ✓ T-13         |
+| MCP client + server                           | ✓            | ✓              | ✓         | ✓          | ✓         | ✓ T-14         |
+| Skills (auto-load, SKILL.md)                  | ✗            | ✓              | ✗         | ✓          | ✓         | ✓ T-16         |
+| Hooks / plugins                               | ✗ plugins    | ✓ hooks        | ✗         | ✗          | ✓ plugins | ✓ T-17         |
+| Learning loop (curated memory, auto-skills)   | ✗            | ✗              | ✗         | ✗          | ✓         | ✓ T-22         |
+| Session sharing / HTTP server                 | ✓ share      | ✗              | ✗         | ✗          | ✗         | ✓ T-23/24      |
+| Cron / scheduled automations                  | ✗            | ✗              | ✗         | ✗          | ✓         | ✓ T-25         |
+| Messaging gateway (Telegram/Slack/…)          | ✗            | ✗              | ✗         | ✗          | ✓ ~20     | ✓ T-26         |
+| Execution backends (Docker/SSH/sandbox)       | ✗            | ✗              | ✓         | ✓          | ✓ 7       | ✓ T-27         |
+| Checkpoints / rewind                          | ✗            | ✓              | ✗         | ✗          | ✓         | ✓ T-20         |
+| Cost/usage tracking, per-conversation caching | partial      | ✓              | ✗         | ✗          | ✓         | ✓ T-28         |
 
 Sources: opencode README/docs (fetched 2026-10-17), Hermes Agent README + AGENTS.md (local checkout), known public feature sets of Claude Code / Codex CLI / Gemini CLI.
 
 ## 4. Target Users & Use Cases
 
-1. **Individual developer** — daily coding companion in the terminal: plan, edit, test, commit, explain.
-2. **Privacy-conscious / local-first user** — Ollama or self-hosted gateway; data never leaves the machine.
-3. **Power user / automator** — cron jobs ("nightly audit, report to Telegram"), background tasks, gateway access from phone.
-4. **Team** — shareable session links for review; `AGENTS.md` conventions; consistent permission policies via repo config.
+1. **Individual developer**: daily coding companion in the terminal: plan, edit, test, commit, explain.
+2. **Privacy-conscious / local-first user**: Ollama or self-hosted gateway; data never leaves the machine.
+3. **Power user / automator**: cron jobs ("nightly audit, report to Telegram"), background tasks, gateway access from phone.
+4. **Team**: shareable session links for review; `AGENTS.md` conventions; consistent permission policies via repo config.
 
 ## 5. Goals / Non-Goals
 
@@ -66,7 +66,7 @@ Sources: opencode README/docs (fetched 2026-10-17), Hermes Agent README + AGENTS
 
 ### FR-1 Agent Runtime
 
-Bounded iterations; tool-call limits; repetition detection; token/duration budgets; cancellation; streamed output; per-turn usage accounting; **per-conversation prompt caching is sacred** — history is never mutated mid-conversation, with exactly two accepted exceptions: explicit compaction, and an explicit user-initiated agent mode switch (`Tab`).
+Bounded iterations; tool-call limits; repetition detection; token/duration budgets; cancellation; streamed output; per-turn usage accounting; **per-conversation prompt caching is sacred**: history is never mutated mid-conversation, with exactly two accepted exceptions: explicit compaction, and an explicit user-initiated agent mode switch (`Tab`).
 
 ### FR-2 TUI
 
@@ -78,7 +78,7 @@ Adapters: OpenAI-compatible, Anthropic, Google, Ollama, OpenRouter, Z.ai/GLM, cu
 
 ### FR-4 Permission Engine
 
-Groups: `read`, `write`, `shell`, `network`, `git`, `secrets`, `destructive`, `external-services`, `subagent`, `browser`, `skills`; modes `ask`/`allow`/`deny`; policy-scoped auto-approval that **never** covers destructive or secrets; **unattended flows (`run`, cron, gateway) default-deny** every group not pre-authorized via an explicit policy bundle at scheduling/connect time — `destructive` and `secrets` are never pre-authorizable; audit log; model output and instruction files can never grant permissions.
+Groups: `read`, `write`, `shell`, `network`, `git`, `secrets`, `destructive`, `external-services`, `subagent`, `browser`, `skills`; modes `ask`/`allow`/`deny`; policy-scoped auto-approval that **never** covers destructive or secrets; **unattended flows (`run`, cron, gateway) default-deny** every group not pre-authorized via an explicit policy bundle at scheduling/connect time; `destructive` and `secrets` are never pre-authorizable; audit log; model output and instruction files can never grant permissions.
 
 ### FR-5 Tools
 
@@ -98,7 +98,7 @@ Client over stdio + HTTP/SSE; `mcp add/list/remove/call`; every MCP call permiss
 
 ### FR-9 Plugins & Hooks
 
-Lifecycle hooks (pre/post tool call, session start/end); plugin trust classes with provenance; untrusted-class plugins execute **out-of-process via IPC** — the "can never patch core" guarantee is enforced by process isolation, not convention; in-process execution is opt-in for the signed/user-installed trusted class only.
+Lifecycle hooks (pre/post tool call, session start/end); plugin trust classes with provenance; untrusted-class plugins execute **out-of-process via IPC**: the "can never patch core" guarantee is enforced by process isolation, not convention; in-process execution is opt-in for the signed/user-installed trusted class only.
 
 ### FR-10 Subagents & Plan Mode
 
@@ -110,7 +110,7 @@ Persisted sessions, resume, compaction; four-tier memory (temporary / session / 
 
 ### FR-12 Learning Loop (Hermes-style)
 
-Memory curator with periodic nudges; automatic skill creation after complex tasks — auto-created skills land in a **draft** state and require one-time human confirmation before first execution, and every skill execution is permission-checked like a tool (`skills` group); skills self-improve during use; FTS cross-session search with LLM summarization.
+Memory curator with periodic nudges; automatic skill creation after complex tasks: auto-created skills land in a **draft** state and require one-time human confirmation before first execution; every skill execution is permission-checked like a tool (`skills` group); skills self-improve during use; FTS cross-session search with LLM summarization.
 
 ### FR-13 Server & Sharing
 
@@ -147,12 +147,12 @@ Status/diff/commit (permissioned), PR & CI inspection; remote writes require exp
 ## 7. Non-Functional Requirements
 
 - **Startup:** < 100 ms to first paint (benchmark in CI).
-- **Language/runtime:** TypeScript strict, ESM. **Bun is the only CLI runtime:** distributions ship as `bun build --compile` binaries plus a Bun-based npm package — no Node requirement for users. The SDK (T-30) is pure TypeScript with zero Bun-specific APIs so it runs under Node ≥ 20. **Support tiers:** Tier 1 — Linux x64/arm64, macOS; Tier 2 (best-effort) — Windows (CLI + TUI work; Docker/SSH backends recommend WSL).
+- **Language/runtime:** TypeScript strict, ESM. **Bun is the only CLI runtime:** distributions ship as `bun build --compile` binaries plus a Bun-based npm package; users never need Node. The SDK (T-30) is pure TypeScript with zero Bun-specific APIs so it runs under Node ≥ 20. **Support tiers:** Tier 1: Linux x64/arm64, macOS; Tier 2 (best-effort): Windows (CLI + TUI work; Docker/SSH backends recommend WSL).
 - **Tests:** Vitest; behavior-contract tests per module; every task ships with tests.
-- **Security:** untrusted = model output, plugins, instruction files; **secrets are never persisted in plaintext** — redact-on-persist in transcripts/logs, and share links render the redacted form; config written `0600`.
+- **Security:** untrusted = model output, plugins, instruction files; **secrets are never persisted in plaintext**: redact-on-persist in transcripts/logs, and share links render the redacted form; config written `0600`.
 - **Privacy:** zero telemetry; any usage reporting is opt-in.
 - **Cost:** per-conversation token/cost accounting surfaced in TUI.
-- **UI:** emoji-free chrome — no emoji, not even emoji-capable codepoints (`⚡` `⏺` `⚠`); text-presentation glyphs only (`●` `⎿` `❯` `»` `✓` `✗`). Model-generated content is exempt.
+- **UI:** emoji-free chrome: no emoji, not even emoji-capable codepoints (`⚡` `⏺` `⚠`); text-presentation glyphs only (`●` `⎿` `❯` `»` `✓` `✗`). Model-generated content is exempt.
 
 ## 8. Architecture Overview
 
@@ -168,19 +168,19 @@ lumpscode/                     (monorepo, Bun workspaces)
 └── packages/skills/           built-in skills (shipped, not all active)
 ```
 
-Client/server model: TUI and gateway are clients of the same core agent; `serve` exposes the core over HTTP — identical architecture lesson taken from opencode and Hermes.
+Client/server model: TUI and gateway are clients of the same core agent; `serve` exposes the core over HTTP, the same architecture lesson taken from opencode and Hermes.
 
-## 9. Execution Model — Task Splitting Rules (Mandatory)
+## 9. Execution Model: Task Splitting Rules (Mandatory)
 
 > This is the core operating rule requested by the product owner: **tasks are split so that no AI process attempts the whole build at once.**
 
 1. **One task = one AI session/process.** A task is a self-contained unit: its own context, its own branch, its own tests. Never bundle multiple tasks into one session.
 2. **A task is done only when** lint + typecheck + tests pass in CI, docs/CHANGELOG updated, and the acceptance criteria are demonstrably met.
-3. **If a task overflows one session**, stop, commit the working state, and split the remainder into a new task — do not silently continue.
+3. **If a task overflows one session**, stop, commit the working state, and split the remainder into a new task; do not silently continue.
 4. **Dependencies are hard:** a task starts only when its dependency tasks are merged.
 5. Each task below states: **Scope / Depends on / Acceptance**.
 
-### M0 — Foundation
+### M0: Foundation
 
 | ID   | Task                                                                                                          | Depends on | Acceptance                                                            |
 | ---- | ------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------- |
@@ -188,7 +188,7 @@ Client/server model: TUI and gateway are clients of the same core agent; `serve`
 | T-02 | Config system: `~/.lumpscode/config.json`, project `lumpscode.json`, instruction-file discovery & consent     | T-01       | `lumpscode doctor` validates config, prints provider/permission state |
 | T-03 | Logging, error taxonomy, usage accounting skeleton                                                            | T-01       | structured logs, error codes, usage recorder API                      |
 
-### M1 — Core Agent MVP
+### M1: Core Agent MVP
 
 | ID   | Task                                                                            | Depends on | Acceptance                                                     |
 | ---- | ------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------- |
@@ -202,7 +202,7 @@ Client/server model: TUI and gateway are clients of the same core agent; `serve`
 | T-11 | Session persistence & resume                                                    | T-06       | resume reproduces context; secrets redacted on disk            |
 | T-12 | Non-interactive `lumpscode run "task"` + `--verify` (baseline-aware test check) | T-08, T-11 | run mode passes/fails per pre-existing-baseline logic          |
 
-### M2 — Intelligence & Extensibility
+### M2: Intelligence & Extensibility
 
 | ID   | Task                                                                  | Depends on | Acceptance                                                  |
 | ---- | --------------------------------------------------------------------- | ---------- | ----------------------------------------------------------- |
@@ -216,7 +216,7 @@ Client/server model: TUI and gateway are clients of the same core agent; `serve`
 | T-20 | Checkpoints/rewind + git worktrees                                    | T-11, T-08 | rewind restores workspace state                             |
 | T-21 | Web fetch/search + browser (CDP, capability-scoped)                   | T-09       | fetch tool respects network permission group                |
 
-### M3 — Differentiators
+### M3: Differentiators
 
 | ID   | Task                                                                         | Depends on | Acceptance                                                                 |
 | ---- | ---------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
@@ -228,7 +228,7 @@ Client/server model: TUI and gateway are clients of the same core agent; `serve`
 | T-27 | Execution backends: Docker, SSH                                              | T-12       | bash tool routes through Docker backend in test                            |
 | T-28 | Usage/cost tracking + `doctor`/`update` hardening                            | T-03       | per-conversation cost shown in TUI                                         |
 
-### M4 — Polish & Distribution
+### M4: Polish & Distribution
 
 | ID   | Task                                                                   | Depends on | Acceptance                                   |
 | ---- | ---------------------------------------------------------------------- | ---------- | -------------------------------------------- |
@@ -260,13 +260,13 @@ Client/server model: TUI and gateway are clients of the same core agent; `serve`
 
 1. Binary alias `lc` in addition to `lumpscode`?
 2. Default reasoning profile for unknown models?
-3. Apache-2.0 (predecessor) vs **MIT (default, matches opencode)** — confirm MIT.
+3. Apache-2.0 (predecessor) vs **MIT (default, matches opencode)**: confirm.
 
 ---
 
 ## 13. Builder-Check Resolutions (PRD-stage calls)
 
-An independent builder review raised nine questions before planning could proceed. Each was resolved at PRD stage and folded into the requirements above. They are **calls, not contracts** — the product owner can override any of them.
+An independent builder review raised nine questions before planning could proceed. Each was resolved at PRD stage and folded into the requirements above. They are **calls, not contracts**: the product owner can override any of them.
 
 | #   | Question                                            | Resolution                                                                                                |
 | --- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -282,9 +282,9 @@ An independent builder review raised nine questions before planning could procee
 
 ---
 
-## Appendix A — TUI Mockups (FR-2)
+## Appendix A: TUI Mockups (FR-2)
 
-### A.1 First run (no config) — setup wizard
+### A.1 First run (no config): setup wizard
 
 ```
 ╭─────────────────────────────────────────────╮
@@ -292,7 +292,7 @@ An independent builder review raised nine questions before planning could procee
 │  Every agent's best, in one CLI.            │
 ╰─────────────────────────────────────────────╯
 
-  No configuration found — let's set you up.
+  No configuration found. Let's set you up.
 
   [1/3] Pick a provider
     ❯ OpenAI-compatible (custom base URL)
@@ -339,5 +339,5 @@ Screen elements:
 
 ### A.3 Other modes
 
-- `lumpscode "task"` — plain non-interactive streaming output, then a summary.
-- `lumpscode serve` — API banner with host/port and bearer-token hint.
+- `lumpscode "task"`: plain non-interactive streaming output, then a summary.
+- `lumpscode serve`: API banner with host/port and bearer-token hint.
