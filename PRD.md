@@ -70,7 +70,7 @@ Bounded iterations; tool-call limits; repetition detection; token/duration budge
 
 ### FR-2 TUI
 
-Full-screen terminal UI (Ink/React): multiline editing, slash-command palette with autocomplete, conversation history, interrupt-and-redirect, streaming tool output, theming, keybindings, `Tab` agent switch. See Appendix A for screen mockups.
+Full-screen terminal UI (Ink/React): multiline editing, slash-command palette with autocomplete, conversation history, interrupt-and-redirect, streaming tool output, theming, keybindings, `Tab` agent switch. See Appendix A for screen mockups. **UI chrome is emoji-free, including emoji-capable codepoints (⚡ ⏺ ⚠ …); only text-presentation glyphs are allowed (● ⎿ ❯ » ✓ ✗ ? ~). Emoji may only appear inside model-generated content.**
 
 ### FR-3 Providers
 
@@ -152,6 +152,7 @@ Status/diff/commit (permissioned), PR & CI inspection; remote writes require exp
 - **Security:** untrusted = model output, plugins, instruction files; **secrets are never persisted in plaintext** — redact-on-persist in transcripts/logs, and share links render the redacted form; config written `0600`.
 - **Privacy:** zero telemetry; any usage reporting is opt-in.
 - **Cost:** per-conversation token/cost accounting surfaced in TUI.
+- **UI:** emoji-free chrome — no emoji, not even emoji-capable codepoints (`⚡` `⏺` `⚠`); text-presentation glyphs only (`●` `⎿` `❯` `»` `✓` `✗`). Model-generated content is exempt.
 
 ## 8. Architecture Overview
 
@@ -287,7 +288,7 @@ An independent builder review raised nine questions before planning could procee
 
 ```
 ╭─────────────────────────────────────────────╮
-│  ⚡ Lumps Code v1.0.0                       │
+│  Lumps Code v1.0.0                          │
 │  Every agent's best, in one CLI.            │
 ╰─────────────────────────────────────────────╯
 
@@ -303,7 +304,7 @@ An independent builder review raised nine questions before planning could procee
   [2/3] Base URL : http://localhost:20128/v1
   [3/3] API key  : ••••••••••
 
-  ✻ doctor: config written to ~/.lumpscode/config.json
+  » doctor: config written to ~/.lumpscode/config.json
 ```
 
 ### A.2 Main screen
@@ -311,18 +312,16 @@ An independent builder review raised nine questions before planning could procee
 ```
 ╭─ lumpscode ──────────────────────────────────╮
 │                                              │
-│  ● you                                       │
-│  refactor the config loader                  │
+│  > refactor the config loader                │
 │                                              │
-│  ⏺ lumps · plan                              │
+│  ● lumps · plan                              │
 │  Reading src/config.ts…                      │
-│                                              │
-│  ⏺ lumps · read(2) grep(1)                   │
+│  ⎿ read(2) grep(1)                           │
 │  I'll rename loadConfig → loadAppConfig      │
-│  across 3 files. Apply in build mode?         │
+│  across 3 files. Apply in build mode?        │
 │                                              │
-│ ────────────────────────────────────────────│
-│  ❯ type a message…                          │
+│ ──────────────────────────────────────────── │
+│  ❯ type a message…                           │
 │                                              │
 │  plan (Tab) · gpt-4o · 12.3k tok · $0.02     │
 ╰──────────────────────────────────────────────╯
@@ -331,6 +330,7 @@ An independent builder review raised nine questions before planning could procee
 Screen elements:
 
 - Multiline input at the bottom, streaming output above, full box border (opencode-style).
+- Message glyphs: `>` user · `●` agent turn · `⎿` tool result (all text-presentation; no emoji).
 - `Tab` = switch agent `plan` (read-only) ↔ `build` (full access).
 - `/` = command palette (`/model`, `/skill`, `/session`, `/share`); `@general` = invoke research subagent.
 - Footer: active mode · model · real-time token/cost counter.
