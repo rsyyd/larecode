@@ -1,6 +1,6 @@
 export interface MCPServerConfig {
   name: string;
-  transport: "stdio" | "http";
+  transport: 'stdio' | 'http';
   command?: string;
   url?: string;
 }
@@ -26,7 +26,7 @@ export class MCP {
   }
 
   async callTool(_server: string, _tool: string, _args: unknown): Promise<unknown> {
-    throw new Error("MCP tool calls arrive in T-14");
+    throw new Error('MCP tool calls arrive in T-14');
   }
 
   list(): string[] {

@@ -1,7 +1,7 @@
-import type { Permissions } from "../permission/permission.js";
+import type { Permissions } from '../permission/permission.js';
 
 export interface ToolSchema {
-  type: "object";
+  type: 'object';
   properties: Record<string, { type: string; description: string }>;
   required: string[];
 }

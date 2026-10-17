@@ -1,4 +1,4 @@
-export type HookType = "pre-tool" | "post-tool" | "session-start" | "session-end";
+export type HookType = 'pre-tool' | 'post-tool' | 'session-start' | 'session-end';
 
 export interface HookContext {
   event: HookType;

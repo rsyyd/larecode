@@ -1,11 +1,11 @@
-export type SkillState = "draft" | "active" | "disabled";
+export type SkillState = 'draft' | 'active' | 'disabled';
 
 export interface SkillMetadata {
   name: string;
   description: string;
   version: string;
   state: SkillState;
-  source: "auto" | "user";
+  source: 'auto' | 'user';
 }
 
 export interface Skill extends SkillMetadata {
@@ -30,8 +30,8 @@ export class Skills {
 
   approve(name: string): boolean {
     const skill = this.skills.get(name);
-    if (!skill || skill.state !== "draft") return false;
-    skill.state = "active";
+    if (!skill || skill.state !== 'draft') return false;
+    skill.state = 'active';
     return true;
   }
 }

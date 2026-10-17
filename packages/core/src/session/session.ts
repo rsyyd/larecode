@@ -1,4 +1,4 @@
-import type { ToolCall, ToolResult } from "../tool/tool.js";
+import type { ToolCall, ToolResult } from '../tool/tool.js';
 
 export interface SessionMetadata {
   id: string;
@@ -10,7 +10,7 @@ export interface SessionMetadata {
 }
 
 export interface SessionMessage {
-  role: "user" | "assistant" | "system" | "tool";
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
@@ -42,7 +42,7 @@ export class Sessions {
       messages: [],
     };
     if (initialMessage) {
-      session.messages.push({ role: "user", content: initialMessage, timestamp: now });
+      session.messages.push({ role: 'user', content: initialMessage, timestamp: now });
       session.metadata.messageCount = 1;
     }
     this.sessions.set(id, session);

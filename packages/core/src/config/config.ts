@@ -1,10 +1,10 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { homedir } from "node:os";
-import type { PermissionPolicy } from "../permission/permission.js";
+import { mkdirSync, readFileSync, writeFileSync, chmodSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { homedir } from 'node:os';
+import type { PermissionPolicy } from '../permission/permission.js';
 
 export interface ProviderConfig {
-  type: "openai-compatible" | "anthropic" | "ollama" | "openrouter" | "zai" | "custom";
+  type: 'openai-compatible' | 'anthropic' | 'ollama' | 'openrouter' | 'zai' | 'custom';
   baseUrl: string;
   apiKey?: string;
   models: string[];
@@ -18,26 +18,34 @@ export interface Config {
   providers: Record<string, ProviderConfig>;
 }
 
+export function lumpscodeHome(): string {
+  return process.env.LUMPSCODE_HOME ?? join(homedir(), '.lumpscode');
+}
+
 export function configPath(): string {
-  return join(homedir(), ".lumpscode", "config.json");
+  return join(lumpscodeHome(), 'config.json');
+}
+
+export function projectConfigPath(projectDir: string = process.cwd()): string {
+  return join(projectDir, 'lumpscode.json');
 }
 
 export function defaultConfig(): Config {
   return {
-    version: "0.0.0",
-    defaultProvider: "openai-compatible",
-    defaultModel: "gpt-4o",
-    permissions: { mode: "ask", allowedGroups: ["read"] },
+    version: '0.0.0',
+    defaultProvider: 'openai-compatible',
+    defaultModel: 'gpt-4o',
+    permissions: { mode: 'ask', allowedGroups: ['read'] },
     providers: {
-      "openai-compatible": {
-        type: "openai-compatible",
-        baseUrl: "http://localhost:20128/v1",
-        models: ["gpt-4o", "gpt-4o-mini"],
+      'openai-compatible': {
+        type: 'openai-compatible',
+        baseUrl: 'http://localhost:20128/v1',
+        models: ['gpt-4o', 'gpt-4o-mini'],
       },
       ollama: {
-        type: "ollama",
-        baseUrl: "http://localhost:11434",
-        models: ["llama3", "qwen2.5-coder"],
+        type: 'ollama',
+        baseUrl: 'http://localhost:11434',
+        models: ['llama3', 'qwen2.5-coder'],
       },
     },
   };
@@ -45,12 +53,47 @@ export function defaultConfig(): Config {
 
 export function loadConfig(path: string = configPath()): Config {
   if (!existsSync(path)) return defaultConfig();
-  const raw = JSON.parse(readFileSync(path, "utf8")) as Partial<Config>;
+  const raw = JSON.parse(readFileSync(path, 'utf8')) as Partial<Config>;
   return { ...defaultConfig(), ...raw };
+}
+
+export function loadEffectiveConfig(
+  projectDir: string = process.cwd(),
+  path: string = configPath()
+): Config {
+  const config = loadConfig(path);
+  const projectFile = projectConfigPath(projectDir);
+  if (!existsSync(projectFile)) return config;
+  const project = JSON.parse(readFileSync(projectFile, 'utf8')) as Partial<Config>;
+  return {
+    ...config,
+    ...project,
+    permissions: { ...config.permissions, ...project.permissions },
+    providers: { ...config.providers, ...project.providers },
+  };
+}
+
+export function validateConfig(config: Config): string[] {
+  const problems: string[] = [];
+  const provider = config.providers[config.defaultProvider];
+  if (!provider) {
+    problems.push(`default provider "${config.defaultProvider}" is not configured`);
+  } else if (!provider.models.includes(config.defaultModel)) {
+    problems.push(
+      `default model "${config.defaultModel}" is not offered by provider "${config.defaultProvider}"`
+    );
+  }
+  if (!['ask', 'allow', 'deny'].includes(config.permissions.mode)) {
+    problems.push(`permission mode "${config.permissions.mode}" is not one of ask, allow, deny`);
+  }
+  for (const [name, entry] of Object.entries(config.providers)) {
+    if (!entry.baseUrl) problems.push(`provider "${name}" has no baseUrl`);
+  }
+  return problems;
 }
 
 export function saveConfig(config: Config, path: string = configPath()): void {
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(config, null, 2) + "\n", { mode: 0o600 });
+  writeFileSync(path, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
   chmodSync(path, 0o600);
 }

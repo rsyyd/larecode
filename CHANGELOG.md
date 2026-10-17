@@ -1,5 +1,7 @@
 # Changelog
 
-## 0.0.0 — scaffold
+## Unreleased — M0
 
-- T-01: monorepo scaffold — Bun workspaces, TypeScript strict, oxlint, prettier, vitest, GitHub Actions CI, hello-world binary (`packages/cli`). Core package ships agent/provider/tool/permission/session/memory/config/LSP/MCP/skills/hooks/context module stubs; permission engine is functional with tests.
+- T-02: config system — global `~/.lumpscode/config.json` (0600) with project `lumpscode.json` overrides, validation, instruction-file discovery with hash-bound consent (`AGENTS.md`, `LUMPCODE.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`), and the `lumpscode doctor` command. `LUMPSCODE_HOME` overrides the config directory for tests and sandboxes.
+- T-01: monorepo scaffold — Bun workspaces, TypeScript strict, oxlint, prettier, vitest, GitHub Actions CI, hello-world binary. Core ships agent/provider/tool/permission/session/memory/config/lsp/mcp/skill/hook/context modules; permission engine is functional with tests.
+- Naming pass: modules follow opencode conventions — domain-named files, plural facade classes, config as plain functions.

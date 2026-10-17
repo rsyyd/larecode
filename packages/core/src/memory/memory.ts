@@ -1,4 +1,4 @@
-export type MemoryTier = "temporary" | "session" | "project" | "user";
+export type MemoryTier = 'temporary' | 'session' | 'project' | 'user';
 
 export interface MemoryEntry {
   id: string;
@@ -13,14 +13,14 @@ export interface MemoryEntry {
 export class Memory {
   private stores = new Map<MemoryTier, Map<string, MemoryEntry>>();
   private maxSizes = new Map<MemoryTier, number>([
-    ["temporary", 1000],
-    ["session", 5000],
-    ["project", 10000],
-    ["user", 50000],
+    ['temporary', 1000],
+    ['session', 5000],
+    ['project', 10000],
+    ['user', 50000],
   ]);
 
   constructor() {
-    for (const tier of ["temporary", "session", "project", "user"] as MemoryTier[]) {
+    for (const tier of ['temporary', 'session', 'project', 'user'] as MemoryTier[]) {
       this.stores.set(tier, new Map());
     }
   }
@@ -60,7 +60,7 @@ export class Memory {
 
   search(
     query: string,
-    tiers: MemoryTier[] = ["temporary", "session", "project", "user"]
+    tiers: MemoryTier[] = ['temporary', 'session', 'project', 'user']
   ): MemoryEntry[] {
     const results: MemoryEntry[] = [];
     for (const tier of tiers) {

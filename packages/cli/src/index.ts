@@ -1,12 +1,14 @@
+import { Command } from 'commander';
 import { VERSION } from '@lumpscode/core';
+import { runDoctor } from './commands/doctor.js';
 
-const args = process.argv.slice(2);
+const program = new Command();
 
-if (args[0] === '--version' || args[0] === '-v') {
-  console.log(VERSION);
-  process.exit(0);
-}
+program.name('lumpscode').description("Every agent's best, in one CLI.").version(VERSION);
 
-console.log(`lumpscode ${VERSION} — scaffold ready (T-01)`);
-console.log('Configuration directory: ~/.lumpscode/');
-console.log('Full CLI arrives with M1 tasks. See PRD.md for the roadmap.');
+program
+  .command('doctor', { isDefault: false })
+  .description('Check configuration, providers, permissions, and instruction files')
+  .action(runDoctor);
+
+program.parseAsync(process.argv);
