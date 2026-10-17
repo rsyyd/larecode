@@ -9,7 +9,14 @@ export type {
   ProviderCapabilities,
   ModelInfo,
   CompletionOptions,
+  ToolSpec,
 } from './provider/provider.js';
+export {
+  OpenAIAdapter,
+  openAIAdapterFromConfig,
+  providersFromConfig,
+  type OpenAIAdapterOptions,
+} from './provider/openai-adapter.js';
 
 export { Tools } from './tool/tool.js';
 export type { Tool, ToolCall, ToolResult, ToolContext, ToolSchema } from './tool/tool.js';

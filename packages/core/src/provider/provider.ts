@@ -1,3 +1,6 @@
+import type { ProviderConfig } from '../config/config.js';
+import { openAIAdapterFromConfig } from './openai-adapter.js';
+
 export interface ProviderCapabilities {
   tools: boolean;
   vision: boolean;
@@ -13,7 +16,7 @@ export interface ModelInfo {
   capabilities: ProviderCapabilities;
 }
 
-interface ToolSpec {
+export interface ToolSpec {
   name: string;
   description: string;
   parameters: Record<string, unknown>;
@@ -49,5 +52,12 @@ export class Providers {
 
   list(): ProviderAdapter[] {
     return Array.from(this.adapters.values());
+  }
+
+  /**
+   * Creates an OpenAI-compatible provider adapter from a ProviderConfig.
+   */
+  static createOpenAIAdapter(name: string, config: ProviderConfig): ProviderAdapter {
+    return openAIAdapterFromConfig(name, config);
   }
 }

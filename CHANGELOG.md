@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (M1)
+
+- T-04: provider abstraction and OpenAI-compatible adapter: ModelInfo catalog with capabilities, complete and streamComplete with SSE parsing, models endpoint fetch with catalog fallback, model hot-swap, and config-based adapter instantiation.
+
 ## Unreleased (M0)
 
 - T-03: logging, error taxonomy, usage accounting skeleton: structured logger with pluggable handlers and child contexts, typed LumpsError taxonomy with categories and serialization, and in-memory UsageRecorder with token and cost estimation per model and conversation.
