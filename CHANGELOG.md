@@ -2,6 +2,7 @@
 
 ## Unreleased (M0)
 
+- T-03: logging, error taxonomy, usage accounting skeleton: structured logger with pluggable handlers and child contexts, typed LumpsError taxonomy with categories and serialization, and in-memory UsageRecorder with token and cost estimation per model and conversation.
 - UI rule (PRD FR-2/§7): UI chrome is emoji-free: text-presentation glyphs only (`●` `⎿` `❯` `»` `✓` `✗` `?` `~`); emoji may appear only inside model-generated content. Appendix A mockups updated to the glyph set: `>` user, `●` agent turn, `⎿` tool result.
 
 - T-02: config system: global `~/.lumpscode/config.json` (0600) with project `lumpscode.json` overrides, validation, instruction-file discovery with hash-bound consent (`AGENTS.md`, `LUMPCODE.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`), and the `lumpscode doctor` command. `LUMPSCODE_HOME` overrides the config directory for tests and sandboxes.

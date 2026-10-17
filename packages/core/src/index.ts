@@ -63,3 +63,32 @@ export {
   hashFile,
 } from './context/instructions.js';
 export type { InstructionFile, InstructionStatus } from './context/instructions.js';
+
+export {
+  Logger,
+  defaultLogger,
+  createConsoleHandler,
+  type LogLevel,
+  type LogEntry,
+  type LogHandler,
+} from './logger/logger.js';
+
+export {
+  LumpsError,
+  isLumpsError,
+  assertLumpsError,
+  type ErrorCode,
+  type LumpsErrorJSON,
+} from './error/error.js';
+
+export {
+  InMemoryUsageRecorder,
+  createUsageRecorder,
+  estimateCost,
+  DEFAULT_MODEL_PRICING,
+  type TokenUsage,
+  type CostUsage,
+  type UsageSnapshot,
+  type UsageAggregate,
+  type UsageRecorder,
+} from './usage/usage.js';
