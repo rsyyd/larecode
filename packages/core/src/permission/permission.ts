@@ -1,17 +1,17 @@
 export type PermissionGroup =
-  | 'read'
-  | 'write'
-  | 'shell'
-  | 'network'
-  | 'git'
-  | 'secrets'
-  | 'destructive'
-  | 'external-services'
-  | 'subagent'
-  | 'browser'
-  | 'skills';
+  | "read"
+  | "write"
+  | "shell"
+  | "network"
+  | "git"
+  | "secrets"
+  | "destructive"
+  | "external-services"
+  | "subagent"
+  | "browser"
+  | "skills";
 
-export type PermissionMode = 'ask' | 'allow' | 'deny';
+export type PermissionMode = "ask" | "allow" | "deny";
 
 export interface PermissionPolicy {
   mode: PermissionMode;
@@ -24,12 +24,12 @@ export interface PermissionDecision {
   reason?: string;
 }
 
-const NEVER_PRE_AUTHORIZED: PermissionGroup[] = ['destructive', 'secrets'];
+const NEVER_PRE_AUTHORIZED: PermissionGroup[] = ["destructive", "secrets"];
 
-export class PermissionEngine {
+export class Permissions {
   private policy: PermissionPolicy;
 
-  constructor(policy: PermissionPolicy = { mode: 'ask', allowedGroups: ['read'] }) {
+  constructor(policy: PermissionPolicy = { mode: "ask", allowedGroups: ["read"] }) {
     this.policy = policy;
   }
 
@@ -50,16 +50,16 @@ export class PermissionEngine {
         };
       }
       const bundles = Object.values(this.policy.preAuthorized ?? {});
-      if (bundles.some((b) => b.includes(group))) {
+      if (bundles.some((bundle) => bundle.includes(group))) {
         return { allowed: true };
       }
       return { allowed: false, reason: `${group} not pre-authorized for this unattended flow` };
     }
 
-    if (this.policy.mode === 'deny') {
-      return { allowed: false, reason: 'permission mode is deny' };
+    if (this.policy.mode === "deny") {
+      return { allowed: false, reason: "permission mode is deny" };
     }
-    if (this.policy.mode === 'allow') {
+    if (this.policy.mode === "allow") {
       return { allowed: true };
     }
     if (this.policy.allowedGroups.includes(group)) {

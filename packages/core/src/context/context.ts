@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 
 export interface ContextQuery {
   root: string;
@@ -17,9 +17,9 @@ export interface ContextResult {
   budgetUsed: number;
 }
 
-const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', '.next']);
+const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next"]);
 
-export class ContextEngine {
+export class Context {
   private files: string[] = [];
 
   index(root: string): number {
@@ -45,7 +45,7 @@ export class ContextEngine {
     const ranked = this.files
       .map((file) => {
         try {
-          const content = readFileSync(join(query.root, file), 'utf8').toLowerCase();
+          const content = readFileSync(join(query.root, file), "utf8").toLowerCase();
           const hits = content.split(query.query.toLowerCase()).length - 1;
           const nameBoost = file.toLowerCase().includes(query.query.toLowerCase()) ? 10 : 0;
           return { file, score: hits + nameBoost };
@@ -53,7 +53,7 @@ export class ContextEngine {
           return { file, score: 0 };
         }
       })
-      .filter((r) => r.score > 0)
+      .filter((result) => result.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, query.maxFiles);
     return { files: ranked, budgetUsed: ranked.length };

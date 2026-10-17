@@ -1,6 +1,6 @@
 export interface MCPServerConfig {
   name: string;
-  transport: 'stdio' | 'http';
+  transport: "stdio" | "http";
   command?: string;
   url?: string;
 }
@@ -11,7 +11,7 @@ export interface MCPTool {
   inputSchema: Record<string, unknown>;
 }
 
-export class MCPClient {
+export class MCP {
   private servers = new Map<string, MCPServerConfig>();
 
   async connect(config: MCPServerConfig): Promise<void> {
@@ -26,7 +26,7 @@ export class MCPClient {
   }
 
   async callTool(_server: string, _tool: string, _args: unknown): Promise<unknown> {
-    throw new Error('MCP calls arrive in T-14');
+    throw new Error("MCP tool calls arrive in T-14");
   }
 
   list(): string[] {

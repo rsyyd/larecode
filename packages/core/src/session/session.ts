@@ -1,4 +1,4 @@
-import type { ToolCall, ToolResult } from '../tools/registry.js';
+import type { ToolCall, ToolResult } from "../tool/tool.js";
 
 export interface SessionMetadata {
   id: string;
@@ -10,7 +10,7 @@ export interface SessionMetadata {
 }
 
 export interface SessionMessage {
-  role: 'user' | 'assistant' | 'system' | 'tool';
+  role: "user" | "assistant" | "system" | "tool";
   content: string;
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
@@ -23,7 +23,7 @@ export interface Session {
   messages: SessionMessage[];
 }
 
-export class SessionManager {
+export class Sessions {
   private sessions = new Map<string, Session>();
 
   create(initialMessage?: string): Session {
@@ -42,7 +42,7 @@ export class SessionManager {
       messages: [],
     };
     if (initialMessage) {
-      session.messages.push({ role: 'user', content: initialMessage, timestamp: now });
+      session.messages.push({ role: "user", content: initialMessage, timestamp: now });
       session.metadata.messageCount = 1;
     }
     this.sessions.set(id, session);
@@ -54,7 +54,7 @@ export class SessionManager {
   }
 
   list(): SessionMetadata[] {
-    return Array.from(this.sessions.values()).map((s) => s.metadata);
+    return Array.from(this.sessions.values()).map((session) => session.metadata);
   }
 
   save(session: Session): void {

@@ -36,7 +36,7 @@ export interface ProviderAdapter {
   streamComplete(prompt: string, options: CompletionOptions): AsyncGenerator<string>;
 }
 
-export class ProviderRegistry {
+export class Providers {
   private adapters = new Map<string, ProviderAdapter>();
 
   register(adapter: ProviderAdapter): void {

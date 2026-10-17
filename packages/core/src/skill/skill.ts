@@ -1,11 +1,11 @@
-export type SkillState = 'draft' | 'active' | 'disabled';
+export type SkillState = "draft" | "active" | "disabled";
 
 export interface SkillMetadata {
   name: string;
   description: string;
   version: string;
   state: SkillState;
-  source: 'auto' | 'user';
+  source: "auto" | "user";
 }
 
 export interface Skill extends SkillMetadata {
@@ -13,7 +13,7 @@ export interface Skill extends SkillMetadata {
   hash: string;
 }
 
-export class SkillManager {
+export class Skills {
   private skills = new Map<string, Skill>();
 
   register(skill: Skill): void {
@@ -30,8 +30,8 @@ export class SkillManager {
 
   approve(name: string): boolean {
     const skill = this.skills.get(name);
-    if (!skill || skill.state !== 'draft') return false;
-    skill.state = 'active';
+    if (!skill || skill.state !== "draft") return false;
+    skill.state = "active";
     return true;
   }
 }

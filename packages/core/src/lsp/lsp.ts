@@ -12,7 +12,7 @@ export interface SymbolInfo {
   line: number;
 }
 
-export class LSPClient {
+export class LSP {
   private started = false;
 
   constructor(_command?: string) {}
@@ -22,7 +22,7 @@ export class LSPClient {
   }
 
   async start(): Promise<void> {
-    // ponytail: stub until T-13 — graceful degradation means "no server, no results"
+    // ponytail: no server, no results — LSP arrives in T-13
     this.started = false;
   }
 
@@ -30,7 +30,7 @@ export class LSPClient {
     this.started = false;
   }
 
-  async definitions(_file: string, _line: number, _col: number): Promise<SymbolInfo[]> {
+  async definitions(_file: string, _line: number, _column: number): Promise<SymbolInfo[]> {
     return [];
   }
 
@@ -42,7 +42,7 @@ export class LSPClient {
     return [];
   }
 
-  async hover(_file: string, _line: number, _col: number): Promise<string | null> {
+  async hover(_file: string, _line: number, _column: number): Promise<string | null> {
     return null;
   }
 }

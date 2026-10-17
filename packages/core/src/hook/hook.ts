@@ -1,4 +1,4 @@
-export type HookType = 'pre-tool' | 'post-tool' | 'session-start' | 'session-end';
+export type HookType = "pre-tool" | "post-tool" | "session-start" | "session-end";
 
 export interface HookContext {
   event: HookType;
@@ -7,10 +7,10 @@ export interface HookContext {
 
 export interface Hook {
   type: HookType;
-  handler: (ctx: HookContext) => void | Promise<void>;
+  handler: (context: HookContext) => void | Promise<void>;
 }
 
-export class HookManager {
+export class Hooks {
   private hooks = new Map<HookType, Hook[]>();
 
   register(hook: Hook): void {

@@ -1,7 +1,7 @@
-import type { PermissionEngine } from '../permissions/engine.js';
+import type { Permissions } from "../permission/permission.js";
 
 export interface ToolSchema {
-  type: 'object';
+  type: "object";
   properties: Record<string, { type: string; description: string }>;
   required: string[];
 }
@@ -29,11 +29,11 @@ export interface ToolResult {
 export interface ToolContext {
   sessionId: string;
   workingDir: string;
-  permissions: PermissionEngine;
+  permissions: Permissions;
   abortSignal: AbortSignal;
 }
 
-export class ToolRegistry {
+export class Tools {
   private tools = new Map<string, Tool>();
 
   register(tool: Tool): void {
