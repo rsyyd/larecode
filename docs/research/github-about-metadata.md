@@ -1,0 +1,57 @@
+# GitHub About-section conventions for terminal dev-tool repos
+
+> **Sources**: GitHub REST API, `gh api repos/<owner>/<repo>` (field `.description`, field `.topics`), retrieved **2026-10-17**. All values below are verbatim from the API. No web-search or blog data was used for the metadata itself. Three repos now redirect to newer owner accounts (noted in-table); the data shown is from the resolved repo.
+
+Sampling plan: 11 open-source terminal CLI tools / AI coding agents (owner/repo as given at sampling time). `cline` intentionally excluded (VS Code extension, not a terminal analog). No 404s; all fetches succeeded. For legacy-org repos, the queried slug is listed first.
+
+## Data (what top repos actually use)
+
+| repo | description (verbatim) | len | topics (verbatim) | # |
+|---|---|---|---|---|
+| sst/opencode *(resolves to anomalyco/opencode)* | `The open source coding agent.` | 29 | — | 0 |
+| anthropics/claude-code | `Claude Code is an agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster by executing routine tasks, explaining complex code, and handling git workflows - all through natural language commands.` | 240 | — | 0 |
+| openai/codex | `Lightweight coding agent that runs in your terminal` | 51 | — | 0 |
+| google-gemini/gemini-cli | `An open-source AI agent that brings the power of Gemini directly into your terminal.` | 84 | `ai, ai-agents, cli, gemini, gemini-api, mcp-client, mcp-server` | 7 |
+| charmbracelet/crush | `Glamourous agentic coding for all 💘` | 35 | `agentic-ai, ai, llms, ravishing` | 4 |
+| block/goose *(resolves to aaif-goose/goose)* | `an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM` | 117 | `acp, ai, ai-agents, mcp` | 4 |
+| plandex-ai/plandex | `Open source AI coding agent. Designed for large projects and real world tasks.` | 78 | `ai, ai-agents, ai-developer-tools, ai-tools, cli, command-line, developer-tools, git, golang, gpt-4, llm, openai, polyglot-programming, terminal, terminal-based, terminal-ui` | 16 |
+| oven-sh/bun | `Incredibly fast JavaScript runtime, bundler, test runner, and package manager – all in one` | 90 | `bun, bundler, javascript, javascriptcore, jsx, nodejs, npm, react, rust, rust-lang, transpiler, typescript` | 12 |
+| astral-sh/uv | `An extremely fast Python package and project manager, written in Rust.` | 70 | `packaging, python, resolver, uv` | 4 |
+| astral-sh/ruff | `An extremely fast Python linter and code formatter, written in Rust.` | 68 | `linter, pep8, python, python3, ruff, rust, rustpython, static-analysis, static-code-analysis, style-guide, styleguide` | 11 |
+| openinterpreter/open-interpreter *(resolves to openinterpreter/openinterpreter)* | `A coding agent for open models like Kimi K3 and GLM 5.3` | 55 | `acp, coding-agent, deepseek, kimi, python, qwen, rust` | 7 |
+
+## Patterns
+
+### Description
+
+- **Noun-fragment, not a sentence.** 10 of 11 are fragments (no subject/verb): "The open source coding agent.", "Lightweight coding agent that runs in your terminal", "An extremely fast Python linter and code formatter, written in Rust." The one subject-verb exception (claude-code) is also the longest and outlier.
+- **Length**: 29–240 chars; 9 of 11 are ≤ 117; median ≈ 70–84. Nothing else comes close to claude-code's 240.
+- **Formula** (dominant): `[qualifier: open source / extremely fast / lightweight] + [what it is] + [where it runs / written in what] (+ [key differentiator])`. e.g. uv/ruff's twin construction "An extremely fast Python X, written in Rust."; gemini-cli's "…directly into your terminal."
+- **Capitalization**: sentence case. 8 of 11 start with "A/An/The" or a proper noun. Two outliers: goose starts lowercase ("an open source…"), codex launches straight into an adjective with no article ("Lightweight coding agent…") — a minimalist house style.
+- **Punctuation**: trailing period on 8 of 11 (no period: claude-code, goose, bun). Hyphen/dash mid-sentence as separator ("-", "–") appears in claude-code, goose, bun; parentheses: **zero**; exclamation marks: **zero**.
+- **Nodes**: **No repo mentions license, installation, or bundled feature lists in the description.** No parenthetical lists (e.g. "(X, Y, Z)"). No "revolutionary/game-changer/next-gen" buzzwords. Superlatives appear only where they ARE the brand claim ("Incredibly fast" for Bun, "Glamourous" for Charm's voice) — differentiator-as-identity, not hype padding.
+- **What/where is always stated**: what the tool is + (usually) that it runs in the terminal, or what it's written in / what it supports. claude-code alone enumerates a feature clause-list — and reads like a README excerpt, not an About line.
+- **Emoji**: exactly one (Charm's 💘, on-r-brand). Nobody else uses one.
+- **Interesting detail**: opencode's description is a single claim in 29 chars — "The open source coding agent." — leaning on "the" (definitive) rather than adjectives.
+
+### Topics
+
+- **Counts**: 0, 0, 0, 4, 4, 4, 7, 7, 11, 12, 16 → effectively **bimodal**: the newest/biggest-agent repos (opencode, claude-code, codex) set **zero** topics; everyone else curates **4–16**, most commonly 4–7. (GitHub allows up to 20; plandex at 16 is the only heavy user.)
+- **Recurring tags across repos**: `ai` (4×), `ai-agents` (3×), `acp` (2×), `mcp` (2×), `cli` (2×), `rust` (3×), `python` (3×), plus language tags (`javascript`, `typescript`, `golang`) on the runtime/lint projects.
+- **Generic vs long-tail split**: repos pair 1–3 broad discovery tags (`ai`, `cli`, `python`, `terminal`) with specific/technical ones (`mcp-client`, `packaging`, `resolver`, `static-code-analysis`, `pep8`) and their own brand tag (`bun`, `uv`, `gemini`, `ruff`, `coding-agent`). Charm even carries a pure in-joke tag (`ravishing`). Tags are kebab-case; `gpt-4`/`openai`-style model+vendor tags are plandex-only and read as dated.
+- **Verdict by use-case**: topics here serve GitHub search/subscribe, not social signaling — technical classifications (linter, packaging, static-analysis) get curated even when the brand tag would suffice.
+
+### Which descriptions read most professional/human
+
+Best-in-class (most concise → context-rich, all human-sounding):
+1. **sst/opencode** — "The open source coding agent." (29) — one definitive claim, zero filler.
+2. **openai/codex** — "Lightweight coding agent that runs in your terminal" (51) — same shape, adds the where.
+3. **astral-sh/uv** & **astral-sh/ruff** — parallel "An extremely fast …, written in Rust." (68–70) — the differentiator is embedded, not appended.
+4. **openai/gemini-cli**, **plandex**, **openinterpreter** — 55–90, one or two clauses, differentiator included.
+5. **claude-code** — the outlier (240): effective for READMEs/search but not a model for an About line; it enumerates capabilities instead of naming the tool's identity.
+
+## Implication for rsyyd/lumpscode
+
+1. **Claim in a fragment, sentence case, ≤ ~80 chars, trailing period.** The community norm is `qualifier + what it is + where it runs` as a noun phrase — e.g. the opencode/codex/uv shape. Do not mention license, installation, or parenthetical feature lists; **no top repo does**, and DJ additions read as noise.
+2. **Make the differentiator structural, not superlative.** Perspective: uv/ruff put "written in Rust" inside the one sentence; gemini-cli puts "directly into your terminal" at the end; claude-code's clause-listing is the anti-pattern. One differentiator, embedded where a clause naturally sits — no buzzwords, no emoji (unless your brand voice is deliberately Charm-style).
+3. **Topics: either curate 4–7 curated or none.** The highest-profile agent repos deliberately run zero topics; peers that want search discovery pair 2–3 broad tags (`ai`, `ai-agents`, `cli`, `terminal`) with technical/specific ones (`mcp`, `acp`, `coding-agent`, language tags) plus one brand tag. Avoid model-name tags (`gpt-4`, `openai`) — already shown to be dated. Reserving one playful or brand tag is acceptable (Charm precedent).
