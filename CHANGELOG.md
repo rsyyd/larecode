@@ -2,6 +2,7 @@
 
 ## Unreleased (M1)
 
+- T-06: agent loop with budgets, bounded iterations, cancellation, and streaming: mid-stream token and duration budget halting with halt reasons, iteration caps checked before each provider call, abort-signal cancellation mapped to a CANCELLED error code, streamed token passthrough, and per-turn usage accounting wired to the usage recorder.
 - T-05: Anthropic, Ollama, OpenRouter, and Z.ai adapters with capability metadata: Anthropic messages API with SSE events, Ollama `/api/chat` NDJSON streaming and `/api/tags` catalog, OpenRouter/Z.ai via the OpenAI-compatible adapter with attribution headers, per-provider capability defaults, model-id capability heuristics, and a shared contract test suite across all adapters.
 - T-04: provider abstraction and OpenAI-compatible adapter: ModelInfo catalog with capabilities, complete and streamComplete with SSE parsing, models endpoint fetch with catalog fallback, model hot-swap, and config-based adapter instantiation.
 

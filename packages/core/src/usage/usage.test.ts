@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   createUsageRecorder,
   estimateCost,
+  estimateTokens,
   DEFAULT_MODEL_PRICING,
   type TokenUsage,
   type CostUsage,
@@ -99,5 +100,12 @@ describe('Usage accounting', () => {
       DEFAULT_MODEL_PRICING
     );
     expect(cost.totalCost).toBe(0);
+  });
+
+  it('estimateTokens rounds up to whole tokens', () => {
+    expect(estimateTokens('')).toBe(0);
+    expect(estimateTokens('abcd')).toBe(1);
+    expect(estimateTokens('abcde')).toBe(2);
+    expect(estimateTokens('Hello world!')).toBe(3);
   });
 });

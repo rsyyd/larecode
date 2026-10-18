@@ -1,7 +1,7 @@
 export const VERSION = '0.0.0';
 
 export { AgentLoop } from './agent/loop.js';
-export type { AgentLoopOptions, AgentLoopCallbacks } from './agent/loop.js';
+export type { AgentLoopOptions, AgentLoopCallbacks, HaltReason } from './agent/loop.js';
 
 export { Providers, providersFromConfig } from './provider/provider.js';
 export type {
@@ -106,6 +106,7 @@ export {
   InMemoryUsageRecorder,
   createUsageRecorder,
   estimateCost,
+  estimateTokens,
   DEFAULT_MODEL_PRICING,
   type TokenUsage,
   type CostUsage,

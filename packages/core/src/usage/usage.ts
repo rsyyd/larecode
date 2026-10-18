@@ -130,6 +130,10 @@ export function createUsageRecorder(conversationId: string): UsageRecorder {
   return new InMemoryUsageRecorder(conversationId);
 }
 
+export function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
 export function estimateCost(
   tokens: TokenUsage,
   model: string,
