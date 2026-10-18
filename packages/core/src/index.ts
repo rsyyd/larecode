@@ -48,7 +48,7 @@ export { AuditLog, fileAuditSink } from './permission/audit.js';
 export type { AuditEntry, AuditSink, AuditInput } from './permission/audit.js';
 export { redactSecrets, redactValue } from './permission/redact.js';
 
-export { Sessions } from './session/session.js';
+export { Sessions, renderSessionContext, sessionsDir } from './session/session.js';
 export type { Session, SessionMetadata, SessionMessage } from './session/session.js';
 
 export { Memory } from './memory/memory.js';
