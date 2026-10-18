@@ -17,6 +17,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@lumpscode/core": "*",
+        "@lumpscode/server": "*",
         "commander": "^15.0.0",
       },
     },

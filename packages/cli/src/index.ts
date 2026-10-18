@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { VERSION } from '@lumpscode/core';
 import { runDoctor } from './commands/doctor.js';
 import { runCommand } from './commands/run.js';
+import { serveCommand } from './commands/serve.js';
 import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
 
 const program = new Command();
@@ -12,6 +13,16 @@ program
   .command('doctor', { isDefault: false })
   .description('Check configuration, providers, permissions, and instruction files')
   .action(runDoctor);
+
+program
+  .command('serve')
+  .description('Serve the HTTP API with SSE streaming')
+  .option('--port <port>', 'port to listen on')
+  .option('--host <host>', 'host to bind')
+  .option('--token <token>', 'bearer token (default: LUMPSCODE_SERVER_TOKEN or generated)')
+  .action(async (options: Parameters<typeof serveCommand>[0]) => {
+    process.exitCode = await serveCommand(options);
+  });
 
 program
   .command('run')
