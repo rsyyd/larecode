@@ -85,8 +85,25 @@ export { MCP } from './mcp/mcp.js';
 export type { MCPServerConfig, MCPTool } from './mcp/mcp.js';
 export { mcpTools } from './mcp/tools.js';
 
-export { Skills } from './skill/skill.js';
-export type { Skill, SkillMetadata, SkillState } from './skill/skill.js';
+export {
+  Skills,
+  discoverSkills,
+  parseSkillFile,
+  consentToSkill,
+  skillConsentPath,
+  SKILL_FILE,
+  SKILL_CATALOG_MAX_CHARS,
+  SKILL_BODY_MAX_CHARS,
+} from './skill/skill.js';
+export type {
+  Skill,
+  SkillMetadata,
+  SkillState,
+  SkillStatus,
+  DiscoveredSkill,
+  SkillsOptions,
+} from './skill/skill.js';
+export { skillTool } from './tool/skill.js';
 
 export { Hooks } from './hook/hook.js';
 export type { Hook, HookContext, HookType } from './hook/hook.js';
