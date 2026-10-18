@@ -62,8 +62,22 @@ export { redactSecrets, redactValue } from './permission/redact.js';
 export { Sessions, renderSessionContext, sessionsDir } from './session/session.js';
 export type { Session, SessionMetadata, SessionMessage } from './session/session.js';
 
-export { Memory } from './memory/memory.js';
-export type { MemoryTier, MemoryEntry } from './memory/memory.js';
+export {
+  Memory,
+  extractFacts,
+  memoryDir,
+  renderEntries,
+  renderEntry,
+  MAX_EXTRACTED_FACTS,
+  MEMORY_BUDGET_TOKENS,
+} from './memory/memory.js';
+export type {
+  MemoryTier,
+  MemoryEntry,
+  MemoryFact,
+  MemoryOptions,
+  RetrieveOptions,
+} from './memory/memory.js';
 
 export {
   lumpscodeHome,
