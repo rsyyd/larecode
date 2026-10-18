@@ -12,3 +12,5 @@ export type {
   TurnHandler,
   TurnResult,
 } from './server.js';
+export { Shares, sharesPath, renderSharePage, escapeHtml, SHARE_TOKEN_RE } from './share.js';
+export type { ShareLink } from './share.js';

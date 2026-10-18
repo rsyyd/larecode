@@ -11,6 +11,7 @@ import {
   loadEffectiveConfig,
   type HaltReason,
 } from '@lumpscode/core';
+import { Shares, renderSharePage } from './share.js';
 
 export const DEFAULT_SERVER_PORT = 4096;
 export const DEFAULT_SERVER_HOST = '127.0.0.1';
@@ -46,6 +47,7 @@ export interface ServerOptions {
   token?: string;
   tokens?: ServerToken[];
   sessions?: Sessions;
+  shares?: Shares;
   workingDir?: string;
   provider?: string;
   model?: string;
@@ -79,6 +81,7 @@ function scopeFor(method: string, parts: string[]): ServerScope | null {
   if (parts[0] !== 'sessions') return null;
   if (method === 'GET' && (parts.length === 1 || parts.length === 2)) return 'read';
   if (method === 'POST' && parts.length === 1) return 'write';
+  if (method === 'POST' && parts.length === 3 && parts[2] === 'share') return 'write';
   if (method === 'POST' && parts.length === 3 && parts[2] === 'messages') return 'run';
   return null;
 }
@@ -136,6 +139,7 @@ export class Server {
   private readonly http: ReturnType<typeof createHttpServer>;
   private readonly tokens: ServerToken[];
   private readonly sessions: Sessions;
+  private readonly shares: Shares;
   private readonly turn: TurnHandler;
   private readonly maxBodyBytes: number;
   private readonly host: string;
@@ -146,6 +150,7 @@ export class Server {
     this.host = options.host ?? DEFAULT_SERVER_HOST;
     this.port = options.port ?? DEFAULT_SERVER_PORT;
     this.sessions = options.sessions ?? new Sessions();
+    this.shares = options.shares ?? new Shares();
     this.maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
     this.tokens = [...(options.tokens ?? [])];
     if (options.token) {
@@ -216,6 +221,11 @@ export class Server {
       return;
     }
 
+    if (method === 'GET' && parts.length === 2 && parts[0] === 'share') {
+      this.renderShare(res, parts[1]);
+      return;
+    }
+
     const scope = scopeFor(method, parts);
     if (!scope) {
       sendJson(res, 404, { error: 'not found' });
@@ -239,6 +249,10 @@ export class Server {
       }
       if (method === 'POST' && parts.length === 1) {
         this.createSession(res);
+        return;
+      }
+      if (method === 'POST' && parts[2] === 'share') {
+        this.createShare(req, res, parts[1]);
         return;
       }
       await this.runMessage(req, res, parts[1]);
@@ -290,6 +304,46 @@ export class Server {
       createdAt: session.metadata.createdAt.toISOString(),
       updatedAt: session.metadata.updatedAt.toISOString(),
     });
+  }
+
+  private createShare(req: IncomingMessage, res: ServerResponse, sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      sendJson(res, 404, { error: 'session not found' });
+      return;
+    }
+    const link = this.shares.create(session.id);
+    const host = req.headers.host ?? `${this.host}:${this.port}`;
+    sendJson(res, 201, {
+      token: link.token,
+      sessionId: link.sessionId,
+      url: `http://${host}/share/${link.token}`,
+      createdAt: link.createdAt.toISOString(),
+    });
+  }
+
+  private renderShare(res: ServerResponse, token: string): void {
+    const notFound = () => {
+      res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
+      res.end('<!doctype html><html><body><h1>Share link not found</h1></body></html>');
+    };
+    const link = this.shares.get(token);
+    if (!link) {
+      notFound();
+      return;
+    }
+    const session = this.sessions.get(link.sessionId);
+    if (!session) {
+      notFound();
+      return;
+    }
+    const html = renderSharePage(session);
+    res.writeHead(200, {
+      'content-type': 'text/html; charset=utf-8',
+      'content-length': Buffer.byteLength(html),
+      'cache-control': 'no-store',
+    });
+    res.end(html);
   }
 
   private async runMessage(

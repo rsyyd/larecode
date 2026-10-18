@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Sessions } from '@lumpscode/core';
+import { Shares } from './share.js';
 import { Server, type ServerOptions } from './server.js';
 
 const TOKEN = 'test-token';
@@ -20,6 +21,7 @@ async function start(options: Partial<ServerOptions> = {}): Promise<Server> {
     token: TOKEN,
     tokens: [{ name: 'reader', token: READ_TOKEN, scopes: ['read'] }],
     sessions,
+    shares: new Shares(join(dir, 'shares.json')),
     ...options,
   });
   await server.start();
@@ -95,6 +97,95 @@ describe('sessions api', () => {
   it('returns 404 for unknown sessions', async () => {
     const instance = await start();
     expect((await fetch(`${instance.url}/sessions/nope`, { headers: auth() })).status).toBe(404);
+  });
+});
+
+describe('share links', () => {
+  async function streamTurn(instance: Server, id: string, content: string): Promise<void> {
+    await (
+      await fetch(`${instance.url}/sessions/${id}/messages`, {
+        method: 'POST',
+        headers: auth(),
+        body: JSON.stringify({ content }),
+      })
+    ).text();
+  }
+
+  it('requires a write-scoped token to create links', async () => {
+    const instance = await start();
+    const id = await createSession(instance);
+    expect((await fetch(`${instance.url}/sessions/${id}/share`, { method: 'POST' })).status).toBe(
+      401
+    );
+    expect(
+      (
+        await fetch(`${instance.url}/sessions/${id}/share`, {
+          method: 'POST',
+          headers: auth(READ_TOKEN),
+        })
+      ).status
+    ).toBe(403);
+    expect(
+      (
+        await fetch(`${instance.url}/sessions/nope/share`, {
+          method: 'POST',
+          headers: auth(),
+        })
+      ).status
+    ).toBe(404);
+  });
+
+  it('renders a public read-only replay without auth', async () => {
+    const instance = await start({
+      runTurn: async function* () {
+        yield 'replayed answer';
+        return { halt: null, tokens: 3, cost: 0 };
+      },
+    });
+    const id = await createSession(instance);
+    await streamTurn(instance, id, 'hello share');
+
+    const response = await fetch(`${instance.url}/sessions/${id}/share`, {
+      method: 'POST',
+      headers: auth(),
+    });
+    expect(response.status).toBe(201);
+    const link = (await response.json()) as { token: string; url: string };
+    expect(link.url).toBe(`${instance.url}/share/${link.token}`);
+
+    const page = await fetch(link.url);
+    expect(page.status).toBe(200);
+    expect(page.headers.get('content-type')).toContain('text/html');
+    const html = await page.text();
+    expect(html).toContain('hello share');
+    expect(html).toContain('replayed answer');
+    expect(html).toContain('read-only replay');
+  });
+
+  it('redacts secrets in the replay', async () => {
+    const instance = await start({
+      runTurn: async function* () {
+        yield 'ok';
+        return { halt: null, tokens: 1, cost: 0 };
+      },
+    });
+    const id = await createSession(instance);
+    await streamTurn(instance, id, 'deploy with sk-ant-abcdefghijklmnop');
+    const { token } = (await (
+      await fetch(`${instance.url}/sessions/${id}/share`, {
+        method: 'POST',
+        headers: auth(),
+      })
+    ).json()) as { token: string };
+    const html = await (await fetch(`${instance.url}/share/${token}`)).text();
+    expect(html).not.toContain('sk-ant-abcdefghijklmnop');
+    expect(html).toContain('[REDACTED]');
+  });
+
+  it('returns 404 for unknown share tokens', async () => {
+    const instance = await start();
+    const response = await fetch(`${instance.url}/share/${'a'.repeat(32)}`);
+    expect(response.status).toBe(404);
   });
 });
 
