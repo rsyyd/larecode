@@ -7,6 +7,7 @@ import { globTool } from './glob.js';
 import { grepTool } from './grep.js';
 import { patchTool } from './patch.js';
 import { readTool } from './read.js';
+import { sessionSearchTool } from './session-search.js';
 import { webFetchTool, webSearchTool } from './web.js';
 import { writeTool } from './write.js';
 
@@ -23,5 +24,6 @@ export function coreTools(): Tool[] {
     webFetchTool(),
     webSearchTool(),
     browserTool(),
+    sessionSearchTool(),
   ];
 }

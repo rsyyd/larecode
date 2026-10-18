@@ -75,6 +75,7 @@ describe('Error taxonomy', () => {
       'LSP_UNAVAILABLE',
       'SKILL_LOAD_FAILED',
       'SKILL_EXECUTION_FAILED',
+      'SKILL_WRITE_FAILED',
       'HOOK_EXECUTION_FAILED',
       'GIT_OPERATION_FAILED',
       'NETWORK_ERROR',

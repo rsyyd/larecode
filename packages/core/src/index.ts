@@ -61,6 +61,19 @@ export { redactSecrets, redactValue } from './permission/redact.js';
 
 export { Sessions, renderSessionContext, sessionsDir } from './session/session.js';
 export type { Session, SessionMetadata, SessionMessage } from './session/session.js';
+export {
+  searchSessions,
+  searchHistory,
+  renderHistoryDigest,
+  SESSION_SEARCH_LIMIT,
+  SESSION_SEARCH_MAX_LIMIT,
+} from './session/search.js';
+export type {
+  SessionSearchHit,
+  SessionSearchOptions,
+  SearchHistoryOptions,
+  HistorySummary,
+} from './session/search.js';
 
 export { Checkpoints, Worktrees, checkpointsDir, worktreesDir } from './checkpoint/checkpoint.js';
 export type {
@@ -87,6 +100,8 @@ export type {
   MemoryOptions,
   RetrieveOptions,
 } from './memory/memory.js';
+export { MemoryCurator, CURATE_EVERY_TURNS } from './memory/curator.js';
+export type { CuratorOptions } from './memory/curator.js';
 
 export {
   lumpscodeHome,
@@ -103,6 +118,7 @@ export type { Config, ProviderConfig } from './config/config.js';
 export { LSP } from './lsp/lsp.js';
 export type { LSPCapabilities, LSPOptions, SymbolInfo } from './lsp/lsp.js';
 export { lspTool } from './tool/lsp.js';
+export { sessionSearchTool } from './tool/session-search.js';
 
 export { MCP } from './mcp/mcp.js';
 export type { MCPServerConfig, MCPTool } from './mcp/mcp.js';
@@ -128,6 +144,20 @@ export type {
   SkillsOptions,
 } from './skill/skill.js';
 export { skillTool } from './tool/skill.js';
+export {
+  authorSkill,
+  isComplexTask,
+  renderSkillDraft,
+  skillDraftPath,
+  slugifySkillName,
+  transcriptOf,
+  writeSkillDraft,
+  COMPLEX_TASK_MIN_TURNS,
+  COMPLEX_TASK_MIN_TOOL_CALLS,
+  SKILL_NAME_RE,
+  AUTHOR_TRANSCRIPT_MAX_CHARS,
+} from './skill/author.js';
+export type { SkillDraft, AuthorSkillOptions } from './skill/author.js';
 
 export { Hooks } from './hook/hook.js';
 export type { Hook, HookContext, HookType, HookDecision } from './hook/hook.js';

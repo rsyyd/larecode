@@ -36,7 +36,7 @@ function call(name: string, args: unknown, context = ctx()): Promise<ToolResult>
 }
 
 describe('core tool contract', () => {
-  it('exposes eleven registerable tools with valid schemas', () => {
+  it('exposes twelve registerable tools with valid schemas', () => {
     const all = coreTools();
     expect(all.map((tool) => tool.name).sort()).toEqual([
       'ast_grep',
@@ -47,6 +47,7 @@ describe('core tool contract', () => {
       'grep',
       'patch',
       'read',
+      'session_search',
       'web_fetch',
       'web_search',
       'write',
@@ -61,7 +62,7 @@ describe('core tool contract', () => {
         expect(tool.schema.properties[required]).toBeDefined();
       }
     }
-    expect(tools.toToolSpecs()).toHaveLength(11);
+    expect(tools.toToolSpecs()).toHaveLength(12);
   });
 
   it('rejects paths escaping the workspace', async () => {
