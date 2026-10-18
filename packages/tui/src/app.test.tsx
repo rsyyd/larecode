@@ -74,6 +74,58 @@ describe('App', () => {
     expect(lastFrame()).not.toContain('> hello');
   });
 
+  it('passes the selected agent to runTurn', async () => {
+    const agents: string[] = [];
+    const runTurn = async (
+      _prompt: string,
+      _onChunk: (chunk: string) => void,
+      _signal: AbortSignal,
+      agent: 'plan' | 'build'
+    ): Promise<void> => {
+      agents.push(agent);
+    };
+
+    const { stdin } = render(<App runTurn={runTurn} />);
+    await flush();
+    stdin.write('one');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    stdin.write('\t');
+    await flush();
+    stdin.write('two');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(agents).toEqual(['plan', 'build']);
+  });
+
+  it('routes @general to the subagent seam', async () => {
+    const calls: string[] = [];
+    const runTurn = async (prompt: string, onChunk: (chunk: string) => void): Promise<void> => {
+      calls.push(`turn:${prompt}`);
+      onChunk('main result');
+    };
+    const runSubagentTurn = async (
+      prompt: string,
+      onChunk: (chunk: string) => void
+    ): Promise<void> => {
+      calls.push(`sub:${prompt}`);
+      onChunk('sub result');
+    };
+
+    const { stdin, lastFrame } = render(
+      <App runTurn={runTurn} runSubagentTurn={runSubagentTurn} />
+    );
+    await flush();
+    stdin.write('@general find the parser');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(calls).toEqual(['sub:find the parser']);
+    expect(lastFrame()).toContain('sub result');
+  });
+
   it('aborts a running turn on escape', async () => {
     let aborted = false;
     const runTurn = (

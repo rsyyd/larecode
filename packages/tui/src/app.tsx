@@ -12,18 +12,27 @@ export interface AppProps {
   runTurn?: (
     prompt: string,
     onChunk: (chunk: string) => void,
+    signal: AbortSignal,
+    agent: 'plan' | 'build'
+  ) => Promise<void>;
+  runSubagentTurn?: (
+    prompt: string,
+    onChunk: (chunk: string) => void,
     signal: AbortSignal
   ) => Promise<void>;
 }
 
 export const HELP_TEXT =
-  'enter send · ctrl+j newline · esc stop · tab agent · / commands · ctrl+c quit';
+  'enter send · ctrl+j newline · esc stop · tab agent · @general subagent · / commands · ctrl+c quit';
+
+const GENERAL_PREFIX = /^@general\b\s*([\s\S]*)$/;
 
 export function App({
   model = 'no model',
   theme: initialTheme = 'dark',
   initialMessages = [],
   runTurn,
+  runSubagentTurn,
 }: AppProps) {
   const { exit } = useApp();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -62,6 +71,34 @@ export function App({
     }
   };
 
+  const streamTurn = async (
+    invoke: (
+      prompt: string,
+      onChunk: (chunk: string) => void,
+      signal: AbortSignal
+    ) => Promise<void>,
+    prompt: string
+  ): Promise<void> => {
+    setMessages((current) => [...current, { role: 'agent', text: '' }]);
+    setStreaming(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      await invoke(
+        prompt,
+        (chunk) => setMessages((current) => appendChunk(current, chunk)),
+        controller.signal
+      );
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        addNote(`error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    } finally {
+      setStreaming(false);
+      abortRef.current = null;
+    }
+  };
+
   const submit = async (value: string): Promise<void> => {
     const trimmed = value.trim();
     if (trimmed.length === 0) return;
@@ -75,29 +112,27 @@ export function App({
     if (streaming) return;
 
     setMessages((current) => [...current, { role: 'user', text: trimmed }]);
+
+    const general = GENERAL_PREFIX.exec(trimmed);
+    if (general) {
+      const prompt = general[1].trim();
+      if (!prompt) {
+        addNote('@general needs a prompt');
+        return;
+      }
+      if (!runSubagentTurn) {
+        addNote('no subagent connected');
+        return;
+      }
+      await streamTurn((next, onChunk, signal) => runSubagentTurn(next, onChunk, signal), prompt);
+      return;
+    }
+
     if (!runTurn) {
       addNote('no agent connected');
       return;
     }
-
-    setMessages((current) => [...current, { role: 'agent', text: '' }]);
-    setStreaming(true);
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      await runTurn(
-        trimmed,
-        (chunk) => setMessages((current) => appendChunk(current, chunk)),
-        controller.signal
-      );
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        addNote(`error: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    } finally {
-      setStreaming(false);
-      abortRef.current = null;
-    }
+    await streamTurn((next, onChunk, signal) => runTurn(next, onChunk, signal, agent), trimmed);
   };
 
   useInput((raw, key) => {

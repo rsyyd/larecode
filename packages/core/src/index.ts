@@ -2,6 +2,15 @@ export const VERSION = '0.0.0';
 
 export { AgentLoop } from './agent/loop.js';
 export type { AgentLoopOptions, AgentLoopCallbacks, HaltReason } from './agent/loop.js';
+export { BUILTIN_AGENTS, toolsForAgent } from './agent/agents.js';
+export type { AgentDefinition, AgentName } from './agent/agents.js';
+export { Subagents, compressResult, SUBAGENT_DEFAULTS } from './agent/subagent.js';
+export type {
+  SubagentLoopLike,
+  SubagentResult,
+  SubagentRunOptions,
+  SubagentsOptions,
+} from './agent/subagent.js';
 
 export { Providers, providersFromConfig } from './provider/provider.js';
 export type {
@@ -35,6 +44,8 @@ export {
 export { Tools } from './tool/tool.js';
 export type { Tool, ToolCall, ToolResult, ToolContext, ToolSchema } from './tool/tool.js';
 export { coreTools } from './tool/core.js';
+export { taskTool } from './tool/task.js';
+export type { TaskToolOptions } from './tool/task.js';
 
 export { Permissions } from './permission/permission.js';
 export type {
