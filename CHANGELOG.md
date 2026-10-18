@@ -2,6 +2,7 @@
 
 ## Unreleased (M1)
 
+- T-08: core tools: read (line ranges, byte caps, SHA-256), write (directory creation, created flag), edit (unique-fragment replacement with replaceAll), bash (timeout kill, abort cancellation, stream caps, exit codes), glob (recursive walk, workspace scoping, limits), grep (regex, include globs, binary skip, result caps), and patch (rejected with PATCH_CONFLICT when the file no longer matches the expected SHA-256); all file tools resolve paths inside the workspace.
 - T-07: tool framework: registry with duplicate-registration warnings, JSON-schema tool definitions, and an execution pipeline that logs every registration, call, completion, and failure with latency, maps errors to the LumpsError taxonomy, honors pre-aborted contexts, and exposes tool specs for provider function calling.
 - T-06: agent loop with budgets, bounded iterations, cancellation, and streaming: mid-stream token and duration budget halting with halt reasons, iteration caps checked before each provider call, abort-signal cancellation mapped to a CANCELLED error code, streamed token passthrough, and per-turn usage accounting wired to the usage recorder.
 - T-05: Anthropic, Ollama, OpenRouter, and Z.ai adapters with capability metadata: Anthropic messages API with SSE events, Ollama `/api/chat` NDJSON streaming and `/api/tags` catalog, OpenRouter/Z.ai via the OpenAI-compatible adapter with attribution headers, per-provider capability defaults, model-id capability heuristics, and a shared contract test suite across all adapters.

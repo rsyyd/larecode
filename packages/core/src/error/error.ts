@@ -7,6 +7,7 @@ export type ErrorCode =
   | 'MODEL_NOT_FOUND'
   | 'TOOL_NOT_FOUND'
   | 'TOOL_EXECUTION_FAILED'
+  | 'PATCH_CONFLICT'
   | 'PERMISSION_DENIED'
   | 'SESSION_NOT_FOUND'
   | 'SESSION_CORRUPTED'
@@ -48,6 +49,7 @@ export const ERROR_CATEGORIES: Record<
   MODEL_NOT_FOUND: 'provider',
   TOOL_NOT_FOUND: 'tool',
   TOOL_EXECUTION_FAILED: 'tool',
+  PATCH_CONFLICT: 'tool',
   PERMISSION_DENIED: 'permission',
   SESSION_NOT_FOUND: 'session',
   SESSION_CORRUPTED: 'session',

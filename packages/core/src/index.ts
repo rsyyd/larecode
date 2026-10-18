@@ -34,6 +34,7 @@ export {
 
 export { Tools } from './tool/tool.js';
 export type { Tool, ToolCall, ToolResult, ToolContext, ToolSchema } from './tool/tool.js';
+export { coreTools } from './tool/core.js';
 
 export { Permissions } from './permission/permission.js';
 export type {
