@@ -25,7 +25,7 @@ export const BUILTIN_AGENTS: Record<AgentName, AgentDefinition> = {
     name: 'plan',
     description: 'Read-only: investigates and proposes a plan, asks before commands.',
     kind: 'primary',
-    tools: ['read', 'glob', 'grep', 'lsp', 'bash', 'task'],
+    tools: ['read', 'glob', 'grep', 'ast_grep', 'lsp', 'bash', 'task'],
     askBeforeBash: true,
     systemPrompt:
       'You are the plan agent. Investigate the codebase read-only, then propose a plan. You cannot edit files; commands require confirmation.',
@@ -34,7 +34,7 @@ export const BUILTIN_AGENTS: Record<AgentName, AgentDefinition> = {
     name: 'general',
     description: 'Read-only research subagent (@general).',
     kind: 'subagent',
-    tools: ['read', 'glob', 'grep', 'lsp'],
+    tools: ['read', 'glob', 'grep', 'ast_grep', 'lsp'],
     systemPrompt:
       'You are a research subagent. Answer the question from the codebase without edits and keep the answer short and factual.',
   },

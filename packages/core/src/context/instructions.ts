@@ -56,3 +56,39 @@ export function discoverInstructions(projectDir: string): InstructionFile[] {
   }
   return results;
 }
+
+export const INSTRUCTION_BUDGET_CHARS = 32000;
+
+export interface InstructionContextOptions {
+  maxChars?: number;
+}
+
+export function loadInstructionContext(
+  projectDir: string,
+  options: InstructionContextOptions = {}
+): string {
+  const budget = options.maxChars ?? INSTRUCTION_BUDGET_CHARS;
+  const parts: string[] = [];
+  let used = 0;
+  for (const instruction of discoverInstructions(projectDir)) {
+    if (instruction.status !== 'consented') continue;
+    let content: string;
+    try {
+      content = readFileSync(instruction.file, 'utf8');
+    } catch {
+      continue;
+    }
+    const header = `# ${instruction.relative}\n`;
+    const separator = parts.length > 0 ? 2 : 0;
+    const remaining = budget - used - separator - header.length;
+    if (remaining <= 0) {
+      parts.push(`[instructions truncated: budget of ${budget} chars reached]`);
+      break;
+    }
+    const piece =
+      content.length > remaining ? `${content.slice(0, remaining)}\n[truncated]` : content;
+    parts.push(header + piece);
+    used += separator + header.length + piece.length;
+  }
+  return parts.join('\n\n');
+}

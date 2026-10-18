@@ -119,17 +119,39 @@ export type {
   PluginsOptions,
 } from './plugin/plugin.js';
 
-export { Context } from './context/context.js';
+export { Context, CONTEXT_BUDGET_TOKENS, CONTEXT_MAX_FILES } from './context/context.js';
 export type { ContextQuery, ContextResult, RelevanceScore } from './context/context.js';
+export {
+  buildRepoMap,
+  extractFileFacts,
+  pageRank,
+  resolveImport,
+  REPO_MAP_BUDGET_TOKENS,
+} from './context/repomap.js';
+export type { FileFacts, SymbolFact, RepoMapOptions } from './context/repomap.js';
+export {
+  compactMessages,
+  estimateMessagesTokens,
+  SUMMARY_MARKER,
+  CLEARED_TOOL_RESULT,
+} from './context/compact.js';
+export type { CompactionOptions, CompactionResult } from './context/compact.js';
+export { astGrepTool, AST_GREP_LIMIT } from './tool/astgrep.js';
 
 export {
+  INSTRUCTION_BUDGET_CHARS,
   INSTRUCTION_FILES,
   consentPath,
   consentToFile,
   discoverInstructions,
   hashFile,
+  loadInstructionContext,
 } from './context/instructions.js';
-export type { InstructionFile, InstructionStatus } from './context/instructions.js';
+export type {
+  InstructionFile,
+  InstructionStatus,
+  InstructionContextOptions,
+} from './context/instructions.js';
 
 export {
   Logger,
