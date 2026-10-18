@@ -1,155 +1,121 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ProviderConfig } from '../config/config.js';
-import { OpenAIAdapter, openAIAdapterFromConfig, providersFromConfig } from './openai-adapter.js';
-import { Providers } from './provider.js';
+import { describe, expect, it, vi } from 'vitest';
+import type { Config, ProviderConfig } from '../config/config.js';
+import { OpenAIAdapter, openAIAdapterFromConfig } from './openai-adapter.js';
+import { AnthropicAdapter } from './anthropic-adapter.js';
+import { OllamaAdapter } from './ollama-adapter.js';
+import { providersFromConfig, Providers } from './provider.js';
+import type { LumpsCodeFetch } from './fetch.js';
 
-describe('OpenAIAdapter', () => {
-  let adapter: OpenAIAdapter;
-  const mockFetch = vi.fn();
+function okJson(data: unknown): Response {
+  return { ok: true, json: async () => data } as unknown as Response;
+}
 
-  beforeEach(() => {
-    mockFetch.mockReset();
-    adapter = new OpenAIAdapter({
-      name: 'openai-compatible',
-      baseUrl: 'http://localhost:20128/v1',
-      apiKey: 'test-key',
-      models: ['gpt-4o', 'gpt-4o-mini'],
-      fetchImpl: mockFetch as unknown as typeof fetch,
-    });
-  });
+describe('OpenAIAdapter specifics', () => {
+  it('sends bearer auth and openrouter attribution headers per config type', async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      calls.push({ url: String(_url), init });
+      return okJson({ choices: [{ message: { content: 'hi' } }] });
+    }) as LumpsCodeFetch;
 
-  it('models() returns parsed list or falls back to configured catalog', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        data: [{ id: 'gpt-4o' }, { id: 'custom-model' }],
-      }),
-    });
-
-    const models = await adapter.models();
-    expect(models).toHaveLength(2);
-    expect(models.map((m) => m.id)).toEqual(['gpt-4o', 'custom-model']);
-
-    mockFetch.mockRejectedValueOnce(new Error('offline'));
-    const fallback = await adapter.models();
-    expect(fallback.map((m) => m.id)).toEqual(['gpt-4o', 'gpt-4o-mini']);
-  });
-
-  it('complete() posts to chat/completions and returns text', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        choices: [{ text: 'response text' }],
-      }),
-    });
-
-    const text = await adapter.complete('hello', { model: 'gpt-4o' });
-    expect(text).toBe('response text');
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:20128/v1/chat/completions',
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: 'Bearer test-key',
-        },
-      })
-    );
-  });
-
-  it('streamComplete() streams parsed chunks until done', async () => {
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode('data: {"choices":[{"text":"part1"}]}\n\n'));
-        controller.enqueue(encoder.encode('data: {"choices":[{"text":"part2"}]}\n\n'));
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
+    const plain = openAIAdapterFromConfig(
+      'p1',
+      {
+        type: 'openai-compatible',
+        baseUrl: 'http://mock/v1',
+        apiKey: 'k',
+        models: ['m'],
       },
-    });
+      fetchImpl
+    );
+    await plain.complete('hi', { model: 'm' });
+    const plainHeaders = (calls[0].init?.headers ?? {}) as Record<string, string>;
+    expect(plainHeaders.authorization).toBe('Bearer k');
+    expect(plainHeaders['HTTP-Referer']).toBeUndefined();
 
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      body: stream,
-    });
-
-    const parts: string[] = [];
-    for await (const chunk of adapter.streamComplete('stream this', { model: 'gpt-4o' })) {
-      parts.push(chunk);
-    }
-    expect(parts).toEqual(['part1', 'part2']);
+    calls.length = 0;
+    const router = openAIAdapterFromConfig(
+      'p2',
+      {
+        type: 'openrouter',
+        baseUrl: 'http://mock/v1',
+        apiKey: 'k',
+        models: ['m'],
+      },
+      fetchImpl
+    );
+    await router.complete('hi', { model: 'm' });
+    const routerHeaders = (calls[0].init?.headers ?? {}) as Record<string, string>;
+    expect(routerHeaders['HTTP-Referer']).toBe('https://github.com/rsyyd/lumpscode');
+    expect(routerHeaders['X-Title']).toBe('lumpscode');
+    expect(router.capabilities.vision).toBe(true);
   });
 
-  it('swaps model seamlessly between requests', async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ choices: [{ text: 'from gpt-4o' }] }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ choices: [{ text: 'from mini' }] }),
-      });
+  it('swaps model on a live adapter instance', async () => {
+    const mockFn = vi
+      .fn()
+      .mockResolvedValueOnce(okJson({ choices: [{ message: { content: 'from a' } }] }))
+      .mockResolvedValueOnce(okJson({ choices: [{ message: { content: 'from b' } }] }));
+    const fetchImpl = mockFn as unknown as LumpsCodeFetch;
 
-    const r1 = await adapter.complete('hi', { model: 'gpt-4o' });
-    const r2 = await adapter.complete('hi', { model: 'gpt-4o-mini' });
+    const adapter = new OpenAIAdapter({
+      name: 't',
+      baseUrl: 'http://mock/v1',
+      models: ['a', 'b'],
+      fetchImpl,
+    });
 
-    expect(r1).toBe('from gpt-4o');
-    expect(r2).toBe('from mini');
+    expect(await adapter.complete('hi', { model: 'a' })).toBe('from a');
+    expect(await adapter.complete('hi', { model: 'b' })).toBe('from b');
+
+    const first = JSON.parse(String(mockFn.mock.calls[0][1]?.body));
+    const second = JSON.parse(String(mockFn.mock.calls[1][1]?.body));
+    expect(first.model).toBe('a');
+    expect(second.model).toBe('b');
   });
+});
 
-  it('throws mapped LumpsError on auth failures', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 401,
-    });
+describe('providersFromConfig mapping', () => {
+  it('instantiates the right adapter class per provider type', () => {
+    const config = {
+      version: '0.0.0',
+      defaultProvider: 'p1',
+      defaultModel: 'm',
+      permissions: { mode: 'ask' as const, allowedGroups: [] },
+      providers: {
+        p1: { type: 'openai-compatible', baseUrl: 'http://a', models: ['m'] },
+        p2: { type: 'anthropic', baseUrl: 'http://b', apiKey: 'k', models: ['m'] },
+        p3: { type: 'ollama', baseUrl: 'http://c', models: ['m'] },
+        p4: { type: 'zai', baseUrl: 'http://d', apiKey: 'k', models: ['m'] },
+        p5: { type: 'openrouter', baseUrl: 'http://e', apiKey: 'k', models: ['m'] },
+        p6: { type: 'custom', baseUrl: 'http://f', models: ['m'] },
+      },
+    } satisfies Config;
 
-    await expect(adapter.complete('hi', { model: 'gpt-4o' })).rejects.toMatchObject({
-      code: 'PROVIDER_AUTH_FAILED',
-    });
+    const adapters = providersFromConfig(config);
+    expect(adapters).toHaveLength(6);
+    expect(adapters[0]).toBeInstanceOf(OpenAIAdapter);
+    expect(adapters[1]).toBeInstanceOf(AnthropicAdapter);
+    expect(adapters[2]).toBeInstanceOf(OllamaAdapter);
+    expect(adapters[3]).toBeInstanceOf(OpenAIAdapter);
+    expect(adapters[4]).toBeInstanceOf(OpenAIAdapter);
+    expect(adapters[5]).toBeInstanceOf(OpenAIAdapter);
+    expect(adapters[3].capabilities.reasoning).toBe(true);
   });
 });
 
 describe('Providers registry', () => {
-  it('registers and gets adapters', () => {
+  it('registers, gets, and lists adapters', () => {
     const providers = new Providers();
-    const adapter = new OpenAIAdapter({
-      name: 'local',
-      baseUrl: 'http://localhost:11434/v1',
-      models: ['llama3'],
-    });
+    const adapter = openAIAdapterFromConfig('local', {
+      type: 'openai-compatible',
+      baseUrl: 'http://x',
+      models: ['m'],
+    } satisfies ProviderConfig);
 
     providers.register(adapter);
     expect(providers.get('local')).toBe(adapter);
     expect(providers.list()).toHaveLength(1);
-  });
-
-  it('creates an adapter from config helper', () => {
-    const config: ProviderConfig = {
-      type: 'openai-compatible',
-      baseUrl: 'http://localhost:8000',
-      apiKey: 'k',
-      models: ['m1'],
-    };
-
-    const adapter = openAIAdapterFromConfig('custom', config);
-    expect(adapter.name).toBe('custom');
-  });
-
-  it('loads supported providers from config', () => {
-    const providers = providersFromConfig({
-      version: '0.0.0',
-      defaultProvider: 'p1',
-      defaultModel: 'm1',
-      permissions: { mode: 'ask', allowedGroups: [] },
-      providers: {
-        p1: { type: 'openai-compatible', baseUrl: 'http://test', models: ['m1'] },
-        p2: { type: 'ollama', baseUrl: 'http://test2', models: ['m2'] },
-      },
-    });
-
-    expect(providers).toHaveLength(1);
-    expect(providers[0].name).toBe('p1');
+    expect(providers.get('missing')).toBeUndefined();
   });
 });

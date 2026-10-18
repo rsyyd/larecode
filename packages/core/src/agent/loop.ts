@@ -1,4 +1,4 @@
-import { Providers } from '../provider/provider.js';
+import { Providers, providersFromConfig } from '../provider/provider.js';
 import { loadEffectiveConfig } from '../config/config.js';
 import { LumpsError } from '../error/error.js';
 import { Logger } from '../logger/logger.js';
@@ -35,11 +35,8 @@ export class AgentLoop {
 
     // Load config and register providers
     const config = loadEffectiveConfig();
-    for (const [name, providerConfig] of Object.entries(config.providers)) {
-      if (providerConfig.type === 'openai-compatible') {
-        const adapter = Providers.createOpenAIAdapter(name, providerConfig);
-        this.providers.register(adapter);
-      }
+    for (const adapter of providersFromConfig(config)) {
+      this.providers.register(adapter);
     }
   }
 

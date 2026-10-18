@@ -1,4 +1,6 @@
-import type { ProviderConfig } from '../config/config.js';
+import type { Config } from '../config/config.js';
+import { anthropicAdapterFromConfig } from './anthropic-adapter.js';
+import { ollamaAdapterFromConfig } from './ollama-adapter.js';
 import { openAIAdapterFromConfig } from './openai-adapter.js';
 
 export interface ProviderCapabilities {
@@ -53,11 +55,17 @@ export class Providers {
   list(): ProviderAdapter[] {
     return Array.from(this.adapters.values());
   }
+}
 
-  /**
-   * Creates an OpenAI-compatible provider adapter from a ProviderConfig.
-   */
-  static createOpenAIAdapter(name: string, config: ProviderConfig): ProviderAdapter {
-    return openAIAdapterFromConfig(name, config);
-  }
+export function providersFromConfig(config: Config): ProviderAdapter[] {
+  return Object.entries(config.providers).map(([name, entry]) => {
+    switch (entry.type) {
+      case 'anthropic':
+        return anthropicAdapterFromConfig(name, entry);
+      case 'ollama':
+        return ollamaAdapterFromConfig(name, entry);
+      default:
+        return openAIAdapterFromConfig(name, entry);
+    }
+  });
 }

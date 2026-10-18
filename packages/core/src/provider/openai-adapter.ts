@@ -1,6 +1,6 @@
 import { LumpsError } from '../error/error.js';
-import { defaultLogger, Logger, createConsoleHandler } from '../logger/logger.js';
-import type { Config, ProviderConfig } from '../config/config.js';
+import { defaultLogger } from '../logger/logger.js';
+import type { ProviderConfig } from '../config/config.js';
 import type {
   CompletionOptions,
   ModelInfo,
@@ -9,6 +9,7 @@ import type {
   ToolSpec,
 } from './provider.js';
 import type { LumpsCodeFetch } from './fetch.js';
+import { capabilitiesFor, modelCapabilities } from './capabilities.js';
 
 export interface OpenAIAdapterOptions {
   name: string;
@@ -16,11 +17,12 @@ export interface OpenAIAdapterOptions {
   apiKey?: string;
   models: string[];
   capabilities?: ProviderCapabilities;
+  headers?: Record<string, string>;
   fetchImpl?: LumpsCodeFetch;
 }
 
-interface OpenAICompletionResponse {
-  choices: { text?: string }[];
+interface OpenAIChatResponse {
+  choices?: { message?: { content?: string | null } }[];
 }
 
 interface OpenAIModelsResponse {
@@ -28,7 +30,7 @@ interface OpenAIModelsResponse {
 }
 
 interface OpenAIStreamChunk {
-  choices?: { text?: string }[];
+  choices?: { delta?: { content?: string | null } }[];
 }
 
 export class OpenAIAdapter implements ProviderAdapter {
@@ -39,32 +41,31 @@ export class OpenAIAdapter implements ProviderAdapter {
   private readonly apiKey: string;
   private readonly catalog: ModelInfo[];
   private readonly fetchImpl: LumpsCodeFetch;
+  private readonly extraHeaders: Record<string, string>;
 
   constructor(options: OpenAIAdapterOptions) {
     this.name = options.name;
     this.baseUrl = options.baseUrl.replace(/\/+$/, '');
     this.apiKey = options.apiKey ?? '';
     this.fetchImpl = options.fetchImpl ?? fetch;
-    this.capabilities = options.capabilities ?? {
-      tools: true,
-      vision: false,
-      reasoning: false,
-      streaming: true,
-      maxTokens: 4096,
-    };
+    this.capabilities = options.capabilities ?? capabilitiesFor('openai-compatible');
+    this.extraHeaders = options.headers ?? {};
     this.catalog = options.models.map(
       (id) =>
         ({
           id,
           name: id,
           provider: this.name,
-          capabilities: this.capabilities,
+          capabilities: modelCapabilities(this.capabilities, id),
         }) satisfies ModelInfo
     );
   }
 
   private headers(): Record<string, string> {
-    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+      ...this.extraHeaders,
+    };
     if (this.apiKey) headers.authorization = `Bearer ${this.apiKey}`;
     return headers;
   }
@@ -104,7 +105,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         id: entry.id,
         name: entry.id,
         provider: this.name,
-        capabilities: this.capabilities,
+        capabilities: modelCapabilities(this.capabilities, entry.id),
       }));
     } catch (error) {
       defaultLogger.warn('falling back to configured model list', {
@@ -128,10 +129,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       throw LumpsError.wrap(
         'NETWORK_ERROR',
         error instanceof Error ? error : new Error(String(error)),
-        {
-          provider: this.name,
-          baseUrl: this.baseUrl,
-        }
+        { provider: this.name, baseUrl: this.baseUrl }
       );
     }
 
@@ -148,9 +146,9 @@ export class OpenAIAdapter implements ProviderAdapter {
       );
     }
 
-    const data = (await response.json()) as OpenAICompletionResponse;
-    const text = data.choices?.[0]?.text;
-    if (text === undefined)
+    const data = (await response.json()) as OpenAIChatResponse;
+    const text = data.choices?.[0]?.message?.content;
+    if (text === undefined || text === null)
       throw LumpsError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
         provider: this.name,
       });
@@ -170,9 +168,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       throw LumpsError.wrap(
         'NETWORK_ERROR',
         error instanceof Error ? error : new Error(String(error)),
-        {
-          provider: this.name,
-        }
+        { provider: this.name }
       );
     }
 
@@ -197,7 +193,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         if (payload === '[DONE]') return;
         try {
           const chunk = JSON.parse(payload) as OpenAIStreamChunk;
-          const text = chunk.choices?.[0]?.text;
+          const text = chunk.choices?.[0]?.delta?.content;
           if (text) yield text;
         } catch {
           defaultLogger.debug('unparseable stream chunk', { provider: this.name });
@@ -207,25 +203,22 @@ export class OpenAIAdapter implements ProviderAdapter {
   }
 }
 
-export function openAIAdapterFromConfig(name: string, config: ProviderConfig): OpenAIAdapter {
+export function openAIAdapterFromConfig(
+  name: string,
+  config: ProviderConfig,
+  fetchImpl?: LumpsCodeFetch
+): OpenAIAdapter {
   return new OpenAIAdapter({
     name,
     baseUrl: config.baseUrl,
     apiKey: config.apiKey,
     models: config.models,
+    capabilities: capabilitiesFor(config.type),
+    ...(config.type === 'openrouter'
+      ? {
+          headers: { 'HTTP-Referer': 'https://github.com/rsyyd/lumpscode', 'X-Title': 'lumpscode' },
+        }
+      : {}),
+    ...(fetchImpl ? { fetchImpl } : {}),
   });
-}
-
-export function providersFromConfig(config: Config): ProviderAdapter[] {
-  return Object.entries(config.providers)
-    .filter(
-      ([, entry]) =>
-        entry.type === 'openai-compatible' || entry.type === 'custom' || entry.type === 'zai'
-    )
-    .map(([name, entry]) => openAIAdapterFromConfig(name, entry));
-}
-
-export function logProviderCatalog(adapter: ProviderAdapter): void {
-  const logger = new Logger({ level: 'info', handlers: [createConsoleHandler()] });
-  logger.debug('provider catalog ready', { provider: adapter.name, models: adapter.models.length });
 }

@@ -3,7 +3,7 @@ export const VERSION = '0.0.0';
 export { AgentLoop } from './agent/loop.js';
 export type { AgentLoopOptions, AgentLoopCallbacks } from './agent/loop.js';
 
-export { Providers } from './provider/provider.js';
+export { Providers, providersFromConfig } from './provider/provider.js';
 export type {
   ProviderAdapter,
   ProviderCapabilities,
@@ -14,9 +14,23 @@ export type {
 export {
   OpenAIAdapter,
   openAIAdapterFromConfig,
-  providersFromConfig,
   type OpenAIAdapterOptions,
 } from './provider/openai-adapter.js';
+export {
+  AnthropicAdapter,
+  anthropicAdapterFromConfig,
+  type AnthropicAdapterOptions,
+} from './provider/anthropic-adapter.js';
+export {
+  OllamaAdapter,
+  ollamaAdapterFromConfig,
+  type OllamaAdapterOptions,
+} from './provider/ollama-adapter.js';
+export {
+  PROVIDER_CAPABILITIES,
+  capabilitiesFor,
+  modelCapabilities,
+} from './provider/capabilities.js';
 
 export { Tools } from './tool/tool.js';
 export type { Tool, ToolCall, ToolResult, ToolContext, ToolSchema } from './tool/tool.js';
