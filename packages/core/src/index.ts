@@ -72,6 +72,7 @@ export { lspTool } from './tool/lsp.js';
 
 export { MCP } from './mcp/mcp.js';
 export type { MCPServerConfig, MCPTool } from './mcp/mcp.js';
+export { mcpTools } from './mcp/tools.js';
 
 export { Skills } from './skill/skill.js';
 export type { Skill, SkillMetadata, SkillState } from './skill/skill.js';

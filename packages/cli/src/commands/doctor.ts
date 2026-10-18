@@ -68,6 +68,7 @@ export async function runDoctor(): Promise<void> {
   console.log(`  provider        ${config.defaultProvider}`);
   console.log(`  model           ${config.defaultModel}`);
   console.log(`  providers       ${Object.keys(config.providers).length} configured`);
+  console.log(`  mcp servers     ${Object.keys(config.mcpServers ?? {}).length} configured`);
 
   console.log('\n  reachability');
   await Promise.all(

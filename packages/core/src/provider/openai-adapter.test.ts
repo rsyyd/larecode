@@ -90,6 +90,7 @@ describe('providersFromConfig mapping', () => {
         p5: { type: 'openrouter', baseUrl: 'http://e', apiKey: 'k', models: ['m'] },
         p6: { type: 'custom', baseUrl: 'http://f', models: ['m'] },
       },
+      mcpServers: {},
     } satisfies Config;
 
     const adapters = providersFromConfig(config);

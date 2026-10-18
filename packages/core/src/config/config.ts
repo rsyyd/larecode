@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync, chmodSync, existsSync } from 'n
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import type { PermissionPolicy } from '../permission/permission.js';
+import type { MCPServerConfig } from '../mcp/mcp.js';
 
 export interface ProviderConfig {
   type: 'openai-compatible' | 'anthropic' | 'ollama' | 'openrouter' | 'zai' | 'custom';
@@ -16,6 +17,7 @@ export interface Config {
   defaultModel: string;
   permissions: PermissionPolicy;
   providers: Record<string, ProviderConfig>;
+  mcpServers: Record<string, MCPServerConfig>;
 }
 
 export function lumpscodeHome(): string {
@@ -48,6 +50,7 @@ export function defaultConfig(): Config {
         models: ['llama3', 'qwen2.5-coder'],
       },
     },
+    mcpServers: {},
   };
 }
 
@@ -70,6 +73,7 @@ export function loadEffectiveConfig(
     ...project,
     permissions: { ...config.permissions, ...project.permissions },
     providers: { ...config.providers, ...project.providers },
+    mcpServers: { ...config.mcpServers, ...project.mcpServers },
   };
 }
 
@@ -88,6 +92,16 @@ export function validateConfig(config: Config): string[] {
   }
   for (const [name, entry] of Object.entries(config.providers)) {
     if (!entry.baseUrl) problems.push(`provider "${name}" has no baseUrl`);
+  }
+  for (const [name, server] of Object.entries(config.mcpServers ?? {})) {
+    const transport = server.transport ?? (server.url ? 'http' : 'stdio');
+    if (!['stdio', 'http'].includes(transport)) {
+      problems.push(`mcp server "${name}" transport "${transport}" is not stdio or http`);
+    } else if (transport === 'http' && !server.url) {
+      problems.push(`mcp server "${name}" uses http transport but has no url`);
+    } else if (transport === 'stdio' && !server.command) {
+      problems.push(`mcp server "${name}" uses stdio transport but has no command`);
+    }
   }
   return problems;
 }
