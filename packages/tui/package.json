@@ -16,9 +16,10 @@
     "@lumpscode/core": "*"
   },
   "devDependencies": {
+    "@types/node": "^20.14.0",
     "@types/react": "^18.3.0",
-    "vitest": "^2.0.0",
+    "ink-testing-library": "4",
     "typescript": "^5.5.0",
-    "@types/node": "^20.14.0"
+    "vitest": "^2.0.0"
   }
 }
