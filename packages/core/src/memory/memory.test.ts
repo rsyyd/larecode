@@ -83,15 +83,15 @@ describe('memory tiers', () => {
 
   it('expires entries by ttl and drops them on reload', () => {
     const memory = new Memory({ projectDir: projectA });
-    memory.remember('temporary', 'flash', 'gone', { ttlMs: 5 });
-    memory.remember('project', 'stale', 'gone', { ttlMs: 5 });
+    memory.remember('temporary', 'flash', 'gone', { ttlMs: 500 });
+    memory.remember('project', 'stale', 'gone', { ttlMs: 500 });
     expect(memory.get('temporary', 'flash')).toBeDefined();
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         expect(memory.get('temporary', 'flash')).toBeUndefined();
         expect(new Memory({ projectDir: projectA }).get('project', 'stale')).toBeUndefined();
         resolve();
-      }, 10);
+      }, 600);
     });
   });
 
