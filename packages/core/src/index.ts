@@ -62,6 +62,15 @@ export { redactSecrets, redactValue } from './permission/redact.js';
 export { Sessions, renderSessionContext, sessionsDir } from './session/session.js';
 export type { Session, SessionMetadata, SessionMessage } from './session/session.js';
 
+export { Checkpoints, Worktrees, checkpointsDir, worktreesDir } from './checkpoint/checkpoint.js';
+export type {
+  CheckpointInfo,
+  CheckpointOptions,
+  RewindResult,
+  WorktreeInfo,
+  WorktreeOptions,
+} from './checkpoint/checkpoint.js';
+
 export {
   Memory,
   extractFacts,

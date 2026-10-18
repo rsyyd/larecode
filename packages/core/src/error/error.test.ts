@@ -76,6 +76,7 @@ describe('Error taxonomy', () => {
       'SKILL_LOAD_FAILED',
       'SKILL_EXECUTION_FAILED',
       'HOOK_EXECUTION_FAILED',
+      'GIT_OPERATION_FAILED',
       'NETWORK_ERROR',
       'RATE_LIMITED',
       'BUDGET_EXCEEDED',
