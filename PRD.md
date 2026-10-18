@@ -106,7 +106,7 @@ Built-in `build` (full access) and `plan` (read-only, asks before bash) agents; 
 
 ### FR-11 Sessions & Memory
 
-Persisted sessions, resume, compaction; four-tier memory (temporary / session / project / user) with size budgets and secret redaction.
+Persisted sessions, resume, compaction with an explicit policy (threshold-based trigger with a reserved headroom, recent turns kept verbatim, stale tool results cleared before summarizing, and a compaction never re-summarizing a previous compaction); four-tier memory (temporary / session / project / user) with size budgets and secret redaction.
 
 ### FR-12 Learning Loop (Hermes-style)
 
@@ -204,17 +204,19 @@ Client/server model: TUI and gateway are clients of the same core agent; `serve`
 
 ### M2: Intelligence & Extensibility
 
-| ID   | Task                                                                  | Depends on | Acceptance                                                  |
-| ---- | --------------------------------------------------------------------- | ---------- | ----------------------------------------------------------- |
-| T-13 | LSP client (defs/refs/symbols/hover, graceful degrade)                | T-07       | LSP-backed symbol lookup in test repo                       |
-| T-14 | MCP client (stdio+HTTP) + `mcp` commands                              | T-09       | call a reference MCP server; permission gate enforced       |
-| T-15 | Plan mode + subagents (`build`/`plan` Tab switch, `@general`)         | T-10, T-08 | plan agent cannot write; subagent returns compressed result |
-| T-16 | Skills system (SKILL.md, discovery, integrity, agentskills.io compat) | T-07       | skill loads, triggers, executes; bad hash rejected          |
-| T-17 | Hooks + plugins (lifecycle hooks, trust classes)                      | T-07       | pre-tool hook blocks a call in test                         |
-| T-18 | Context engine (indexing, relevance ranking, instruction budgets)     | T-08       | ranked file hits within budget                              |
-| T-19 | Four-tier memory (temp/session/project/user)                          | T-11       | tier scoping + redaction tests                              |
-| T-20 | Checkpoints/rewind + git worktrees                                    | T-11, T-08 | rewind restores workspace state                             |
-| T-21 | Web fetch/search + browser (CDP, capability-scoped)                   | T-09       | fetch tool respects network permission group                |
+| ID   | Task                                                                                                                                                                    | Depends on | Acceptance                                                  |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------- |
+| T-13 | LSP client (defs/refs/symbols/hover, graceful degrade; serena as design reference, no code porting)                                                                     | T-07       | LSP-backed symbol lookup in test repo                       |
+| T-14 | MCP client (stdio+HTTP) + `mcp` commands; `@modelcontextprotocol/sdk`; preset servers: context7, playwright, serena                                                     | T-09       | call a reference MCP server; permission gate enforced       |
+| T-15 | Plan mode + subagents (`build`/`plan` Tab switch, `@general`)                                                                                                           | T-10, T-08 | plan agent cannot write; subagent returns compressed result |
+| T-16 | Skills system (SKILL.md, discovery, integrity, agentskills.io compat); default bundle: superpowers subset + humanizer (anti-slop); progressive disclosure budgets       | T-07       | skill loads, triggers, executes; bad hash rejected          |
+| T-17 | Hooks + plugins (lifecycle hooks, trust classes)                                                                                                                        | T-07       | pre-tool hook blocks a call in test                         |
+| T-18 | Context engine (indexing, relevance ranking, instruction budgets); tree-sitter + PageRank repo map (~1k token budget), ast-grep structural search, compaction per FR-11 | T-08       | ranked file hits within budget                              |
+| T-19 | Four-tier memory (temp/session/project/user); mem0-style fact extraction with token-lean retrieval                                                                      | T-11       | tier scoping + redaction tests                              |
+| T-20 | Checkpoints/rewind + git worktrees                                                                                                                                      | T-11, T-08 | rewind restores workspace state                             |
+| T-21 | Web fetch/search + browser (CDP, capability-scoped); playwright-mcp preset option                                                                                       | T-09       | fetch tool respects network permission group                |
+
+Adoption notes: the external tech worth folding into this milestone is cataloged in `docs/research/agent-tech-adoption.md` (serena as the T-13 design reference, context7 / playwright / serena MCP presets, superpowers subset plus humanizer as default T-16 skills, tree-sitter repo map and ast-grep for T-18, mem0-style fact extraction for T-19). Prompt-cache-safe prompt ordering (stable prefix: system, tools, history; no timestamps in the system prompt; fixed tool order) applies to the agent loop and provider adapters, and cache-read metrics join usage tracking in T-28.
 
 ### M3: Differentiators
 
