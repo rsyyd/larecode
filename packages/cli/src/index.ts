@@ -34,13 +34,14 @@ mcp
 mcp
   .command('add')
   .description('Add or update an MCP server')
-  .argument('<name>', 'server name')
+  .argument('[name]', 'server name (defaults to the preset name)')
+  .option('--preset <preset>', 'preset server (context7, playwright, serena)')
   .option('--command <command>', 'stdio: executable to spawn')
   .option('--arg <value...>', 'stdio: command arguments')
   .option('--env <key=value...>', 'stdio: environment variables')
   .option('--url <url>', 'http: server URL')
   .option('--header <key=value...>', 'http: request headers')
-  .action(async (name: string, options: Parameters<typeof mcpAdd>[1]) => {
+  .action(async (name: string | undefined, options: Parameters<typeof mcpAdd>[1]) => {
     process.exitCode = await mcpAdd(name, options);
   });
 

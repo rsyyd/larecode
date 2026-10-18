@@ -104,10 +104,34 @@ describe('mcp add/remove/list', () => {
 
   it('rejects invalid combinations', async () => {
     const ui = harness(configOf());
+    expect(await mcpAdd(undefined, {}, ui.deps)).toBe(1);
     expect(await mcpAdd('bad', {}, ui.deps)).toBe(1);
     expect(await mcpAdd('bad', { command: 'node', url: 'http://x' }, ui.deps)).toBe(1);
     expect(await mcpAdd('bad', { command: 'node', env: ['nope'] }, ui.deps)).toBe(1);
     expect(ui.err.join('')).toContain('--env and --header entries must use KEY=VALUE');
+  });
+
+  it('adds a preset server under the preset name', async () => {
+    const ui = harness(configOf());
+    const code = await mcpAdd(undefined, { preset: 'playwright' }, ui.deps);
+    expect(code).toBe(0);
+    expect(ui.saved?.mcpServers.playwright).toEqual({
+      name: 'playwright',
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', '@playwright/mcp@latest'],
+    });
+    expect(ui.out.join('')).toContain('added mcp server "playwright" (playwright preset)');
+  });
+
+  it('adds a preset server under a custom name and rejects unknown presets', async () => {
+    const ui = harness(configOf());
+    expect(await mcpAdd('pw', { preset: 'playwright' }, ui.deps)).toBe(0);
+    expect(ui.saved?.mcpServers.pw?.command).toBe('npx');
+    expect(await mcpAdd('x', { preset: 'ghost' }, ui.deps)).toBe(1);
+    expect(ui.err.join('')).toContain('unknown preset: ghost');
+    expect(await mcpAdd('x', { preset: 'playwright', command: 'node' }, ui.deps)).toBe(1);
+    expect(ui.err.join('')).toContain('use either --preset or --command/--url, not both');
   });
 
   it('removes a configured server and rejects unknown names', async () => {

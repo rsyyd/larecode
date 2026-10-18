@@ -1,11 +1,13 @@
 import type { Tool } from './tool.js';
 import { astGrepTool } from './astgrep.js';
 import { bashTool } from './bash.js';
+import { browserTool } from './browser.js';
 import { editTool } from './edit.js';
 import { globTool } from './glob.js';
 import { grepTool } from './grep.js';
 import { patchTool } from './patch.js';
 import { readTool } from './read.js';
+import { webFetchTool, webSearchTool } from './web.js';
 import { writeTool } from './write.js';
 
 export function coreTools(): Tool[] {
@@ -18,5 +20,8 @@ export function coreTools(): Tool[] {
     grepTool(),
     astGrepTool(),
     patchTool(),
+    webFetchTool(),
+    webSearchTool(),
+    browserTool(),
   ];
 }

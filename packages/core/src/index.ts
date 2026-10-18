@@ -107,6 +107,7 @@ export { lspTool } from './tool/lsp.js';
 export { MCP } from './mcp/mcp.js';
 export type { MCPServerConfig, MCPTool } from './mcp/mcp.js';
 export { mcpTools } from './mcp/tools.js';
+export { MCP_PRESETS, MCP_PRESET_NAMES } from './mcp/presets.js';
 
 export {
   Skills,
@@ -160,6 +161,19 @@ export {
 } from './context/compact.js';
 export type { CompactionOptions, CompactionResult } from './context/compact.js';
 export { astGrepTool, AST_GREP_LIMIT } from './tool/astgrep.js';
+export {
+  webFetchTool,
+  webSearchTool,
+  parseDuckDuckGo,
+  htmlToText,
+  decodeEntities,
+  parseHttpUrl,
+  WEB_FETCH_MAX_CHARS,
+  WEB_SEARCH_LIMIT,
+  WEB_SEARCH_MAX_LIMIT,
+} from './tool/web.js';
+export type { SearchResult } from './tool/web.js';
+export { browserTool, cdpEndpoint, DEFAULT_CDP_ENDPOINT, BROWSER_ACTIONS } from './tool/browser.js';
 
 export {
   INSTRUCTION_BUDGET_CHARS,

@@ -1,6 +1,8 @@
 import {
   Logger,
   MCP,
+  MCP_PRESETS,
+  MCP_PRESET_NAMES,
   Permissions,
   configPath,
   loadConfig,
@@ -33,6 +35,7 @@ export interface McpAddOptions {
   env?: string[];
   url?: string;
   header?: string[];
+  preset?: string;
 }
 
 export interface McpCallOptions {
@@ -91,11 +94,34 @@ export async function mcpList(deps: McpDeps = {}): Promise<number> {
 }
 
 export async function mcpAdd(
-  name: string,
+  name: string | undefined,
   options: McpAddOptions,
   deps: McpDeps = {}
 ): Promise<number> {
   const resolved = resolveDeps(deps);
+  if (options.preset) {
+    if (options.url || options.command) {
+      resolved.writeError('use either --preset or --command/--url, not both\n');
+      return 1;
+    }
+    const preset = MCP_PRESETS[options.preset];
+    if (!preset) {
+      resolved.writeError(
+        `unknown preset: ${options.preset} (available: ${MCP_PRESET_NAMES.join(', ')})\n`
+      );
+      return 1;
+    }
+    const serverName = name ?? options.preset;
+    const config = resolved.globalConfig();
+    config.mcpServers = { ...config.mcpServers, [serverName]: { name: serverName, ...preset } };
+    resolved.saveConfig(config);
+    resolved.write(`added mcp server "${serverName}" (${options.preset} preset)\n`);
+    return 0;
+  }
+  if (!name) {
+    resolved.writeError('provide a server name or --preset <name>\n');
+    return 1;
+  }
   if (options.url && options.command) {
     resolved.writeError('use either --url (http) or --command (stdio), not both\n');
     return 1;
