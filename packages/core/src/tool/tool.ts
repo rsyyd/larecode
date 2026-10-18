@@ -1,5 +1,6 @@
 import type { Permissions } from '../permission/permission.js';
 import type { ToolSpec } from '../provider/provider.js';
+import type { Hooks } from '../hook/hook.js';
 import { LumpsError } from '../error/error.js';
 import { defaultLogger, Logger } from '../logger/logger.js';
 
@@ -39,9 +40,11 @@ export interface ToolContext {
 export class Tools {
   private readonly tools = new Map<string, Tool>();
   private readonly logger: Logger;
+  private readonly hooks?: Hooks;
 
-  constructor(options: { logger?: Logger } = {}) {
+  constructor(options: { logger?: Logger; hooks?: Hooks } = {}) {
     this.logger = options.logger ?? defaultLogger;
+    this.hooks = options.hooks;
   }
 
   register(tool: Tool): void {
@@ -87,8 +90,22 @@ export class Tools {
       return { id: call.id, success: false, error: 'cancelled' };
     }
 
+    const blocked = await this.hooks?.emit('pre-tool', {
+      sessionId: context.sessionId,
+      call,
+    });
+    if (blocked?.block) {
+      this.logger.warn('tool call blocked by hook', { id: call.id, name: call.name });
+      return {
+        id: call.id,
+        success: false,
+        error: `PERMISSION_DENIED: ${blocked.reason ?? 'blocked by hook'}`,
+      };
+    }
+
     this.logger.info('calling tool', { id: call.id, name: call.name });
     const startedAt = Date.now();
+    let result: ToolResult;
     try {
       const output = await tool.execute(call.arguments, context);
       this.logger.info('tool complete', {
@@ -96,7 +113,7 @@ export class Tools {
         name: call.name,
         latencyMs: Date.now() - startedAt,
       });
-      return { id: call.id, success: true, output };
+      result = { id: call.id, success: true, output };
     } catch (error) {
       const latencyMs = Date.now() - startedAt;
       this.logger.error(
@@ -110,7 +127,9 @@ export class Tools {
           : error instanceof Error
             ? error.message
             : String(error);
-      return { id: call.id, success: false, error: message };
+      result = { id: call.id, success: false, error: message };
     }
+    await this.hooks?.emit('post-tool', { sessionId: context.sessionId, call, result });
+    return result;
   }
 }

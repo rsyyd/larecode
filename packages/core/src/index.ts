@@ -106,7 +106,18 @@ export type {
 export { skillTool } from './tool/skill.js';
 
 export { Hooks } from './hook/hook.js';
-export type { Hook, HookContext, HookType } from './hook/hook.js';
+export type { Hook, HookContext, HookType, HookDecision } from './hook/hook.js';
+
+export { Plugins, discoverPlugins, pluginRoots, HOOK_TYPES } from './plugin/plugin.js';
+export type {
+  PluginApi,
+  PluginInfo,
+  PluginLoadReport,
+  PluginManifest,
+  PluginModule,
+  PluginTrust,
+  PluginsOptions,
+} from './plugin/plugin.js';
 
 export { Context } from './context/context.js';
 export type { ContextQuery, ContextResult, RelevanceScore } from './context/context.js';
