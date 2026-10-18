@@ -67,7 +67,8 @@ export {
 export type { Config, ProviderConfig } from './config/config.js';
 
 export { LSP } from './lsp/lsp.js';
-export type { LSPCapabilities, SymbolInfo } from './lsp/lsp.js';
+export type { LSPCapabilities, LSPOptions, SymbolInfo } from './lsp/lsp.js';
+export { lspTool } from './tool/lsp.js';
 
 export { MCP } from './mcp/mcp.js';
 export type { MCPServerConfig, MCPTool } from './mcp/mcp.js';
