@@ -36,7 +36,7 @@ The formula installed by the tap is generated from the release binaries on every
 ## Scoop (Windows)
 
 ```powershell
-scoop bucket add larecode https://github.com/rsyyd/larecodecode-scoop
+scoop bucket add larecode https://github.com/rsyyd/larecode-scoop
 scoop install larecode
 ```
 
