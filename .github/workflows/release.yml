@@ -1,0 +1,90 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: bun-linux-x64
+            asset: lumpscode-linux-x64
+          - target: bun-linux-arm64
+            asset: lumpscode-linux-arm64
+          - target: bun-darwin-x64
+            asset: lumpscode-darwin-x64
+          - target: bun-darwin-arm64
+            asset: lumpscode-darwin-arm64
+          - target: bun-windows-x64
+            asset: lumpscode-windows-x64.exe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Build ${{ matrix.asset }}
+        run: bun build --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.asset }} packages/cli/src/index.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" artifacts/* --title "$GITHUB_REF_NAME" --generate-notes
+      - name: Generate packaging manifests
+        run: bun run scripts/packaging.ts --version "${GITHUB_REF_NAME#v}" --binaries artifacts --out packaging/out
+      - name: Upload packaging manifests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" packaging/out/*
+
+  npm:
+    needs: publish
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: bun install --frozen-lockfile
+      - name: Build npm bundle
+        run: bun run build:npm
+      - name: Set version from tag
+        run: npm pkg set version="${GITHUB_REF_NAME#v}"
+        working-directory: npm
+      - name: Publish to npm
+        if: env.NPM_TOKEN != ''
+        run: npm publish
+        working-directory: npm
+        env:
+          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}

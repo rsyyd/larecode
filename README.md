@@ -9,12 +9,23 @@ and Hermes Agent into one coherent, local-first CLI.
 **Status:** early development (M0).
 **Spec:** [PRD.md](PRD.md) · **License:** [MIT](LICENSE)
 
+## Install
+
+```bash
+npm install -g lumpscode        # Node 20+
+curl -fsSL https://raw.githubusercontent.com/rsyyd/lumpscode/main/install.sh | sh
+brew tap rsyyd/lumpscode && brew install lumpscode
+```
+
+Then `lumpscode setup`, `lumpscode doctor`, `lumpscode run "explain this repository"`. See [docs/install.md](docs/install.md) for Scoop, AUR, and manual installs.
+
 ## Usage
 
 ```bash
 bun install
 bun run dev            # run the CLI from source
 bun run build          # compile dist/lumpscode
+bun run build:npm      # bundle the npm package into npm/dist
 ./dist/lumpscode doctor
 ```
 

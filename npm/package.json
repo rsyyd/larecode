@@ -1,0 +1,36 @@
+{
+  "name": "lumpscode",
+  "version": "0.0.0",
+  "description": "Provider-neutral AI coding agent for the terminal",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "lumpscode": "bin/lumpscode.mjs"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@ast-grep/napi": "0.51.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rsyyd/lumpscode.git"
+  },
+  "homepage": "https://github.com/rsyyd/lumpscode",
+  "bugs": {
+    "url": "https://github.com/rsyyd/lumpscode/issues"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "cli",
+    "coding-agent",
+    "llm"
+  ]
+}

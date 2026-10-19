@@ -7,6 +7,7 @@ import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
 import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cron.js';
 import { gatewayCommand } from './commands/gateway.js';
 import { updateCommand } from './commands/update.js';
+import { setupCommand } from './commands/setup.js';
 
 const program = new Command();
 
@@ -16,6 +17,19 @@ program
   .command('doctor', { isDefault: false })
   .description('Check configuration, providers, permissions, and instruction files')
   .action(runDoctor);
+
+program
+  .command('setup')
+  .description('Write an initial config for your provider')
+  .option('--provider <name>', 'provider name')
+  .option('--type <type>', 'openai-compatible, anthropic, or ollama')
+  .option('--base-url <url>', 'provider base url')
+  .option('--api-key <key>', 'api key for the provider')
+  .option('--model <model>', 'default model')
+  .option('--force', 'overwrite an existing config')
+  .action(async (options: Parameters<typeof setupCommand>[0]) => {
+    await setupCommand(options);
+  });
 
 program
   .command('update')

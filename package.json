@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "bun build --compile --outfile=dist/lumpscode packages/cli/src/index.ts",
+    "build:npm": "bun build --target=node --external @ast-grep/napi --outfile npm/dist/index.js packages/cli/src/index.ts",
     "dev": "bun run packages/cli/src/index.ts"
   },
   "devDependencies": {
