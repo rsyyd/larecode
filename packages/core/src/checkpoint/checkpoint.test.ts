@@ -8,17 +8,17 @@ import { Checkpoints, Worktrees } from './checkpoint.js';
 let home: string;
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), 'lumps-checkpoint-home-'));
-  process.env.LUMPSCODE_HOME = home;
+  home = mkdtempSync(join(tmpdir(), 'lare-checkpoint-home-'));
+  process.env.LARECODE_HOME = home;
 });
 
 afterEach(() => {
-  delete process.env.LUMPSCODE_HOME;
+  delete process.env.LARECODE_HOME;
 });
 
 describe('checkpoints', () => {
   it('rewinds the workspace to a checkpoint and forward again', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'lumps-ws-'));
+    const root = mkdtempSync(join(tmpdir(), 'lare-ws-'));
     writeFileSync(join(root, 'keep.ts'), 'v1');
     writeFileSync(join(root, 'remove-me.ts'), 'gone');
     const checkpoints = new Checkpoints({ root, sessionId: 'session-a' });
@@ -46,7 +46,7 @@ describe('checkpoints', () => {
   });
 
   it('skips duplicate checkpoints when nothing changed', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'lumps-ws-'));
+    const root = mkdtempSync(join(tmpdir(), 'lare-ws-'));
     writeFileSync(join(root, 'a.ts'), '1');
     const checkpoints = new Checkpoints({ root, sessionId: 'session-b' });
     expect(await checkpoints.create('one')).not.toBeNull();
@@ -57,7 +57,7 @@ describe('checkpoints', () => {
   });
 
   it('keeps untracked files when removal is disabled and respects ignores', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'lumps-ws-'));
+    const root = mkdtempSync(join(tmpdir(), 'lare-ws-'));
     writeFileSync(join(root, '.gitignore'), 'ignored.txt\n');
     writeFileSync(join(root, 'tracked.ts'), 'v1');
     mkdirSync(join(root, 'node_modules', 'pkg'), { recursive: true });
@@ -82,7 +82,7 @@ describe('checkpoints', () => {
   });
 
   it('rejects invalid checkpoint ids', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'lumps-ws-'));
+    const root = mkdtempSync(join(tmpdir(), 'lare-ws-'));
     writeFileSync(join(root, 'a.ts'), '1');
     const checkpoints = new Checkpoints({ root, sessionId: 'session-d' });
     await checkpoints.create('one');
@@ -91,7 +91,7 @@ describe('checkpoints', () => {
   });
 
   it('reports no checkpoints for a fresh session before rewind', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'lumps-ws-'));
+    const root = mkdtempSync(join(tmpdir(), 'lare-ws-'));
     const checkpoints = new Checkpoints({ root, sessionId: 'session-e' });
     expect(await checkpoints.list()).toEqual([]);
     await expect(checkpoints.rewind('abc1234')).rejects.toThrow('no checkpoints recorded');
@@ -100,7 +100,7 @@ describe('checkpoints', () => {
 
 describe('worktrees', () => {
   function initRepo(): string {
-    const repo = mkdtempSync(join(tmpdir(), 'lumps-repo-'));
+    const repo = mkdtempSync(join(tmpdir(), 'lare-repo-'));
     const git = (...args: string[]) =>
       execFileSync(
         'git',
@@ -126,16 +126,16 @@ describe('worktrees', () => {
     const repo = initRepo();
     const worktrees = new Worktrees({ root: repo });
     const info = await worktrees.create('feature-x');
-    expect(info.branch).toBe('lumpscode/feature-x');
+    expect(info.branch).toBe('larecode/feature-x');
     expect(readFileSync(join(info.path, 'file.txt'), 'utf8')).toBe('base');
 
     const listed = await worktrees.list();
-    expect(listed.some((entry) => entry.branch === 'lumpscode/feature-x')).toBe(true);
+    expect(listed.some((entry) => entry.branch === 'larecode/feature-x')).toBe(true);
 
     await worktrees.remove('feature-x');
     expect(existsSync(info.path)).toBe(false);
     const branches = execFileSync('git', ['-C', repo, 'branch', '--list'], { encoding: 'utf8' });
-    expect(branches).not.toContain('lumpscode/feature-x');
+    expect(branches).not.toContain('larecode/feature-x');
   });
 
   it('rejects unsafe worktree names', async () => {
@@ -147,7 +147,7 @@ describe('worktrees', () => {
   });
 
   it('fails with GIT_OPERATION_FAILED outside a repository', async () => {
-    const plain = mkdtempSync(join(tmpdir(), 'lumps-plain-'));
+    const plain = mkdtempSync(join(tmpdir(), 'lare-plain-'));
     const worktrees = new Worktrees({ root: plain });
     await expect(worktrees.create('nope')).rejects.toThrow(/not a git repository/i);
   });

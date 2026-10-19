@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { lumpscodeHome } from '../config/config.js';
+import { larecodeHome } from '../config/config.js';
 import { redactValue } from '../permission/redact.js';
 import type { SessionMessage } from '../session/session.js';
 import { estimateTokens } from '../usage/usage.js';
@@ -46,7 +46,7 @@ const TIER_LIMITS: Record<MemoryTier, number> = {
 const TERM_RE = /[a-z0-9_]{3,}/g;
 
 export function memoryDir(): string {
-  return join(lumpscodeHome(), 'memory');
+  return join(larecodeHome(), 'memory');
 }
 
 export function renderEntry(entry: MemoryEntry): string {

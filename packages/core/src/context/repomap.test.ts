@@ -8,7 +8,7 @@ import { estimateTokens } from '../usage/usage.js';
 let project: string;
 
 beforeEach(() => {
-  project = mkdtempSync(join(tmpdir(), 'lumps-repomap-'));
+  project = mkdtempSync(join(tmpdir(), 'lare-repomap-'));
   mkdirSync(join(project, 'src'), { recursive: true });
   writeFileSync(
     join(project, 'src', 'index.ts'),

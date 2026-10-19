@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readdir } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 
 export const MAX_READ_BYTES = 1024 * 1024;
 export const MAX_STREAM_BYTES = 1024 * 1024;
@@ -14,7 +14,7 @@ export function resolveInWorkspace(workingDir: string, input: string): string {
   const root = resolve(workingDir);
   const abs = resolve(root, input);
   if (abs !== root && !abs.startsWith(root + sep)) {
-    throw new LumpsError('TOOL_EXECUTION_FAILED', `path escapes workspace: ${input}`, {
+    throw new LareError('TOOL_EXECUTION_FAILED', `path escapes workspace: ${input}`, {
       context: { workingDir: root, path: input },
     });
   }
@@ -92,16 +92,16 @@ export function applyReplacement(
   displayPath: string
 ): { updated: string; replacements: number } {
   if (find === '') {
-    throw new LumpsError('TOOL_EXECUTION_FAILED', 'find text must not be empty');
+    throw new LareError('TOOL_EXECUTION_FAILED', 'find text must not be empty');
   }
   const occurrences = content.split(find).length - 1;
   if (occurrences === 0) {
-    throw new LumpsError('TOOL_EXECUTION_FAILED', `text not found in ${displayPath}`, {
+    throw new LareError('TOOL_EXECUTION_FAILED', `text not found in ${displayPath}`, {
       context: { path: displayPath },
     });
   }
   if (occurrences > 1 && !replaceAll) {
-    throw new LumpsError(
+    throw new LareError(
       'TOOL_EXECUTION_FAILED',
       `text is not unique in ${displayPath} (${occurrences} matches); pass more context or set replaceAll`,
       { context: { path: displayPath, occurrences } }

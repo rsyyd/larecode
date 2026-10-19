@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
 import { applyReplacement, resolveInWorkspace, sha256 } from './files.js';
 
@@ -36,14 +36,14 @@ export function patchTool(): Tool {
       try {
         buf = await readFile(abs);
       } catch {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', `file not found: ${input}`, {
+        throw new LareError('TOOL_EXECUTION_FAILED', `file not found: ${input}`, {
           context: { path: input },
         });
       }
 
       const current = sha256(buf);
       if (current !== expected) {
-        throw new LumpsError(
+        throw new LareError(
           'PATCH_CONFLICT',
           `patch rejected for ${input}: expected sha256 ${expected}, found ${current}`,
           { context: { path: input, expected, current } }

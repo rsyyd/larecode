@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
 import { applyReplacement, resolveInWorkspace, sha256 } from './files.js';
 
@@ -33,7 +33,7 @@ export function editTool(): Tool {
       try {
         content = await readFile(abs, 'utf8');
       } catch {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', `file not found: ${input}`, {
+        throw new LareError('TOOL_EXECUTION_FAILED', `file not found: ${input}`, {
           context: { path: input },
         });
       }

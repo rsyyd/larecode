@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { defaultLogger } from '../logger/logger.js';
 import type { ProviderConfig } from '../config/config.js';
 import type {
@@ -9,7 +9,7 @@ import type {
   ProviderUsage,
   ToolSpec,
 } from './provider.js';
-import type { LumpsCodeFetch } from './fetch.js';
+import type { LareCodeFetch } from './fetch.js';
 import { capabilitiesFor, modelCapabilities } from './capabilities.js';
 
 export interface OpenAIAdapterOptions {
@@ -19,7 +19,7 @@ export interface OpenAIAdapterOptions {
   models: string[];
   capabilities?: ProviderCapabilities;
   headers?: Record<string, string>;
-  fetchImpl?: LumpsCodeFetch;
+  fetchImpl?: LareCodeFetch;
 }
 
 interface OpenAIUsage {
@@ -59,7 +59,7 @@ export class OpenAIAdapter implements ProviderAdapter {
   private readonly baseUrl: string;
   private readonly apiKey: string;
   private readonly catalog: ModelInfo[];
-  private readonly fetchImpl: LumpsCodeFetch;
+  private readonly fetchImpl: LareCodeFetch;
   private readonly extraHeaders: Record<string, string>;
 
   constructor(options: OpenAIAdapterOptions) {
@@ -146,7 +146,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         signal: options.abortSignal,
       });
     } catch (error) {
-      throw LumpsError.wrap(
+      throw LareError.wrap(
         'NETWORK_ERROR',
         error instanceof Error ? error : new Error(String(error)),
         { provider: this.name, baseUrl: this.baseUrl }
@@ -154,7 +154,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     }
 
     if (!response.ok) {
-      throw new LumpsError(
+      throw new LareError(
         response.status === 401 || response.status === 403
           ? 'PROVIDER_AUTH_FAILED'
           : 'PROVIDER_UNAVAILABLE',
@@ -169,7 +169,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     const data = (await response.json()) as OpenAIChatResponse;
     const text = data.choices?.[0]?.message?.content;
     if (text === undefined || text === null)
-      throw LumpsError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
+      throw LareError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
         provider: this.name,
       });
     if (data.usage && options.onUsage) options.onUsage(mapUsage(data.usage));
@@ -186,7 +186,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         signal: options.abortSignal,
       });
     } catch (error) {
-      throw LumpsError.wrap(
+      throw LareError.wrap(
         'NETWORK_ERROR',
         error instanceof Error ? error : new Error(String(error)),
         { provider: this.name }
@@ -194,7 +194,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     }
 
     if (!response.ok || !response.body) {
-      throw new LumpsError('PROVIDER_UNAVAILABLE', `${this.name} stream unavailable`, {
+      throw new LareError('PROVIDER_UNAVAILABLE', `${this.name} stream unavailable`, {
         context: { provider: this.name, status: response.status },
       });
     }
@@ -228,7 +228,7 @@ export class OpenAIAdapter implements ProviderAdapter {
 export function openAIAdapterFromConfig(
   name: string,
   config: ProviderConfig,
-  fetchImpl?: LumpsCodeFetch
+  fetchImpl?: LareCodeFetch
 ): OpenAIAdapter {
   return new OpenAIAdapter({
     name,
@@ -238,7 +238,7 @@ export function openAIAdapterFromConfig(
     capabilities: capabilitiesFor(config.type),
     ...(config.type === 'openrouter'
       ? {
-          headers: { 'HTTP-Referer': 'https://github.com/rsyyd/lumpscode', 'X-Title': 'lumpscode' },
+          headers: { 'HTTP-Referer': 'https://github.com/rsyyd/lare', 'X-Title': 'larecode' },
         }
       : {}),
     ...(fetchImpl ? { fetchImpl } : {}),

@@ -4,7 +4,7 @@ import {
   DEFAULT_SERVER_PORT,
   Server,
   type ServerOptions,
-} from '@lumpscode/server';
+} from '@larecode/server';
 
 export interface ServeOptions {
   port?: string;
@@ -39,7 +39,7 @@ export async function serveCommand(
 ): Promise<number> {
   const env = deps.env ?? process.env;
   const write = deps.write ?? ((text: string) => process.stdout.write(text));
-  const configured = options.token ?? env.LUMPSCODE_SERVER_TOKEN;
+  const configured = options.token ?? env.LARECODE_SERVER_TOKEN;
   const token = configured ?? randomBytes(24).toString('hex');
   const port = options.port === undefined ? DEFAULT_SERVER_PORT : Number(options.port);
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
@@ -65,7 +65,7 @@ export async function serveCommand(
     return 1;
   }
 
-  write(`lumpscode server listening on ${server.url}\n`);
+  write(`larecode server listening on ${server.url}\n`);
   if (!configured) write(`bearer token: ${token}\n`);
 
   await (deps.waitForShutdown ?? waitForSignals)();

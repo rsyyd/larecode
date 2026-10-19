@@ -3,8 +3,8 @@ import {
   assertPreAuthorizable,
   loadEffectiveConfig,
   type PermissionGroup,
-} from '@lumpscode/core';
-import { TelegramGateway, type TelegramGatewayOptions } from '@lumpscode/gateway';
+} from '@larecode/core';
+import { TelegramGateway, type TelegramGatewayOptions } from '@larecode/gateway';
 
 export interface GatewayOptions {
   platform?: string;
@@ -59,12 +59,12 @@ export async function gatewayCommand(
     write(`${bad('gateway:')} unknown platform "${platform}" (supported: telegram)\n`);
     return 1;
   }
-  const token = options.token ?? env.LUMPSCODE_TELEGRAM_TOKEN;
+  const token = options.token ?? env.LARECODE_TELEGRAM_TOKEN;
   if (!token) {
-    write(`${bad('gateway:')} telegram bot token required (--token or LUMPSCODE_TELEGRAM_TOKEN)\n`);
+    write(`${bad('gateway:')} telegram bot token required (--token or LARECODE_TELEGRAM_TOKEN)\n`);
     return 1;
   }
-  const chat = options.chat ?? env.LUMPSCODE_TELEGRAM_CHAT_ID;
+  const chat = options.chat ?? env.LARECODE_TELEGRAM_CHAT_ID;
 
   let policy: PermissionGroup[];
   try {
@@ -89,7 +89,7 @@ export async function gatewayCommand(
     policy,
     createLoop: defaultLoop,
     loadConfig: loadEffectiveConfig,
-    apiBase: env.LUMPSCODE_TELEGRAM_API_BASE,
+    apiBase: env.LARECODE_TELEGRAM_API_BASE,
     write,
   });
 

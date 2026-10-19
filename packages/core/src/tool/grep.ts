@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
 import {
   DEFAULT_GREP_LIMIT,
@@ -52,7 +52,7 @@ export function grepTool(): Tool {
       try {
         regex = new RegExp(pattern, ignoreCase ? 'i' : '');
       } catch (error) {
-        throw new LumpsError(
+        throw new LareError(
           'TOOL_EXECUTION_FAILED',
           `invalid pattern: ${(error as Error).message}`
         );

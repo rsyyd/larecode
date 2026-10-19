@@ -106,6 +106,6 @@ export function createConsoleHandler(format: 'json' | 'pretty' = 'pretty'): LogH
 }
 
 export const defaultLogger = new Logger({
-  level: (process.env.LUMPSCODE_LOG_LEVEL as LogLevel) ?? 'info',
+  level: (process.env.LARECODE_LOG_LEVEL as LogLevel) ?? 'info',
   handlers: [createConsoleHandler()],
 });

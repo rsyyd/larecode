@@ -1,7 +1,7 @@
 import type { Permissions } from '../permission/permission.js';
 import type { ToolSpec } from '../provider/provider.js';
 import type { Hooks } from '../hook/hook.js';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { defaultLogger, Logger } from '../logger/logger.js';
 
 export type ToolSchema = {
@@ -122,7 +122,7 @@ export class Tools {
         error instanceof Error ? error : undefined
       );
       const message =
-        error instanceof LumpsError
+        error instanceof LareError
           ? `${error.code}: ${error.message}`
           : error instanceof Error
             ? error.message

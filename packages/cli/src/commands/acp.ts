@@ -1,5 +1,5 @@
-import { VERSION } from '@lumpscode/core';
-import { AcpAgent } from '@lumpscode/sdk';
+import { VERSION } from '@larecode/core';
+import { AcpAgent } from '@larecode/sdk';
 
 export async function acpCommand(): Promise<void> {
   const agent = new AcpAgent({ version: VERSION });

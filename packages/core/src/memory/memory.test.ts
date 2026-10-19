@@ -10,14 +10,14 @@ let projectA: string;
 let projectB: string;
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), 'lumps-memory-'));
-  projectA = mkdtempSync(join(tmpdir(), 'lumps-project-a-'));
-  projectB = mkdtempSync(join(tmpdir(), 'lumps-project-b-'));
-  process.env.LUMPSCODE_HOME = home;
+  home = mkdtempSync(join(tmpdir(), 'lare-memory-'));
+  projectA = mkdtempSync(join(tmpdir(), 'lare-project-a-'));
+  projectB = mkdtempSync(join(tmpdir(), 'lare-project-b-'));
+  process.env.LARECODE_HOME = home;
 });
 
 afterEach(() => {
-  delete process.env.LUMPSCODE_HOME;
+  delete process.env.LARECODE_HOME;
 });
 
 function message(role: SessionMessage['role'], content: string): SessionMessage {

@@ -1,6 +1,6 @@
 # Providers
 
-Lumps Code is provider-neutral. Every provider entry has a type, a base URL, and a model list.
+Lare Code is provider-neutral. Every provider entry has a type, a base URL, and a model list.
 
 ```json
 {
@@ -60,4 +60,4 @@ A self-hosted gateway (vLLM, llama.cpp server, LiteLLM) speaks the OpenAI dialec
 
 ## Choosing per run
 
-`lumpscode run` accepts `--provider` and `--model` overrides for a single task. Usage is reported by the provider when it emits token counts; otherwise lumpscode falls back to a character-based estimate. Costs use a built-in price table for known models; unknown models report zero cost.
+`larecode run` accepts `--provider` and `--model` overrides for a single task. Usage is reported by the provider when it emits token counts; otherwise larecode falls back to a character-based estimate. Costs use a built-in price table for known models; unknown models report zero cost.

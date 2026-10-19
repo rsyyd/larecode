@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { defaultLogger } from '../logger/logger.js';
 import type { ProviderConfig } from '../config/config.js';
 import type {
@@ -9,7 +9,7 @@ import type {
   ProviderUsage,
   ToolSpec,
 } from './provider.js';
-import type { LumpsCodeFetch } from './fetch.js';
+import type { LareCodeFetch } from './fetch.js';
 import { capabilitiesFor, modelCapabilities } from './capabilities.js';
 
 export interface OllamaAdapterOptions {
@@ -17,7 +17,7 @@ export interface OllamaAdapterOptions {
   baseUrl: string;
   models: string[];
   capabilities?: ProviderCapabilities;
-  fetchImpl?: LumpsCodeFetch;
+  fetchImpl?: LareCodeFetch;
 }
 
 interface OllamaChatResponse {
@@ -49,7 +49,7 @@ export class OllamaAdapter implements ProviderAdapter {
 
   private readonly baseUrl: string;
   private readonly catalog: ModelInfo[];
-  private readonly fetchImpl: LumpsCodeFetch;
+  private readonly fetchImpl: LareCodeFetch;
 
   constructor(options: OllamaAdapterOptions) {
     this.name = options.name;
@@ -87,16 +87,16 @@ export class OllamaAdapter implements ProviderAdapter {
     return body;
   }
 
-  private httpError(status: number): LumpsError {
-    return new LumpsError(
+  private httpError(status: number): LareError {
+    return new LareError(
       status === 401 || status === 403 ? 'PROVIDER_AUTH_FAILED' : 'PROVIDER_UNAVAILABLE',
       `${this.name} returned ${status}`,
       { context: { provider: this.name, status }, retryable: status >= 500 }
     );
   }
 
-  private networkError(error: unknown): LumpsError {
-    return LumpsError.wrap(
+  private networkError(error: unknown): LareError {
+    return LareError.wrap(
       'NETWORK_ERROR',
       error instanceof Error ? error : new Error(String(error)),
       { provider: this.name }
@@ -143,7 +143,7 @@ export class OllamaAdapter implements ProviderAdapter {
 
     const data = (await response.json()) as OllamaChatResponse;
     if (data.error) {
-      throw LumpsError.from('PROVIDER_UNAVAILABLE', data.error, { provider: this.name });
+      throw LareError.from('PROVIDER_UNAVAILABLE', data.error, { provider: this.name });
     }
     if (
       options.onUsage &&
@@ -153,7 +153,7 @@ export class OllamaAdapter implements ProviderAdapter {
     }
     const text = data.message?.content;
     if (text === undefined || text === null) {
-      throw LumpsError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
+      throw LareError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
         provider: this.name,
       });
     }
@@ -174,7 +174,7 @@ export class OllamaAdapter implements ProviderAdapter {
     }
 
     if (!response.ok || !response.body) {
-      throw new LumpsError('PROVIDER_UNAVAILABLE', `${this.name} stream unavailable`, {
+      throw new LareError('PROVIDER_UNAVAILABLE', `${this.name} stream unavailable`, {
         context: { provider: this.name, status: response.status },
       });
     }
@@ -198,7 +198,7 @@ export class OllamaAdapter implements ProviderAdapter {
           continue;
         }
         if (chunk.error) {
-          throw LumpsError.from('PROVIDER_UNAVAILABLE', chunk.error, { provider: this.name });
+          throw LareError.from('PROVIDER_UNAVAILABLE', chunk.error, { provider: this.name });
         }
         if (chunk.message?.content) yield chunk.message.content;
         if (chunk.done) {

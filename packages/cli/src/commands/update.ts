@@ -1,6 +1,6 @@
-import { VERSION } from '@lumpscode/core';
+import { VERSION } from '@larecode/core';
 
-export const REGISTRY_URL = 'https://registry.npmjs.org/lumpscode/latest';
+export const REGISTRY_URL = 'https://registry.npmjs.org/larecode/latest';
 
 const ok = (text: string) => `\x1b[32m${text}\x1b[0m`;
 const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
@@ -56,6 +56,6 @@ export async function updateCommand(
 
   write(`${ok('✓')} update available: ${current} -> ${latest}\n`);
   if (options.check) return;
-  write(`  npm install -g lumpscode@${latest}\n`);
-  write(`  bun add --global lumpscode@${latest}\n`);
+  write(`  npm install -g larecode@${latest}\n`);
+  write(`  bun add --global larecode@${latest}\n`);
 }

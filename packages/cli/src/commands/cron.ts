@@ -9,7 +9,7 @@ import {
   type CronResult,
   type PermissionGroup,
   type SchedulerDeps,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
 export interface CronAddOptions {
   schedule: string;

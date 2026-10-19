@@ -13,7 +13,7 @@ import {
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'lumpscode-verify-'));
+  dir = mkdtempSync(join(tmpdir(), 'larecode-verify-'));
 });
 
 afterEach(() => {

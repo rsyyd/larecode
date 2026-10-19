@@ -146,7 +146,7 @@ describe('mcp client (stdio)', () => {
   let mcp: MCP;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'lumps-mcp-'));
+    dir = await mkdtemp(join(tmpdir(), 'lare-mcp-'));
     await writeFile(join(dir, 'server.cjs'), FAKE_SERVER);
     mcp = new MCP({ logger: quiet() });
     await mcp.connect({
@@ -198,7 +198,7 @@ describe('mcp client (stdio)', () => {
 
   it('rejects when the server process cannot spawn', async () => {
     await expect(
-      mcp.connect({ name: 'broken', transport: 'stdio', command: 'lumps-missing-mcp-server-xyz' })
+      mcp.connect({ name: 'broken', transport: 'stdio', command: 'lare-missing-mcp-server-xyz' })
     ).rejects.toMatchObject({ code: 'MCP_CONNECTION_FAILED' });
   });
 });
@@ -281,7 +281,7 @@ describe('mcp tools', () => {
   let mcp: MCP;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'lumps-mcp-tools-'));
+    dir = await mkdtemp(join(tmpdir(), 'lare-mcp-tools-'));
     await writeFile(join(dir, 'server.cjs'), FAKE_SERVER);
     mcp = new MCP({ logger: quiet() });
     await mcp.connect({

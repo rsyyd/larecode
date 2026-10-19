@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, chmodSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { lumpscodeHome } from '../config/config.js';
+import { larecodeHome } from '../config/config.js';
 
 export type InstructionStatus = 'consented' | 'pending' | 'changed';
 
@@ -14,7 +14,7 @@ export interface InstructionFile {
 
 export const INSTRUCTION_FILES = [
   'AGENTS.md',
-  'LUMPCODE.md',
+  'LARECODE.md',
   'CLAUDE.md',
   'GEMINI.md',
   '.cursorrules',
@@ -22,7 +22,7 @@ export const INSTRUCTION_FILES = [
 ] as const;
 
 export function consentPath(): string {
-  return join(lumpscodeHome(), 'consent.json');
+  return join(larecodeHome(), 'consent.json');
 }
 
 export function hashFile(path: string): string {

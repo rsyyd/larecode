@@ -11,7 +11,7 @@ export const COMMANDS: SlashCommand[] = [
   { name: '/skill', description: 'run a skill' },
   { name: '/session', description: 'manage sessions' },
   { name: '/share', description: 'share a session link' },
-  { name: '/exit', description: 'quit lumpscode' },
+  { name: '/exit', description: 'quit larecode' },
 ];
 
 export function filterCommands(query: string, limit = 6): SlashCommand[] {

@@ -11,7 +11,7 @@ import {
   type Config,
   type MCPServerConfig,
   type MCPTool,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
 export interface McpConnectionLike {
   listTools(server: string): Promise<MCPTool[]>;

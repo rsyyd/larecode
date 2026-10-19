@@ -1,6 +1,6 @@
 import { BUILTIN_AGENTS, type AgentName } from './agents.js';
 import { AgentLoop, type HaltReason } from './loop.js';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { estimateTokens, type UsageAggregate } from '../usage/usage.js';
 import type { Providers } from '../provider/provider.js';
 
@@ -72,22 +72,22 @@ export class Subagents {
     const agentName = options.agent ?? 'general';
     const definition = BUILTIN_AGENTS[agentName];
     if (!definition || definition.kind !== 'subagent') {
-      throw new LumpsError('TOOL_EXECUTION_FAILED', `"${agentName}" is not a subagent`);
+      throw new LareError('TOOL_EXECUTION_FAILED', `"${agentName}" is not a subagent`);
     }
     const depth = options.depth ?? 0;
     const maxDepth = this.options.maxDepth ?? 1;
     if (depth >= maxDepth) {
-      throw new LumpsError(
+      throw new LareError(
         'TOOL_EXECUTION_FAILED',
         `subagent depth limit reached (max ${maxDepth})`
       );
     }
     if (options.signal?.aborted) {
-      throw new LumpsError('CANCELLED', 'subagent cancelled before start');
+      throw new LareError('CANCELLED', 'subagent cancelled before start');
     }
     const maxConcurrent = this.options.maxConcurrent ?? 3;
     if (this.active >= maxConcurrent) {
-      throw new LumpsError(
+      throw new LareError(
         'TOOL_EXECUTION_FAILED',
         `subagent concurrency limit reached (max ${maxConcurrent})`
       );
@@ -112,7 +112,7 @@ export class Subagents {
         text += chunk;
       }
       if (options.signal?.aborted) {
-        throw new LumpsError('CANCELLED', 'subagent cancelled');
+        throw new LareError('CANCELLED', 'subagent cancelled');
       }
       return {
         agent: agentName,

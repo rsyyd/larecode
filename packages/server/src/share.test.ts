@@ -2,14 +2,14 @@ import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Session } from '@lumpscode/core';
+import type { Session } from '@larecode/core';
 import { Shares, escapeHtml, renderSharePage } from './share.js';
 
 let dir: string;
 let file: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-share-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-share-'));
   file = join(dir, 'shares.json');
 });
 
@@ -76,7 +76,7 @@ function sessionWith(content: string): Session {
 describe('renderSharePage', () => {
   it('renders a read-only replay with escaped content', () => {
     const html = renderSharePage(sessionWith('use <script>alert(1)</script> here'));
-    expect(html).toContain('LumpsCode session abcdef12');
+    expect(html).toContain('LareCode session abcdef12');
     expect(html).toContain('read-only replay');
     expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(html).not.toContain('<script>alert(1)</script>');

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Tools, type Tool, type ToolContext } from './tool.js';
 import { Logger, type LogEntry } from '../logger/logger.js';
 import { Permissions } from '../permission/permission.js';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 
 function capturingLogger(): { logger: Logger; entries: LogEntry[] } {
   const entries: LogEntry[] = [];
@@ -117,7 +117,7 @@ describe('Tools', () => {
       description: 'always fails',
       schema: { type: 'object', properties: {}, required: [] },
       async execute() {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', 'boom', { context: { step: 1 } });
+        throw new LareError('TOOL_EXECUTION_FAILED', 'boom', { context: { step: 1 } });
       },
     };
     const { logger, entries } = capturingLogger();

@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { defaultLogger } from '../logger/logger.js';
 import type { ProviderConfig } from '../config/config.js';
 import type {
@@ -9,7 +9,7 @@ import type {
   ProviderUsage,
   ToolSpec,
 } from './provider.js';
-import type { LumpsCodeFetch } from './fetch.js';
+import type { LareCodeFetch } from './fetch.js';
 import { capabilitiesFor, modelCapabilities } from './capabilities.js';
 
 export interface AnthropicAdapterOptions {
@@ -18,7 +18,7 @@ export interface AnthropicAdapterOptions {
   apiKey?: string;
   models: string[];
   capabilities?: ProviderCapabilities;
-  fetchImpl?: LumpsCodeFetch;
+  fetchImpl?: LareCodeFetch;
 }
 
 interface AnthropicUsage {
@@ -59,7 +59,7 @@ export class AnthropicAdapter implements ProviderAdapter {
   private readonly baseUrl: string;
   private readonly apiKey: string;
   private readonly catalog: ModelInfo[];
-  private readonly fetchImpl: LumpsCodeFetch;
+  private readonly fetchImpl: LareCodeFetch;
   private readonly version = '2023-06-01';
 
   constructor(options: AnthropicAdapterOptions) {
@@ -144,7 +144,7 @@ export class AnthropicAdapter implements ProviderAdapter {
         signal: options.abortSignal,
       });
     } catch (error) {
-      throw LumpsError.wrap(
+      throw LareError.wrap(
         'NETWORK_ERROR',
         error instanceof Error ? error : new Error(String(error)),
         { provider: this.name, baseUrl: this.baseUrl }
@@ -152,7 +152,7 @@ export class AnthropicAdapter implements ProviderAdapter {
     }
 
     if (!response.ok) {
-      throw new LumpsError(
+      throw new LareError(
         response.status === 401 || response.status === 403
           ? 'PROVIDER_AUTH_FAILED'
           : 'PROVIDER_UNAVAILABLE',
@@ -170,7 +170,7 @@ export class AnthropicAdapter implements ProviderAdapter {
       .map((c) => c.text ?? '')
       .join('');
     if (text === undefined || text === null || text === '')
-      throw LumpsError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
+      throw LareError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
         provider: this.name,
       });
     if (data.usage && options.onUsage) options.onUsage(anthropicUsage(data.usage));
@@ -187,7 +187,7 @@ export class AnthropicAdapter implements ProviderAdapter {
         signal: options.abortSignal,
       });
     } catch (error) {
-      throw LumpsError.wrap(
+      throw LareError.wrap(
         'NETWORK_ERROR',
         error instanceof Error ? error : new Error(String(error)),
         { provider: this.name }
@@ -195,7 +195,7 @@ export class AnthropicAdapter implements ProviderAdapter {
     }
 
     if (!response.ok || !response.body) {
-      throw new LumpsError('PROVIDER_UNAVAILABLE', `${this.name} stream unavailable`, {
+      throw new LareError('PROVIDER_UNAVAILABLE', `${this.name} stream unavailable`, {
         context: { provider: this.name, status: response.status },
       });
     }
@@ -239,7 +239,7 @@ export class AnthropicAdapter implements ProviderAdapter {
         ) {
           yield event.delta.text;
         } else if (event.type === 'error') {
-          throw new LumpsError('PROVIDER_UNAVAILABLE', event.error?.message ?? 'stream error', {
+          throw new LareError('PROVIDER_UNAVAILABLE', event.error?.message ?? 'stream error', {
             context: { provider: this.name },
           });
         }

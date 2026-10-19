@@ -6,7 +6,7 @@ import {
   validateConfig,
   type Config,
   type ProviderConfig,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
 const ok = (text: string) => `\x1b[32m${text}\x1b[0m`;
 const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
@@ -85,5 +85,5 @@ export async function setupCommand(options: SetupOptions, deps: SetupDeps = {}):
   if (problems.length > 0) {
     for (const problem of problems) write(`  ${bad('×')} ${problem}\n`);
   }
-  write(`\n${dim('next: lumpscode doctor && lumpscode run "explain this repository"')}\n`);
+  write(`\n${dim('next: larecode doctor && larecode run "explain this repository"')}\n`);
 }

@@ -2,14 +2,14 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { HaltReason, UsageAggregate } from '@lumpscode/core';
+import type { HaltReason, UsageAggregate } from '@larecode/core';
 import { runTask, type LoopLike, type RunTaskDeps, type RunTaskOptions } from './run.js';
 import type { TestRun } from './verify.js';
 
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'lumpscode-run-'));
+  dir = mkdtempSync(join(tmpdir(), 'larecode-run-'));
 });
 
 afterEach(() => {

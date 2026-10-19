@@ -36,16 +36,16 @@ let home: string;
 let previousHome: string | undefined;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'lumps-skill-'));
+  root = mkdtempSync(join(tmpdir(), 'lare-skill-'));
   home = join(root, 'home');
   mkdirSync(home, { recursive: true });
-  previousHome = process.env.LUMPSCODE_HOME;
-  process.env.LUMPSCODE_HOME = home;
+  previousHome = process.env.LARECODE_HOME;
+  process.env.LARECODE_HOME = home;
 });
 
 afterEach(() => {
-  if (previousHome === undefined) delete process.env.LUMPSCODE_HOME;
-  else process.env.LUMPSCODE_HOME = previousHome;
+  if (previousHome === undefined) delete process.env.LARECODE_HOME;
+  else process.env.LARECODE_HOME = previousHome;
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -53,7 +53,7 @@ function setupProject(): { project: string; bundled: string } {
   const project = join(root, 'project');
   const bundled = join(root, 'bundled');
   mkdirSync(project, { recursive: true });
-  writeSkill(join(project, '.lumpscode', 'skills'), 'alpha', { body: 'Alpha instructions.' });
+  writeSkill(join(project, '.larecode', 'skills'), 'alpha', { body: 'Alpha instructions.' });
   writeSkill(join(project, '.agents', 'skills'), 'beta');
   writeSkill(join(home, 'skills'), 'gamma');
   writeSkill(bundled, 'delta', { body: 'Bundled instructions.' });
@@ -114,7 +114,7 @@ describe('skills discovery', () => {
 
   it('skips directories without a valid SKILL.md', () => {
     const { project, bundled } = setupProject();
-    const broken = join(project, '.lumpscode', 'skills', 'broken');
+    const broken = join(project, '.larecode', 'skills', 'broken');
     mkdirSync(broken, { recursive: true });
     writeFileSync(join(broken, 'SKILL.md'), 'no frontmatter');
     const found = discoverSkills(project, { bundledDir: bundled });
@@ -146,7 +146,7 @@ describe('skills consent and integrity', () => {
     skills.approve('alpha');
     expect(skills.load('alpha')).toContain('Alpha instructions.');
 
-    writeSkill(join(project, '.lumpscode', 'skills'), 'alpha', { body: 'Tampered instructions.' });
+    writeSkill(join(project, '.larecode', 'skills'), 'alpha', { body: 'Tampered instructions.' });
     expect(() => skills.load('alpha')).toThrowError(/changed on disk/);
 
     const found = skills.refresh();
@@ -172,7 +172,7 @@ describe('progressive disclosure budgets', () => {
   it('keeps the catalog inside its budget', () => {
     const { project, bundled } = setupProject();
     for (const name of ['one', 'two', 'three', 'four']) {
-      writeSkill(join(project, '.lumpscode', 'skills'), name, { description: 'short' });
+      writeSkill(join(project, '.larecode', 'skills'), name, { description: 'short' });
     }
     const skills = new Skills(options(project, bundled));
     for (const entry of skills.refresh()) skills.approve(entry.name);
@@ -183,7 +183,7 @@ describe('progressive disclosure budgets', () => {
 
   it('truncates oversized skill bodies on load', () => {
     const { project, bundled } = setupProject();
-    writeSkill(join(project, '.lumpscode', 'skills'), 'big', { body: 'b'.repeat(9000) });
+    writeSkill(join(project, '.larecode', 'skills'), 'big', { body: 'b'.repeat(9000) });
     const skills = new Skills(options(project, bundled));
     skills.refresh();
     skills.approve('big');

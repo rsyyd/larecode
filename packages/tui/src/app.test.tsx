@@ -1,6 +1,6 @@
 import { render } from 'ink-testing-library';
 import { describe, expect, it } from 'vitest';
-import type { UsageAggregate } from '@lumpscode/core';
+import type { UsageAggregate } from '@larecode/core';
 import { App } from './app.js';
 
 const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 60));
@@ -35,7 +35,7 @@ describe('App', () => {
     await flush();
     const frame = lastFrame() ?? '';
     expect(frame).toContain('> hi');
-    expect(frame).toContain('● lumps · plan');
+    expect(frame).toContain('● lare · plan');
     expect(frame).toContain('Hello world');
   });
 

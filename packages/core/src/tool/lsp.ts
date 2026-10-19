@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { LSP, SymbolInfo } from '../lsp/lsp.js';
 import type { Tool } from './tool.js';
 
@@ -37,7 +37,7 @@ export function lspTool(lsp: LSP): Tool {
     async execute(args) {
       const { action, path, line, column } = args as LspArgs;
       if (POSITION_ACTIONS.has(action) && line === undefined) {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', `action "${action}" requires a line`);
+        throw new LareError('TOOL_EXECUTION_FAILED', `action "${action}" requires a line`);
       }
       const position = { line: line ?? 1, column: column ?? 1 };
 
@@ -57,7 +57,7 @@ export function lspTool(lsp: LSP): Tool {
           hover = await lsp.hover(path, position.line, position.column);
           break;
         default:
-          throw new LumpsError('TOOL_EXECUTION_FAILED', `unknown action: ${action}`);
+          throw new LareError('TOOL_EXECUTION_FAILED', `unknown action: ${action}`);
       }
 
       if (!lsp.available()) {

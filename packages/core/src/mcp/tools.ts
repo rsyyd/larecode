@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool, ToolSchema } from '../tool/tool.js';
 import type { MCP, MCPTool } from './mcp.js';
 
@@ -28,7 +28,7 @@ function toTool(server: string, mcp: MCP, tool: MCPTool): Tool {
         source: `mcp:${server}/${tool.name}`,
       });
       if (!decision.allowed) {
-        throw new LumpsError(
+        throw new LareError(
           'PERMISSION_DENIED',
           decision.reason ?? `mcp call to ${server}/${tool.name} requires approval`,
           { context: { server, tool: tool.name } }

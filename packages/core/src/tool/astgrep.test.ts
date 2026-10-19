@@ -12,7 +12,7 @@ const quiet = () => new Logger({ level: 'error', handlers: [() => {}] });
 let project: string;
 
 beforeEach(() => {
-  project = mkdtempSync(join(tmpdir(), 'lumps-astgrep-'));
+  project = mkdtempSync(join(tmpdir(), 'lare-astgrep-'));
   mkdirSync(join(project, 'src'), { recursive: true });
   writeFileSync(
     join(project, 'src', 'one.ts'),

@@ -6,12 +6,12 @@ import {
   AgentLoop,
   Providers,
   Sessions,
-  LumpsError,
+  LareError,
   type CompletionOptions,
   type ModelInfo,
   type ProviderAdapter,
-} from '@lumpscode/core';
-import { LumpsClient } from './client.js';
+} from '@larecode/core';
+import { LareClient } from './client.js';
 
 class FakeAdapter implements ProviderAdapter {
   readonly name = 'fake';
@@ -42,17 +42,17 @@ class FakeAdapter implements ProviderAdapter {
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-sdk-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-sdk-'));
 });
 
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-function client(chunks: string[], overrides: { sessions?: Sessions } = {}): LumpsClient {
+function client(chunks: string[], overrides: { sessions?: Sessions } = {}): LareClient {
   const providers = new Providers();
   providers.register(new FakeAdapter(chunks));
-  return new LumpsClient({
+  return new LareClient({
     provider: 'fake',
     model: 'test-model',
     sessions: overrides.sessions ?? new Sessions(join(dir, 'sessions')),
@@ -60,7 +60,7 @@ function client(chunks: string[], overrides: { sessions?: Sessions } = {}): Lump
   });
 }
 
-describe('LumpsClient', () => {
+describe('LareClient', () => {
   it('drives core end to end: streams, records usage, and persists the session', async () => {
     const sessions = new Sessions(join(dir, 'sessions'));
     const sdk = client(['Hello ', 'from ', 'core'], { sessions });
@@ -111,7 +111,7 @@ describe('LumpsClient', () => {
 
   it('rejects unknown session ids', async () => {
     const sdk = client(['x']);
-    await expect(sdk.run('hi', { sessionId: 'missing' })).rejects.toThrow(LumpsError);
+    await expect(sdk.run('hi', { sessionId: 'missing' })).rejects.toThrow(LareError);
     await expect(sdk.run('hi', { sessionId: 'missing' })).rejects.toMatchObject({
       code: 'SESSION_NOT_FOUND',
     });

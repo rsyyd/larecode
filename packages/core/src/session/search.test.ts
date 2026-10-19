@@ -12,7 +12,7 @@ let dir: string;
 let sessions: Sessions;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-search-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-search-'));
   sessions = new Sessions(dir);
 });
 
@@ -123,9 +123,9 @@ describe('session_search tool', () => {
   });
 
   it('returns hits and a digest from the session store', async () => {
-    const home = await mkdtemp(join(tmpdir(), 'lumps-home-'));
-    const previous = process.env.LUMPSCODE_HOME;
-    process.env.LUMPSCODE_HOME = home;
+    const home = await mkdtemp(join(tmpdir(), 'lare-home-'));
+    const previous = process.env.LARECODE_HOME;
+    process.env.LARECODE_HOME = home;
     try {
       const store = new Sessions();
       const session = store.create('remember the docker compose setup');
@@ -138,8 +138,8 @@ describe('session_search tool', () => {
       expect(result.hits[0].sessionId).toBe(session.id);
       expect(result.summary).toContain('docker compose');
     } finally {
-      if (previous === undefined) delete process.env.LUMPSCODE_HOME;
-      else process.env.LUMPSCODE_HOME = previous;
+      if (previous === undefined) delete process.env.LARECODE_HOME;
+      else process.env.LARECODE_HOME = previous;
       await rm(home, { recursive: true, force: true });
     }
   });

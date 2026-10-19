@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
-import { lumpscodeHome } from '../config/config.js';
-import { LumpsError } from '../error/error.js';
+import { larecodeHome } from '../config/config.js';
+import { LareError } from '../error/error.js';
 
 const run = promisify(execFile);
 
@@ -19,11 +19,11 @@ const SHADOW_EXCLUDES = [
   'target/',
   '__pycache__/',
   '.venv/',
-  '.lumpscode/',
+  '.larecode/',
 ];
 
 export function checkpointsDir(): string {
-  return join(lumpscodeHome(), 'checkpoints');
+  return join(larecodeHome(), 'checkpoints');
 }
 
 export interface CheckpointInfo {
@@ -43,10 +43,10 @@ export interface CheckpointOptions {
   gitBin?: string;
 }
 
-function gitFailure(error: unknown, args: string[]): LumpsError {
+function gitFailure(error: unknown, args: string[]): LareError {
   const err = error as { stderr?: string; message?: string; code?: number };
   const detail = err.stderr?.trim() || err.message || 'git command failed';
-  return new LumpsError('GIT_OPERATION_FAILED', detail, {
+  return new LareError('GIT_OPERATION_FAILED', detail, {
     cause: error instanceof Error ? error : undefined,
     context: { args: args.join(' '), exitCode: err.code },
   });
@@ -59,11 +59,11 @@ export class Checkpoints {
 
   constructor(options: CheckpointOptions) {
     if (!SAFE_SESSION.test(options.sessionId)) {
-      throw new LumpsError('GIT_OPERATION_FAILED', `unsafe session id: ${options.sessionId}`);
+      throw new LareError('GIT_OPERATION_FAILED', `unsafe session id: ${options.sessionId}`);
     }
     this.root = options.root;
     this.gitBin = options.gitBin ?? 'git';
-    const home = options.home ?? lumpscodeHome();
+    const home = options.home ?? larecodeHome();
     const scope = createHash('sha256').update(options.root).digest('hex').slice(0, 16);
     this.gitDir = join(home, 'checkpoints', `${scope}-${options.sessionId}.git`);
   }
@@ -105,9 +105,9 @@ export class Checkpoints {
     const clean = label.replace(/\s+/g, ' ').trim().slice(0, 200) || 'checkpoint';
     await this.run(
       '-c',
-      'user.name=lumpscode',
+      'user.name=larecode',
       '-c',
-      'user.email=checkpoint@lumpscode.local',
+      'user.email=checkpoint@larecode.local',
       '-c',
       'commit.gpgsign=false',
       'commit',
@@ -139,10 +139,10 @@ export class Checkpoints {
 
   async rewind(id: string, options: { removeUntracked?: boolean } = {}): Promise<RewindResult> {
     if (!SHA_RE.test(id)) {
-      throw new LumpsError('GIT_OPERATION_FAILED', `invalid checkpoint id: ${id}`);
+      throw new LareError('GIT_OPERATION_FAILED', `invalid checkpoint id: ${id}`);
     }
     if (!existsSync(join(this.gitDir, 'HEAD'))) {
-      throw new LumpsError('GIT_OPERATION_FAILED', 'no checkpoints recorded for this session');
+      throw new LareError('GIT_OPERATION_FAILED', 'no checkpoints recorded for this session');
     }
     const indexFile = join(this.gitDir, `tmp-index-${process.pid}`);
     const env = { ...process.env, GIT_INDEX_FILE: indexFile };
@@ -180,7 +180,7 @@ export interface WorktreeOptions {
 }
 
 export function worktreesDir(root: string): string {
-  return join(root, '.lumpscode', 'worktrees');
+  return join(root, '.larecode', 'worktrees');
 }
 
 export class Worktrees {
@@ -207,7 +207,7 @@ export class Worktrees {
 
   private validateName(name: string): void {
     if (!WORKTREE_NAME_RE.test(name) || name.includes('..')) {
-      throw new LumpsError('GIT_OPERATION_FAILED', `invalid worktree name: ${name}`);
+      throw new LareError('GIT_OPERATION_FAILED', `invalid worktree name: ${name}`);
     }
   }
 
@@ -215,7 +215,7 @@ export class Worktrees {
     this.validateName(name);
     const path = this.pathFor(name);
     mkdirSync(dirname(path), { recursive: true });
-    const branch = `lumpscode/${name}`;
+    const branch = `larecode/${name}`;
     const args = ['worktree', 'add', '-b', branch, path];
     if (options.base) args.push(options.base);
     await this.run(...args);
@@ -260,7 +260,7 @@ export class Worktrees {
     const path = this.pathFor(name);
     await this.run('worktree', 'remove', ...(options.force ? ['--force'] : []), path);
     if (options.deleteBranch ?? true) {
-      await this.run('branch', '-D', `lumpscode/${name}`);
+      await this.run('branch', '-D', `larecode/${name}`);
     }
   }
 }

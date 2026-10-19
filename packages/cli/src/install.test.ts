@@ -8,14 +8,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const installSh = fileURLToPath(new URL('../../../install.sh', import.meta.url));
 const assetName = () =>
-  `lumpscode-${process.platform === 'darwin' ? 'darwin' : 'linux'}-${
+  `larecode-${process.platform === 'darwin' ? 'darwin' : 'linux'}-${
     process.arch === 'arm64' ? 'arm64' : 'x64'
   }`;
 
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-install-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-install-'));
 });
 
 afterEach(async () => {
@@ -37,8 +37,8 @@ function runInstaller(base: string, env: Record<string, string> = {}): string {
   return execFileSync('sh', [installSh], {
     env: {
       ...process.env,
-      LUMPSCODE_INSTALL_BASE: base,
-      LUMPSCODE_INSTALL_DIR: installDir,
+      LARECODE_INSTALL_BASE: base,
+      LARECODE_INSTALL_DIR: installDir,
       ...env,
     },
     encoding: 'utf8',
@@ -51,16 +51,16 @@ describe('install.sh', () => {
     const { base } = await fakeRelease('#!/bin/sh\necho 9.9.9\n');
     const output = runInstaller(base);
     expect(output).toContain('installed to');
-    const installed = join(dir, 'bin', 'lumpscode');
+    const installed = join(dir, 'bin', 'larecode');
     const run = execFileSync('sh', [installed], { encoding: 'utf8' });
     expect(run.trim()).toBe('9.9.9');
   });
 
   it('verifies the checksum when provided', async () => {
     const { base, sha } = await fakeRelease('#!/bin/sh\necho ok\n');
-    runInstaller(base, { LUMPSCODE_SHA256: sha });
+    runInstaller(base, { LARECODE_SHA256: sha });
     const wrong = createHash('sha256').update('other').digest('hex');
-    expect(() => runInstaller(base, { LUMPSCODE_SHA256: wrong })).toThrow(/checksum mismatch/);
+    expect(() => runInstaller(base, { LARECODE_SHA256: wrong })).toThrow(/checksum mismatch/);
   });
 
   it('fails cleanly when the download is missing', async () => {

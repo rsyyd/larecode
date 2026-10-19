@@ -1,6 +1,6 @@
 # Tools
 
-Lumps Code ships a set of built-in tools. Group names in the table map to [permissions.md](permissions.md).
+Lare Code ships a set of built-in tools. Group names in the table map to [permissions.md](permissions.md).
 
 | Tool             | Group      | What it does                                           |
 | ---------------- | ---------- | ------------------------------------------------------ |
@@ -28,8 +28,8 @@ Lumps Code ships a set of built-in tools. Group names in the table map to [permi
 
 Two directions:
 
-- Client: connect external MCP servers and call their tools (`lumpscode mcp add|list|call`, group `external-services`).
-- Server: expose lumpscode tools to other agents over stdio (`lumpscode mcp serve`, default read-only).
+- Client: connect external MCP servers and call their tools (`larecode mcp add|list|call`, group `external-services`).
+- Server: expose larecode tools to other agents over stdio (`larecode mcp serve`, default read-only).
 
 See [mcp.md](mcp.md).
 

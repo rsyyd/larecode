@@ -3,14 +3,14 @@ import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { Jobs, cronPermissions } from './job.js';
 
 let dir: string;
 let file: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-cron-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-cron-'));
   file = join(dir, 'cron.json');
 });
 
@@ -54,7 +54,7 @@ describe('Jobs', () => {
       try {
         fn();
       } catch (error) {
-        return (error as LumpsError).code;
+        return (error as LareError).code;
       }
       return undefined;
     };

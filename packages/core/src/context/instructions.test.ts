@@ -8,13 +8,13 @@ let home: string;
 let project: string;
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), 'lumpscode-consent-'));
-  project = mkdtempSync(join(tmpdir(), 'lumpscode-project-'));
-  process.env.LUMPSCODE_HOME = home;
+  home = mkdtempSync(join(tmpdir(), 'larecode-consent-'));
+  project = mkdtempSync(join(tmpdir(), 'larecode-project-'));
+  process.env.LARECODE_HOME = home;
 });
 
 afterEach(() => {
-  delete process.env.LUMPSCODE_HOME;
+  delete process.env.LARECODE_HOME;
 });
 
 describe('instructions', () => {

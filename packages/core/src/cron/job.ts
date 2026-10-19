@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { lumpscodeHome } from '../config/config.js';
-import { LumpsError } from '../error/error.js';
+import { larecodeHome } from '../config/config.js';
+import { LareError } from '../error/error.js';
 import {
   assertPreAuthorizable,
   Permissions,
@@ -64,7 +64,7 @@ interface StoredJob {
 }
 
 export function cronPath(): string {
-  return join(lumpscodeHome(), 'cron.json');
+  return join(larecodeHome(), 'cron.json');
 }
 
 export function cronPermissions(job: CronJob): Permissions {
@@ -101,7 +101,7 @@ export class Jobs {
     const schedule = input.schedule.trim();
     const parsed = parseSchedule(schedule);
     const prompt = input.prompt.trim();
-    if (!prompt) throw new LumpsError('CONFIG_INVALID', 'cron job needs a prompt');
+    if (!prompt) throw new LareError('CONFIG_INVALID', 'cron job needs a prompt');
     const policy = assertPreAuthorizable(input.policy ?? []);
     const id = randomBytes(4).toString('hex');
     const job: CronJob = {

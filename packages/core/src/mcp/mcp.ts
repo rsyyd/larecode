@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { LumpsError, type ErrorCode } from '../error/error.js';
+import { LareError, type ErrorCode } from '../error/error.js';
 import { defaultLogger, type Logger } from '../logger/logger.js';
 
 export interface MCPServerConfig {
@@ -21,7 +21,7 @@ export interface MCPTool {
 }
 
 // ponytail: literal client version, importing VERSION from the barrel would cycle
-const CLIENT_INFO = { name: 'lumpscode', version: '0.0.0' };
+const CLIENT_INFO = { name: 'larecode', version: '0.0.0' };
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function transportOf(config: MCPServerConfig): 'stdio' | 'http' {
@@ -32,10 +32,10 @@ function wrapMcpError(
   code: ErrorCode,
   error: unknown,
   context: Record<string, unknown>
-): LumpsError {
-  if (error instanceof LumpsError) return error;
+): LareError {
+  if (error instanceof LareError) return error;
   const cause = error instanceof Error ? error : new Error(String(error));
-  return LumpsError.wrap(code, cause, context);
+  return LareError.wrap(code, cause, context);
 }
 
 function normalizeContent(content: unknown[] | undefined): string {
@@ -125,7 +125,7 @@ export class MCP {
     }
     const text = normalizeContent(result.content as unknown[] | undefined);
     if (result.isError) {
-      throw new LumpsError('MCP_TOOL_FAILED', text || `mcp tool ${tool} reported an error`, {
+      throw new LareError('MCP_TOOL_FAILED', text || `mcp tool ${tool} reported an error`, {
         context: { server, tool },
       });
     }
@@ -137,14 +137,14 @@ export class MCP {
   ): StdioClientTransport | StreamableHTTPClientTransport {
     if (transportOf(config) === 'http') {
       if (!config.url) {
-        throw new LumpsError('MCP_CONNECTION_FAILED', `server "${config.name}" has no url`);
+        throw new LareError('MCP_CONNECTION_FAILED', `server "${config.name}" has no url`);
       }
       return new StreamableHTTPClientTransport(new URL(config.url), {
         requestInit: config.headers ? { headers: config.headers } : undefined,
       });
     }
     if (!config.command) {
-      throw new LumpsError('MCP_CONNECTION_FAILED', `server "${config.name}" has no command`);
+      throw new LareError('MCP_CONNECTION_FAILED', `server "${config.name}" has no command`);
     }
     return new StdioClientTransport({
       command: config.command,
@@ -158,7 +158,7 @@ export class MCP {
     if (existing) return existing;
     const config = this.servers.get(name);
     if (!config) {
-      throw new LumpsError('MCP_CONNECTION_FAILED', `unknown mcp server: ${name}`);
+      throw new LareError('MCP_CONNECTION_FAILED', `unknown mcp server: ${name}`);
     }
     await this.connect(config);
     return this.clients.get(name) as Client;

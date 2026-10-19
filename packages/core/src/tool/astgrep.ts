@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Lang, parse, type SgNode } from '@ast-grep/napi';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
 import { looksBinary, resolveInWorkspace, walkFiles } from './files.js';
 
@@ -71,13 +71,13 @@ export function astGrepTool(): Tool {
     async execute(args, context) {
       const { pattern, path: sub, lang, maxResults } = (args ?? {}) as AstGrepArgs;
       if (typeof pattern !== 'string' || pattern.trim() === '') {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', 'ast_grep requires a pattern');
+        throw new LareError('TOOL_EXECUTION_FAILED', 'ast_grep requires a pattern');
       }
       let forcedLang: Lang | undefined;
       if (lang !== undefined) {
         forcedLang = LANGS[lang.toLowerCase()];
         if (!forcedLang) {
-          throw new LumpsError(
+          throw new LareError(
             'TOOL_EXECUTION_FAILED',
             `unsupported lang "${lang}"; use ts, tsx, js, or jsx`
           );
@@ -89,7 +89,7 @@ export function astGrepTool(): Tool {
           throw new Error('pattern does not parse as valid code');
         }
       } catch (error) {
-        throw new LumpsError(
+        throw new LareError(
           'TOOL_EXECUTION_FAILED',
           `invalid pattern: ${error instanceof Error ? error.message : String(error)}`
         );

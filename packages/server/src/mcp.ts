@@ -12,9 +12,9 @@ import {
   type LogLevel,
   type PermissionGroup,
   type Tool,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
-export const MCP_SERVER_NAME = 'lumpscode';
+export const MCP_SERVER_NAME = 'larecode';
 
 export interface McpServeOptions {
   name?: string;
@@ -82,7 +82,7 @@ function renderOutput(output: unknown): string {
 }
 
 function stderrLogger(): Logger {
-  const level = (process.env.LUMPSCODE_LOG_LEVEL as LogLevel | undefined) ?? 'error';
+  const level = (process.env.LARECODE_LOG_LEVEL as LogLevel | undefined) ?? 'error';
   return new Logger({
     level,
     handlers: [

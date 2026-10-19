@@ -7,21 +7,21 @@ import {
   discoverSkills,
   SKILL_BODY_MAX_CHARS,
   SKILL_CATALOG_MAX_CHARS,
-} from '@lumpscode/core';
+} from '@larecode/core';
 import { bundledSkillsDir } from './index.js';
 
 let root: string;
 let previousHome: string | undefined;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'lumps-bundle-'));
-  previousHome = process.env.LUMPSCODE_HOME;
-  process.env.LUMPSCODE_HOME = join(root, 'home');
+  root = mkdtempSync(join(tmpdir(), 'lare-bundle-'));
+  previousHome = process.env.LARECODE_HOME;
+  process.env.LARECODE_HOME = join(root, 'home');
 });
 
 afterEach(() => {
-  if (previousHome === undefined) delete process.env.LUMPSCODE_HOME;
-  else process.env.LUMPSCODE_HOME = previousHome;
+  if (previousHome === undefined) delete process.env.LARECODE_HOME;
+  else process.env.LARECODE_HOME = previousHome;
   rmSync(root, { recursive: true, force: true });
 });
 

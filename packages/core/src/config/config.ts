@@ -22,16 +22,16 @@ export interface Config {
   execution?: ExecutionConfig;
 }
 
-export function lumpscodeHome(): string {
-  return process.env.LUMPSCODE_HOME ?? join(homedir(), '.lumpscode');
+export function larecodeHome(): string {
+  return process.env.LARECODE_HOME ?? join(homedir(), '.larecode');
 }
 
 export function configPath(): string {
-  return join(lumpscodeHome(), 'config.json');
+  return join(larecodeHome(), 'config.json');
 }
 
 export function projectConfigPath(projectDir: string = process.cwd()): string {
-  return join(projectDir, 'lumpscode.json');
+  return join(projectDir, 'larecode.json');
 }
 
 export function defaultConfig(): Config {

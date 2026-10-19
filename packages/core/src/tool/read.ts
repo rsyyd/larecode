@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
 import { MAX_READ_BYTES, resolveInWorkspace, sha256 } from './files.js';
 
@@ -30,7 +30,7 @@ export function readTool(): Tool {
       try {
         buf = await readFile(abs);
       } catch {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', `file not found: ${input}`, {
+        throw new LareError('TOOL_EXECUTION_FAILED', `file not found: ${input}`, {
           context: { path: input, workingDir: context.workingDir },
         });
       }

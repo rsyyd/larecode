@@ -2,12 +2,12 @@ import { randomBytes } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import {
-  lumpscodeHome,
+  larecodeHome,
   redactSecrets,
   redactValue,
   type Session,
   type SessionMessage,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
 export const SHARE_TOKEN_RE = /^[0-9a-f]{32,64}$/;
 
@@ -24,7 +24,7 @@ interface StoredShare {
 }
 
 export function sharesPath(): string {
-  return join(lumpscodeHome(), 'shares.json');
+  return join(larecodeHome(), 'shares.json');
 }
 
 export class Shares {
@@ -129,7 +129,7 @@ ${toolCalls}${toolResults}
 }
 
 export function renderSharePage(session: Session): string {
-  const title = `LumpsCode session ${session.id.slice(0, 8)}`;
+  const title = `LareCode session ${session.id.slice(0, 8)}`;
   const messages = session.messages.map(renderMessage).join('\n');
   return `<!doctype html>
 <html lang="en">

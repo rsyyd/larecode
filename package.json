@@ -1,5 +1,5 @@
 {
-  "name": "lumpscode",
+  "name": "larecode",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "lint:fix": "oxlint --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "bun build --compile --outfile=dist/lumpscode packages/cli/src/index.ts",
+    "build": "bun build --compile --outfile=dist/larecode packages/cli/src/index.ts",
     "build:npm": "bun build --target=node --external @ast-grep/napi --outfile npm/dist/index.js packages/cli/src/index.ts",
     "dev": "bun run packages/cli/src/index.ts"
   },

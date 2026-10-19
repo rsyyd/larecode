@@ -1,11 +1,11 @@
 {
-  "name": "lumpscode",
+  "name": "larecode",
   "version": "0.0.0",
   "description": "Provider-neutral AI coding agent for the terminal",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "lumpscode": "bin/lumpscode.mjs"
+    "larecode": "bin/larecode.mjs"
   },
   "files": [
     "bin",
@@ -20,11 +20,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rsyyd/lumpscode.git"
+    "url": "git+https://github.com/rsyyd/lare.git"
   },
-  "homepage": "https://github.com/rsyyd/lumpscode",
+  "homepage": "https://github.com/rsyyd/lare",
   "bugs": {
-    "url": "https://github.com/rsyyd/lumpscode/issues"
+    "url": "https://github.com/rsyyd/lare/issues"
   },
   "keywords": [
     "ai",

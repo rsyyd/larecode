@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { lumpscodeHome } from '../config/config.js';
+import { larecodeHome } from '../config/config.js';
 import { defaultLogger, Logger } from '../logger/logger.js';
 import type { HookContext, HookDecision, HookType } from '../hook/hook.js';
 import type { Hooks } from '../hook/hook.js';
@@ -86,8 +86,8 @@ export function pluginRoots(
   projectDir: string
 ): Array<{ dir: string; trust: PluginTrust; origin: 'user' | 'project' }> {
   return [
-    { dir: join(lumpscodeHome(), 'plugins'), trust: 'trusted', origin: 'user' },
-    { dir: join(projectDir, '.lumpscode', 'plugins'), trust: 'untrusted', origin: 'project' },
+    { dir: join(larecodeHome(), 'plugins'), trust: 'trusted', origin: 'user' },
+    { dir: join(projectDir, '.larecode', 'plugins'), trust: 'untrusted', origin: 'project' },
   ];
 }
 

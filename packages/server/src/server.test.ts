@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { Sessions } from '@lumpscode/core';
+import { Sessions } from '@larecode/core';
 import { Shares } from './share.js';
 import { Server, type ServerOptions } from './server.js';
 
@@ -14,7 +14,7 @@ let server: Server | undefined;
 let sessions: Sessions | undefined;
 
 async function start(options: Partial<ServerOptions> = {}): Promise<Server> {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-server-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-server-'));
   sessions = new Sessions(dir);
   server = new Server({
     port: 0,

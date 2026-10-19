@@ -121,7 +121,7 @@ function ctx(): ToolContext {
 }
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-lsp-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-lsp-'));
   await writeFile(join(dir, 'server.cjs'), FAKE_SERVER);
   await writeFile(join(dir, 'sample.ts'), 'export function greet(): string {\n  return "hi";\n}\n');
   lsp = new LSP({
@@ -176,7 +176,7 @@ describe('lsp client', () => {
 
   it('degrades gracefully when the server cannot start', async () => {
     const broken = new LSP({
-      command: 'lumps-missing-language-server-xyz',
+      command: 'lare-missing-language-server-xyz',
       rootDir: dir,
       logger: quiet(),
     });

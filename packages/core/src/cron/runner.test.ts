@@ -9,7 +9,7 @@ let dir: string;
 let file: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-cron-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-cron-'));
   file = join(dir, 'cron.json');
 });
 

@@ -2,13 +2,13 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Sessions } from '@lumpscode/core';
+import { Sessions } from '@larecode/core';
 import { AcpAgent, type AcpStopReason, type AcpTurnContext } from './acp.js';
 
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-acp-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-acp-'));
 });
 
 afterEach(async () => {
@@ -69,7 +69,7 @@ describe('AcpAgent', () => {
     const response = out[0];
     expect(response.id).toBe(0);
     expect(response.result?.protocolVersion).toBe(1);
-    expect(response.result?.agentInfo).toMatchObject({ name: 'lumpscode', version: '9.9.9' });
+    expect(response.result?.agentInfo).toMatchObject({ name: 'larecode', version: '9.9.9' });
     expect(response.result?.agentCapabilities).toMatchObject({ loadSession: false });
     expect(response.result?.authMethods).toEqual([]);
   });

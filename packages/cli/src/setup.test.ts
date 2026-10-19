@@ -2,13 +2,13 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Config } from '@lumpscode/core';
+import type { Config } from '@larecode/core';
 import { buildConfig, setupCommand } from './commands/setup.js';
 
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-setup-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-setup-'));
 });
 
 afterEach(async () => {

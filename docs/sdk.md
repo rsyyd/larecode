@@ -4,12 +4,12 @@ Two integration surfaces, both built on the same core.
 
 ## TypeScript SDK
 
-`@lumpscode/sdk` wraps the agent loop in a small client. It is pure TypeScript with no Bun-specific APIs, so it runs on Node 20+.
+`@larecode/sdk` wraps the agent loop in a small client. It is pure TypeScript with no Bun-specific APIs, so it runs on Node 20+.
 
 ```ts
-import { LumpsClient } from '@lumpscode/sdk';
+import { LareClient } from '@larecode/sdk';
 
-const client = new LumpsClient({
+const client = new LareClient({
   workingDir: process.cwd(),
   provider: 'openai-compatible',
   model: 'gpt-4o',
@@ -39,17 +39,17 @@ controller.abort();
 // run resolves with stopReason 'cancelled' and the text so far
 ```
 
-Sessions persist through the same store the CLI uses, so a conversation started in the SDK shows up in `sessions` and can be shared with `lumpscode serve`.
+Sessions persist through the same store the CLI uses, so a conversation started in the SDK shows up in `sessions` and can be shared with `larecode serve`.
 
 ## ACP for editors
 
-`lumpscode acp` speaks the Agent Client Protocol v1 over stdio, which is what editors like Zed use to host agents.
+`larecode acp` speaks the Agent Client Protocol v1 over stdio, which is what editors like Zed use to host agents.
 
 ```json
 {
   "agent_servers": {
-    "Lumps Code": {
-      "command": "lumpscode",
+    "Lare Code": {
+      "command": "larecode",
       "args": ["acp"]
     }
   }
@@ -60,9 +60,9 @@ The adapter implements `initialize`, `session/new`, `session/prompt` with stream
 
 ## Choosing between them
 
-| Need                              | Use                                                |
-| --------------------------------- | -------------------------------------------------- |
-| Embed the agent in a Node service | `@lumpscode/sdk`                                   |
-| Host inside an editor             | `lumpscode acp`                                    |
-| Expose tools to another agent     | `lumpscode mcp serve` ([mcp.md](mcp.md))           |
-| Drive it from other processes     | `lumpscode serve` ([automation.md](automation.md)) |
+| Need                              | Use                                               |
+| --------------------------------- | ------------------------------------------------- |
+| Embed the agent in a Node service | `@larecode/sdk`                                   |
+| Host inside an editor             | `larecode acp`                                    |
+| Expose tools to another agent     | `larecode mcp serve` ([mcp.md](mcp.md))           |
+| Drive it from other processes     | `larecode serve` ([automation.md](automation.md)) |

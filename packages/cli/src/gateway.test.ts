@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { TelegramGatewayOptions } from '@lumpscode/gateway';
+import type { TelegramGatewayOptions } from '@larecode/gateway';
 import { gatewayCommand, type GatewayDeps } from './commands/gateway.js';
 
 function harness(overrides: Partial<GatewayDeps> = {}) {
@@ -32,7 +32,7 @@ describe('gateway command', () => {
 
   it('reads the token and chat from the environment', async () => {
     const ui = harness({
-      env: { LUMPSCODE_TELEGRAM_TOKEN: 'env-token', LUMPSCODE_TELEGRAM_CHAT_ID: '42' },
+      env: { LARECODE_TELEGRAM_TOKEN: 'env-token', LARECODE_TELEGRAM_CHAT_ID: '42' },
     });
     expect(await gatewayCommand({ platform: 'telegram' }, ui.deps)).toBe(0);
     expect(ui.created[0].token).toBe('env-token');
@@ -63,7 +63,7 @@ describe('gateway command', () => {
   });
 
   it('honours a custom api base for self-hosted bot servers', async () => {
-    const ui = harness({ env: { LUMPSCODE_TELEGRAM_API_BASE: 'http://127.0.0.1:9999' } });
+    const ui = harness({ env: { LARECODE_TELEGRAM_API_BASE: 'http://127.0.0.1:9999' } });
     expect(await gatewayCommand({ token: 't' }, ui.deps)).toBe(0);
     expect(ui.created[0].apiBase).toBe('http://127.0.0.1:9999');
   });

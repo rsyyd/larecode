@@ -17,20 +17,20 @@ let previousHome: string | undefined;
 let plugins: Plugins | undefined;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'lumps-plugin-'));
+  root = mkdtempSync(join(tmpdir(), 'lare-plugin-'));
   home = join(root, 'home');
   project = join(root, 'project');
   mkdirSync(home, { recursive: true });
   mkdirSync(project, { recursive: true });
-  previousHome = process.env.LUMPSCODE_HOME;
-  process.env.LUMPSCODE_HOME = home;
+  previousHome = process.env.LARECODE_HOME;
+  process.env.LARECODE_HOME = home;
 });
 
 afterEach(async () => {
   await plugins?.close();
   plugins = undefined;
-  if (previousHome === undefined) delete process.env.LUMPSCODE_HOME;
-  else process.env.LUMPSCODE_HOME = previousHome;
+  if (previousHome === undefined) delete process.env.LARECODE_HOME;
+  else process.env.LARECODE_HOME = previousHome;
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -57,7 +57,7 @@ function userPluginsDir(): string {
 }
 
 function projectPluginsDir(): string {
-  return join(project, '.lumpscode', 'plugins');
+  return join(project, '.larecode', 'plugins');
 }
 
 function ctx(): ToolContext {

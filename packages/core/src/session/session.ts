@@ -9,8 +9,8 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
-import { lumpscodeHome } from '../config/config.js';
-import { LumpsError } from '../error/error.js';
+import { larecodeHome } from '../config/config.js';
+import { LareError } from '../error/error.js';
 import { redactValue } from '../permission/redact.js';
 import type { ToolCall, ToolResult } from '../tool/tool.js';
 
@@ -61,7 +61,7 @@ interface StoredSession {
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/;
 
 export function sessionsDir(): string {
-  return join(lumpscodeHome(), 'sessions');
+  return join(larecodeHome(), 'sessions');
 }
 
 export function renderSessionContext(session: Session): string {
@@ -177,7 +177,7 @@ export class Sessions {
   private persist(session: Session): void {
     const file = this.fileFor(session.id);
     if (!file) {
-      throw new LumpsError('SESSION_NOT_FOUND', `invalid session id "${session.id}"`);
+      throw new LareError('SESSION_NOT_FOUND', `invalid session id "${session.id}"`);
     }
     mkdirSync(this.dir, { recursive: true });
     const redacted = redactValue(toStored(session)) as StoredSession;
@@ -191,7 +191,7 @@ export class Sessions {
     try {
       return fromStored(JSON.parse(readFileSync(file, 'utf8')) as StoredSession);
     } catch (error) {
-      throw LumpsError.wrap('SESSION_CORRUPTED', error as Error, { file });
+      throw LareError.wrap('SESSION_CORRUPTED', error as Error, { file });
     }
   }
 }

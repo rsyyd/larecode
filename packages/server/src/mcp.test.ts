@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Logger, MCP } from '@lumpscode/core';
+import { Logger, MCP } from '@larecode/core';
 import { serveMcp } from './mcp.js';
 
 const CLI_INDEX = fileURLToPath(new URL('../../cli/src/index.ts', import.meta.url));
@@ -27,7 +27,7 @@ async function connect(...extra: string[]): Promise<MCP> {
 }
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-mcp-serve-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-mcp-serve-'));
   await writeFile(join(dir, 'hello.txt'), 'hello from mcp\n');
 });
 

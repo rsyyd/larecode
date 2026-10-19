@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { MAX_STREAM_BYTES } from '../tool/files.js';
 
 export interface ExecRequest {
@@ -100,7 +100,7 @@ export function runProcess(spec: SpawnSpec, options: RunOptions): Promise<ExecRe
       if (settled) return;
       settled = true;
       cleanup();
-      reject(new LumpsError('TOOL_EXECUTION_FAILED', `command failed to start: ${error.message}`));
+      reject(new LareError('TOOL_EXECUTION_FAILED', `command failed to start: ${error.message}`));
     });
 
     child.on('close', (code) => {
@@ -108,7 +108,7 @@ export function runProcess(spec: SpawnSpec, options: RunOptions): Promise<ExecRe
       settled = true;
       cleanup();
       if (options.abortSignal.aborted) {
-        reject(new LumpsError('CANCELLED', 'command cancelled'));
+        reject(new LareError('CANCELLED', 'command cancelled'));
         return;
       }
       resolvePromise({
@@ -234,7 +234,7 @@ export function backendFromConfig(config: { execution?: ExecutionConfig }): Exec
   const execution = config.execution ?? { backend: 'local' as const };
   if (execution.backend === 'docker') {
     if (!execution.docker?.image) {
-      throw new LumpsError(
+      throw new LareError(
         'CONFIG_INVALID',
         'execution.docker.image is required for the docker backend'
       );
@@ -243,7 +243,7 @@ export function backendFromConfig(config: { execution?: ExecutionConfig }): Exec
   }
   if (execution.backend === 'ssh') {
     if (!execution.ssh?.host) {
-      throw new LumpsError('CONFIG_INVALID', 'execution.ssh.host is required for the ssh backend');
+      throw new LareError('CONFIG_INVALID', 'execution.ssh.host is required for the ssh backend');
     }
     return new SshBackend(execution.ssh);
   }

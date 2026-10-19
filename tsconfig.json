@@ -18,13 +18,13 @@
     "declarationMap": true,
     "baseUrl": ".",
     "paths": {
-      "@lumpscode/core": ["packages/core/src"],
-      "@lumpscode/tui": ["packages/tui/src"],
-      "@lumpscode/cli": ["packages/cli/src"],
-      "@lumpscode/server": ["packages/server/src"],
-      "@lumpscode/gateway": ["packages/gateway/src"],
-      "@lumpscode/sdk": ["packages/sdk/src"],
-      "@lumpscode/skills": ["packages/skills/src"]
+      "@larecode/core": ["packages/core/src"],
+      "@larecode/tui": ["packages/tui/src"],
+      "@larecode/cli": ["packages/cli/src"],
+      "@larecode/server": ["packages/server/src"],
+      "@larecode/gateway": ["packages/gateway/src"],
+      "@larecode/sdk": ["packages/sdk/src"],
+      "@larecode/skills": ["packages/skills/src"]
     }
   },
   "exclude": ["node_modules", "dist", "**/dist/**"]

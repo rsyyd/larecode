@@ -3,7 +3,7 @@ import {
   loadEffectiveConfig,
   type HaltReason,
   type UsageAggregate,
-} from '@lumpscode/core';
+} from '@larecode/core';
 import {
   compareRuns,
   detectTestCommand,

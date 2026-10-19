@@ -11,8 +11,8 @@ let projectDir: string;
 let memory: Memory;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-curator-'));
-  projectDir = await mkdtemp(join(tmpdir(), 'lumps-project-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-curator-'));
+  projectDir = await mkdtemp(join(tmpdir(), 'lare-project-'));
   memory = new Memory({ dir, projectDir });
 });
 

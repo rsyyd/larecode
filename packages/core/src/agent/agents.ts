@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool } from '../tool/tool.js';
 
 export type AgentName = 'build' | 'plan' | 'general';
@@ -57,7 +57,7 @@ function gateBash(tool: Tool): Tool {
     async execute(args, context) {
       const decision = context.permissions.check('shell', { source: 'plan:bash' });
       if (!decision.allowed) {
-        throw new LumpsError(
+        throw new LareError(
           'PERMISSION_DENIED',
           decision.reason ?? 'plan mode asks before running commands'
         );

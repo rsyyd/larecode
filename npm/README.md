@@ -1,18 +1,18 @@
-# lumpscode
+# larecode
 
 Provider-neutral AI coding agent for the terminal.
 
 Install:
 
 ```bash
-npm install -g lumpscode
+npm install -g larecode
 ```
 
 Run:
 
 ```bash
-lumpscode setup
-lumpscode run "explain this repository"
+larecode setup
+larecode run "explain this repository"
 ```
 
-Full documentation: https://github.com/rsyyd/lumpscode
+Full documentation: https://github.com/rsyyd/lare

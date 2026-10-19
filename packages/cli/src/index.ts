@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { VERSION } from '@lumpscode/core';
+import { VERSION } from '@larecode/core';
 import { runDoctor } from './commands/doctor.js';
 import { runCommand } from './commands/run.js';
 import { serveCommand } from './commands/serve.js';
-import { serveMcp } from '@lumpscode/server';
-import type { PermissionGroup } from '@lumpscode/core';
+import { serveMcp } from '@larecode/server';
+import type { PermissionGroup } from '@larecode/core';
 import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
 import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cron.js';
 import { gatewayCommand } from './commands/gateway.js';
@@ -14,7 +14,7 @@ import { acpCommand } from './commands/acp.js';
 
 const program = new Command();
 
-program.name('lumpscode').description("Every agent's best, in one CLI.").version(VERSION);
+program.name('larecode').description("Every agent's best, in one CLI.").version(VERSION);
 
 program
   .command('doctor', { isDefault: false })
@@ -41,7 +41,7 @@ program
 
 program
   .command('update')
-  .description('Check for a newer lumpscode release')
+  .description('Check for a newer larecode release')
   .option('--check', 'report without upgrade instructions')
   .action(async (options: { check?: boolean }) => {
     await updateCommand(options);
@@ -52,7 +52,7 @@ program
   .description('Serve the HTTP API with SSE streaming')
   .option('--port <port>', 'port to listen on')
   .option('--host <host>', 'host to bind')
-  .option('--token <token>', 'bearer token (default: LUMPSCODE_SERVER_TOKEN or generated)')
+  .option('--token <token>', 'bearer token (default: LARECODE_SERVER_TOKEN or generated)')
   .action(async (options: Parameters<typeof serveCommand>[0]) => {
     process.exitCode = await serveCommand(options);
   });
@@ -61,8 +61,8 @@ program
   .command('gateway')
   .description('Serve tasks from a messaging platform (Telegram)')
   .option('--platform <name>', 'platform to connect (telegram)', 'telegram')
-  .option('--token <token>', 'bot token (default: LUMPSCODE_TELEGRAM_TOKEN)')
-  .option('--chat <id>', 'only serve this chat id (default: LUMPSCODE_TELEGRAM_CHAT_ID)')
+  .option('--token <token>', 'bot token (default: LARECODE_TELEGRAM_TOKEN)')
+  .option('--chat <id>', 'only serve this chat id (default: LARECODE_TELEGRAM_CHAT_ID)')
   .option('--allow <groups>', 'comma-separated permission groups pre-authorized for gateway tasks')
   .action(async (options: Parameters<typeof gatewayCommand>[0]) => {
     process.exitCode = await gatewayCommand(options);
@@ -110,7 +110,7 @@ mcp
 
 mcp
   .command('serve')
-  .description('Expose lumpscode tools as an MCP server over stdio for editors and other agents')
+  .description('Expose larecode tools as an MCP server over stdio for editors and other agents')
   .option(
     '--allow <groups>',
     'comma-separated permission groups to pre-authorize (read is always on)'

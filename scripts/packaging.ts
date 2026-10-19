@@ -15,11 +15,11 @@ export interface ManifestInput {
 }
 
 export const ASSETS: Record<keyof ManifestInput['sha256'], string> = {
-  'linux-x64': 'lumpscode-linux-x64',
-  'linux-arm64': 'lumpscode-linux-arm64',
-  'darwin-x64': 'lumpscode-darwin-x64',
-  'darwin-arm64': 'lumpscode-darwin-arm64',
-  'windows-x64': 'lumpscode-windows-x64.exe',
+  'linux-x64': 'larecode-linux-x64',
+  'linux-arm64': 'larecode-linux-arm64',
+  'darwin-x64': 'larecode-darwin-x64',
+  'darwin-arm64': 'larecode-darwin-arm64',
+  'windows-x64': 'larecode-windows-x64.exe',
 };
 
 function requireSha(input: ManifestInput, key: keyof ManifestInput['sha256']): string {
@@ -33,9 +33,9 @@ function url(input: ManifestInput, key: keyof ManifestInput['sha256']): string {
 }
 
 export function homebrewFormula(input: ManifestInput): string {
-  return `class Lumpscode < Formula
+  return `class Larecode < Formula
   desc "Provider-neutral AI coding agent for the terminal"
-  homepage "https://github.com/rsyyd/lumpscode"
+  homepage "https://github.com/rsyyd/lare"
   version "${input.version}"
   license "MIT"
 
@@ -64,11 +64,11 @@ export function homebrewFormula(input: ManifestInput): string {
   end
 
   def install
-    bin.install Dir["lumpscode-*"].first => "lumpscode"
+    bin.install Dir["larecode-*"].first => "larecode"
   end
 
   test do
-    assert_match version.to_s, shell_output("#{bin}/lumpscode --version")
+    assert_match version.to_s, shell_output("#{bin}/larecode --version")
   end
 end
 `;
@@ -79,7 +79,7 @@ export function scoopManifest(input: ManifestInput): string {
     {
       version: input.version,
       description: 'Provider-neutral AI coding agent for the terminal',
-      homepage: 'https://github.com/rsyyd/lumpscode',
+      homepage: 'https://github.com/rsyyd/lare',
       license: 'MIT',
       architecture: {
         '64bit': {
@@ -87,9 +87,9 @@ export function scoopManifest(input: ManifestInput): string {
           hash: requireSha(input, 'windows-x64'),
         },
       },
-      bin: [[ASSETS['windows-x64'], 'lumpscode']],
+      bin: [[ASSETS['windows-x64'], 'larecode']],
       checkver: {
-        github: 'https://github.com/rsyyd/lumpscode',
+        github: 'https://github.com/rsyyd/lare',
       },
       autoupdate: {
         architecture: {
@@ -106,26 +106,26 @@ export function scoopManifest(input: ManifestInput): string {
 
 export function archPkgbuild(input: ManifestInput): string {
   return `# Maintainer: rsyyd <rsyyd@users.noreply.github.com>
-pkgname=lumpscode
+pkgname=larecode
 pkgver=${input.version}
 pkgrel=1
 pkgdesc="Provider-neutral AI coding agent for the terminal"
 arch=('x86_64' 'aarch64')
-url="https://github.com/rsyyd/lumpscode"
+url="https://github.com/rsyyd/lare"
 license=('MIT')
-provides=('lumpscode')
-conflicts=('lumpscode-bin')
-source_x86_64=("lumpscode-linux-x64::${url(input, 'linux-x64')}")
-source_aarch64=("lumpscode-linux-arm64::${url(input, 'linux-arm64')}")
+provides=('larecode')
+conflicts=('larecode-bin')
+source_x86_64=("larecode-linux-x64::${url(input, 'linux-x64')}")
+source_aarch64=("larecode-linux-arm64::${url(input, 'linux-arm64')}")
 sha256sums_x86_64=('${requireSha(input, 'linux-x64')}')
 sha256sums_aarch64=('${requireSha(input, 'linux-arm64')}')
 
 package() {
-  install -Dm755 "$srcdir/lumpscode-linux-x64" "$pkgdir/usr/bin/lumpscode"
+  install -Dm755 "$srcdir/larecode-linux-x64" "$pkgdir/usr/bin/larecode"
 }
 
 package_aarch64() {
-  install -Dm755 "$srcdir/lumpscode-linux-arm64" "$pkgdir/usr/bin/lumpscode"
+  install -Dm755 "$srcdir/larecode-linux-arm64" "$pkgdir/usr/bin/larecode"
 }
 `;
 }
@@ -148,8 +148,8 @@ export async function generateManifests(
   const input: ManifestInput = { ...options, sha256 };
   await mkdir(outDir, { recursive: true });
   const files: [string, string][] = [
-    ['lumpscode.rb', homebrewFormula(input)],
-    ['lumpscode.json', scoopManifest(input)],
+    ['larecode.rb', homebrewFormula(input)],
+    ['larecode.json', scoopManifest(input)],
     ['PKGBUILD', archPkgbuild(input)],
   ];
   for (const [name, content] of files) {
@@ -175,7 +175,7 @@ async function main(argv: string[]): Promise<void> {
   const version = args.get('version');
   const binaries = args.get('binaries');
   const baseUrl =
-    args.get('base-url') ?? `https://github.com/rsyyd/lumpscode/releases/download/v${version}`;
+    args.get('base-url') ?? `https://github.com/rsyyd/lare/releases/download/v${version}`;
   const outDir = args.get('out') ?? 'packaging/out';
   if (!version || !binaries) {
     console.error(

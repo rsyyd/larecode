@@ -154,7 +154,7 @@ describe('web_search', () => {
   it('denies without the network permission group', async () => {
     const spy = vi.spyOn(globalThis, 'fetch');
     await expect(
-      webSearchTool().execute({ query: 'lumps' }, ctx(new Permissions()))
+      webSearchTool().execute({ query: 'lare' }, ctx(new Permissions()))
     ).rejects.toThrow(/network/);
     expect(spy).not.toHaveBeenCalled();
   });
@@ -162,13 +162,13 @@ describe('web_search', () => {
   it('searches and caps results at the requested limit', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(htmlResponse(DDG_HTML));
     const result = (await webSearchTool().execute(
-      { query: 'lumps code', limit: 1 },
+      { query: 'lare code', limit: 1 },
       ctx(new Permissions(ALLOW_NETWORK))
     )) as { query: string; results: unknown[] };
-    expect(result.query).toBe('lumps code');
+    expect(result.query).toBe('lare code');
     expect(result.results).toHaveLength(1);
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://html.duckduckgo.com/html/?q=lumps%20code',
+      'https://html.duckduckgo.com/html/?q=lare%20code',
       expect.anything()
     );
   });

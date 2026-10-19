@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LumpsCodeFetch } from './fetch.js';
+import type { LareCodeFetch } from './fetch.js';
 import type { ProviderUsage } from './provider.js';
 import { OpenAIAdapter } from './openai-adapter.js';
 import { AnthropicAdapter } from './anthropic-adapter.js';
@@ -33,7 +33,7 @@ const openai = (response: Response, requests: unknown[] = []) =>
     fetchImpl: (async (_url: string | URL | Request, init?: RequestInit) => {
       requests.push(init?.body ? JSON.parse(String(init.body)) : undefined);
       return response;
-    }) as LumpsCodeFetch,
+    }) as LareCodeFetch,
   });
 
 describe('provider usage reporting', () => {
@@ -97,7 +97,7 @@ describe('provider usage reporting', () => {
             'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"hey"}}\n\n' +
             'event: message_delta\ndata: {"type":"message_delta","usage":{"output_tokens":42}}\n\n' +
             'event: message_stop\ndata: {"type":"message_stop"}\n\n'
-        )) as LumpsCodeFetch,
+        )) as LareCodeFetch,
     });
     let text = '';
     for await (const chunk of adapter.streamComplete('hello', {
@@ -121,7 +121,7 @@ describe('provider usage reporting', () => {
         okJson({
           content: [{ type: 'text', text: 'hi' }],
           usage: { input_tokens: 300, output_tokens: 50, cache_read_input_tokens: 200 },
-        })) as LumpsCodeFetch,
+        })) as LareCodeFetch,
     });
     await adapter.complete('hello', { model: 'claude-3-5-sonnet', onUsage });
     expect(seen).toEqual([{ input: 300, output: 50, cacheRead: 200 }]);
@@ -137,7 +137,7 @@ describe('provider usage reporting', () => {
         rawStream(
           '{"message":{"content":"hi"},"done":false}\n' +
             '{"message":{"content":""},"done":true,"prompt_eval_count":64,"eval_count":16}\n'
-        )) as LumpsCodeFetch,
+        )) as LareCodeFetch,
     });
     let text = '';
     for await (const chunk of adapter.streamComplete('hello', { model: 'llama3', onUsage })) {

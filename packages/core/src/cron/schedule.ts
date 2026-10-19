@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 
 export interface CronSpec {
   minutes: number[];
@@ -31,7 +31,7 @@ const WEEKDAYS: Record<string, number> = {
 };
 
 function invalid(input: string, reason: string): never {
-  throw new LumpsError('CRON_INVALID_SCHEDULE', `invalid schedule "${input}": ${reason}`);
+  throw new LareError('CRON_INVALID_SCHEDULE', `invalid schedule "${input}": ${reason}`);
 }
 
 function range(min: number, max: number): number[] {
@@ -207,5 +207,5 @@ export function nextRun(parsed: CronSpec, from: Date): Date {
     }
     cursor.setMinutes(cursor.getMinutes() + 1);
   }
-  throw new LumpsError('CRON_INVALID_SCHEDULE', 'schedule never matches within a year');
+  throw new LareError('CRON_INVALID_SCHEDULE', 'schedule never matches within a year');
 }

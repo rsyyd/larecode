@@ -13,12 +13,12 @@ import {
 let home: string;
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), 'lumpscode-config-'));
-  process.env.LUMPSCODE_HOME = home;
+  home = mkdtempSync(join(tmpdir(), 'larecode-config-'));
+  process.env.LARECODE_HOME = home;
 });
 
 afterEach(() => {
-  delete process.env.LUMPSCODE_HOME;
+  delete process.env.LARECODE_HOME;
 });
 
 describe('config', () => {
@@ -42,10 +42,10 @@ describe('config', () => {
     expect(loadConfig().defaultProvider).toBe('openai-compatible');
   });
 
-  it('lets a project lumpscode.json override the global config', () => {
-    const project = mkdtempSync(join(tmpdir(), 'lumpscode-project-'));
+  it('lets a project larecode.json override the global config', () => {
+    const project = mkdtempSync(join(tmpdir(), 'larecode-project-'));
     writeFileSync(
-      join(project, 'lumpscode.json'),
+      join(project, 'larecode.json'),
       JSON.stringify({ defaultProvider: 'ollama', defaultModel: 'llama3' })
     );
     const effective = loadEffectiveConfig(project);

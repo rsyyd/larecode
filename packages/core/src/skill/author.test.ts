@@ -16,7 +16,7 @@ import {
 let projectDir: string;
 
 beforeEach(async () => {
-  projectDir = await mkdtemp(join(tmpdir(), 'lumps-author-'));
+  projectDir = await mkdtemp(join(tmpdir(), 'lare-author-'));
 });
 
 afterEach(async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LumpsCodeFetch } from './fetch.js';
+import type { LareCodeFetch } from './fetch.js';
 import type { ProviderAdapter } from './provider.js';
 import { OpenAIAdapter } from './openai-adapter.js';
 import { AnthropicAdapter } from './anthropic-adapter.js';
@@ -27,7 +27,7 @@ function rawStream(body: string): Response {
 
 interface ContractSpec {
   label: string;
-  create(fetchImpl: LumpsCodeFetch): ProviderAdapter;
+  create(fetchImpl: LareCodeFetch): ProviderAdapter;
   endpointFragment: string;
   isModelsUrl(url: string): boolean;
   modelsResponse(): unknown;
@@ -98,7 +98,7 @@ const SPECS: ContractSpec[] = [
 
 describe.each(SPECS)('provider contract: $label', (spec) => {
   function dispatchFetch(responses: { models?: Response; completion?: Response }): {
-    fetchImpl: LumpsCodeFetch;
+    fetchImpl: LareCodeFetch;
     calls: { url: string; init?: RequestInit }[];
   } {
     const calls: { url: string; init?: RequestInit }[] = [];
@@ -107,7 +107,7 @@ describe.each(SPECS)('provider contract: $label', (spec) => {
       calls.push({ url: u, init });
       if (spec.isModelsUrl(u)) return responses.models ?? okJson(spec.modelsResponse());
       return responses.completion ?? okJson(spec.completionResponse('contract text'));
-    }) as LumpsCodeFetch;
+    }) as LareCodeFetch;
     return { fetchImpl, calls };
   }
 
@@ -126,7 +126,7 @@ describe.each(SPECS)('provider contract: $label', (spec) => {
   it('models(): falls back to the configured catalog when the endpoint fails', async () => {
     const failing = (async () => {
       throw new Error('offline');
-    }) as LumpsCodeFetch;
+    }) as LareCodeFetch;
     const adapter = spec.create(failing);
     const models = await adapter.models();
     expect(models.map((m) => m.id)).toEqual(['cfg-model']);
@@ -182,7 +182,7 @@ describe.each(SPECS)('provider contract: $label', (spec) => {
   it('complete(): maps network failure to NETWORK_ERROR', async () => {
     const failing = (async () => {
       throw new Error('ECONNREFUSED');
-    }) as LumpsCodeFetch;
+    }) as LareCodeFetch;
     const adapter = spec.create(failing);
 
     await expect(adapter.complete('hi', { model: 'm1' })).rejects.toMatchObject({
@@ -191,7 +191,7 @@ describe.each(SPECS)('provider contract: $label', (spec) => {
   });
 
   it('exposes provider-level capabilities', () => {
-    const noop = (async () => okJson({})) as LumpsCodeFetch;
+    const noop = (async () => okJson({})) as LareCodeFetch;
     const adapter = spec.create(noop);
 
     expect(adapter.capabilities.tools).toBe(true);

@@ -2,7 +2,7 @@ import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { Permissions } from '../permission/permission.js';
 import { bashTool } from '../tool/bash.js';
 import type { ToolContext } from '../tool/tool.js';
@@ -19,7 +19,7 @@ import {
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-exec-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-exec-'));
 });
 
 afterEach(async () => {
@@ -157,7 +157,7 @@ describe('backendFromConfig', () => {
       try {
         fn();
       } catch (error) {
-        return (error as LumpsError).code;
+        return (error as LareError).code;
       }
       return undefined;
     };

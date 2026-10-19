@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool, ToolContext } from './tool.js';
 
 export const WEB_FETCH_TIMEOUT_MS = 15_000;
@@ -6,7 +6,7 @@ export const WEB_FETCH_MAX_CHARS = 50_000;
 export const WEB_SEARCH_LIMIT = 5;
 export const WEB_SEARCH_MAX_LIMIT = 10;
 
-const USER_AGENT = 'Mozilla/5.0 (compatible; LumpsCode/0.0.0; +https://github.com/rsyyd/lumpscode)';
+const USER_AGENT = 'Mozilla/5.0 (compatible; LareCode/0.0.0; +https://github.com/rsyyd/lare)';
 
 const ENTITIES: Record<string, string> = {
   amp: '&',
@@ -62,16 +62,16 @@ export function htmlToText(html: string): { title: string; text: string } {
 
 export function parseHttpUrl(input: unknown): URL {
   if (typeof input !== 'string' || input.trim() === '') {
-    throw new LumpsError('TOOL_EXECUTION_FAILED', 'url is required');
+    throw new LareError('TOOL_EXECUTION_FAILED', 'url is required');
   }
   let parsed: URL;
   try {
     parsed = new URL(input);
   } catch {
-    throw new LumpsError('TOOL_EXECUTION_FAILED', `invalid url: ${input}`);
+    throw new LareError('TOOL_EXECUTION_FAILED', `invalid url: ${input}`);
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new LumpsError(
+    throw new LareError(
       'TOOL_EXECUTION_FAILED',
       `unsupported protocol: ${parsed.protocol.replace(':', '')} (only http and https)`
     );
@@ -82,7 +82,7 @@ export function parseHttpUrl(input: unknown): URL {
 function requireNetwork(context: ToolContext, source: string): void {
   const decision = context.permissions.check('network', { source });
   if (!decision.allowed) {
-    throw new LumpsError(
+    throw new LareError(
       'PERMISSION_DENIED',
       decision.reason ?? `${source.split(':')[0]} requires the network permission group`,
       { context: { source } }
@@ -108,14 +108,14 @@ async function request(
       headers: { 'user-agent': USER_AGENT, accept },
     });
   } catch (error) {
-    throw new LumpsError(
+    throw new LareError(
       'NETWORK_ERROR',
       `request failed: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error instanceof Error ? error : undefined, context: { url } }
     );
   }
   if (!response.ok) {
-    throw new LumpsError('NETWORK_ERROR', `request failed: HTTP ${response.status}`, {
+    throw new LareError('NETWORK_ERROR', `request failed: HTTP ${response.status}`, {
       context: { url: response.url, status: response.status },
     });
   }
@@ -240,7 +240,7 @@ export function webSearchTool(): Tool {
     async execute(args, context) {
       const { query, limit } = (args ?? {}) as WebSearchArgs;
       if (typeof query !== 'string' || query.trim() === '') {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', 'query is required');
+        throw new LareError('TOOL_EXECUTION_FAILED', 'query is required');
       }
       requireNetwork(context, `web_search:${query.slice(0, 60)}`);
       const requested =

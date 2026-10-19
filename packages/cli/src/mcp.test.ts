@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultConfig, type Config, type MCPServerConfig, type MCPTool } from '@lumpscode/core';
+import { defaultConfig, type Config, type MCPServerConfig, type MCPTool } from '@larecode/core';
 import {
   mcpAdd,
   mcpCall,

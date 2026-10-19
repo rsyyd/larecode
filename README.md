@@ -1,8 +1,8 @@
-# Lumps Code
+# Lare Code
 
 > Every agent's best, in one CLI.
 
-Lumps Code is an open-source, provider-neutral AI coding agent for the terminal.
+Lare Code is an open-source, provider-neutral AI coding agent for the terminal.
 It combines the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI,
 and Hermes Agent into one coherent, local-first CLI.
 
@@ -12,12 +12,12 @@ and Hermes Agent into one coherent, local-first CLI.
 ## Install
 
 ```bash
-npm install -g lumpscode        # Node 20+
-curl -fsSL https://raw.githubusercontent.com/rsyyd/lumpscode/main/install.sh | sh
-brew tap rsyyd/lumpscode && brew install lumpscode
+npm install -g larecode        # Node 20+
+curl -fsSL https://raw.githubusercontent.com/rsyyd/lare/main/install.sh | sh
+brew tap rsyyd/lare && brew install larecode
 ```
 
-Then `lumpscode setup`, `lumpscode doctor`, `lumpscode run "explain this repository"`.
+Then `larecode setup`, `larecode doctor`, `larecode run "explain this repository"`.
 
 ## Docs
 
@@ -33,9 +33,9 @@ The docs publish as a site from `docs/` on every push to main.
 ```bash
 bun install
 bun run dev            # run the CLI from source
-bun run build          # compile dist/lumpscode
+bun run build          # compile dist/larecode
 bun run build:npm      # bundle the npm package into npm/dist
-./dist/lumpscode doctor
+./dist/larecode doctor
 ```
 
 ## Development
@@ -49,12 +49,12 @@ bun run format         # prettier
 
 ## Editors and SDK
 
-`lumpscode acp` speaks the Agent Client Protocol over stdio, ready for editor integrations such as Zed. The same core is embeddable from TypeScript:
+`larecode acp` speaks the Agent Client Protocol over stdio, ready for editor integrations such as Zed. The same core is embeddable from TypeScript:
 
 ```ts
-import { LumpsClient } from '@lumpscode/sdk';
+import { LareClient } from '@larecode/sdk';
 
-const client = new LumpsClient();
+const client = new LareClient();
 const result = await client.run('explain this repository', {
   onChunk: (chunk) => process.stdout.write(chunk),
 });

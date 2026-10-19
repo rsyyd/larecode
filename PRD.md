@@ -1,13 +1,13 @@
-# Lumps Code: Product Requirements Document
+# Lare Code: Product Requirements Document
 
-**Repo:** `github.com/rsyyd/lumpscode`
+**Repo:** `github.com/rsyyd/lare`
 **Version:** 1.0.0-draft · **Date:** 2026-10-17 · **Status:** PRD stage · **License:** MIT
 
 ---
 
 ## 1. Executive Summary
 
-Lumps Code is an open-source, provider-neutral AI coding agent for the terminal. It combines the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI, and Hermes Agent into one coherent, local-first CLI, and keeps the architecture small enough that each capability can be built, tested, and shipped independently.
+Lare Code is an open-source, provider-neutral AI coding agent for the terminal. It combines the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI, and Hermes Agent into one coherent, local-first CLI, and keeps the architecture small enough that each capability can be built, tested, and shipped independently.
 
 This document is the complete product specification. Implementation is deliberately split into 32 independently executable tasks (Section 9), each scoped for a single focused AI session or engineer, with explicit dependencies and acceptance criteria.
 
@@ -15,7 +15,7 @@ This document is the complete product specification. Implementation is deliberat
 
 > **"Every agent's best, in one CLI."**
 
-- One binary: `lumpscode`. Config: `~/.lumpscode/`. Project instructions: `AGENTS.md` (compatible with `CLAUDE.md` & friends).
+- One binary: `larecode`. Config: `~/.larecode/`. Project instructions: `AGENTS.md` (compatible with `CLAUDE.md` & friends).
 - **Local-first, no lock-in:** any model, from OpenAI-compatible endpoints to Anthropic, Google, Ollama, OpenRouter, Z.ai/GLM, or a custom base URL.
 - **Full parity goal:** TUI, plan mode, subagents, skills, plugins, hooks, MCP, LSP, learning loop, session sharing, cron automation, and a multi-platform gateway.
 - **Safety by default:** every tool call is permission-checked; destructive and secret access is never auto-approved.
@@ -28,24 +28,24 @@ What would make this a failure even if it works (anti-goals):
 
 ## 3. Competitive Analysis
 
-| Capability                                    | opencode     | Claude Code    | Codex CLI | Gemini CLI | Hermes    | **Lumps Code** |
-| --------------------------------------------- | ------------ | -------------- | --------- | ---------- | --------- | -------------- |
-| Full TUI (multiline, autocomplete, streaming) | ✓            | ✗ (read-line)  | ✗         | ✗          | ✓         | ✓ T-10         |
-| Plan mode (read-only agent, Tab switch)       | ✓            | ✓              | ✓         | ✓          | ✗         | ✓ T-15         |
-| Subagents (parallel research)                 | ✓ `@general` | ✓ Task tool    | ✗         | ✗          | ✓         | ✓ T-15         |
-| Permission engine (grouped, policy-scoped)    | ✓            | ✓              | ✓ sandbox | ✓          | ✗ (light) | ✓ T-09         |
-| Multi-provider (75+, catalog)                 | ✓            | Anthropic only | OpenAI    | Google     | ✓         | ✓ T-04/05      |
-| LSP integration                               | ✓            | ✗              | ✗         | ✗          | ✗         | ✓ T-13         |
-| MCP client + server                           | ✓            | ✓              | ✓         | ✓          | ✓         | ✓ T-14         |
-| Skills (auto-load, SKILL.md)                  | ✗            | ✓              | ✗         | ✓          | ✓         | ✓ T-16         |
-| Hooks / plugins                               | ✗ plugins    | ✓ hooks        | ✗         | ✗          | ✓ plugins | ✓ T-17         |
-| Learning loop (curated memory, auto-skills)   | ✗            | ✗              | ✗         | ✗          | ✓         | ✓ T-22         |
-| Session sharing / HTTP server                 | ✓ share      | ✗              | ✗         | ✗          | ✗         | ✓ T-23/24      |
-| Cron / scheduled automations                  | ✗            | ✗              | ✗         | ✗          | ✓         | ✓ T-25         |
-| Messaging gateway (Telegram/Slack/…)          | ✗            | ✗              | ✗         | ✗          | ✓ ~20     | ✓ T-26         |
-| Execution backends (Docker/SSH/sandbox)       | ✗            | ✗              | ✓         | ✓          | ✓ 7       | ✓ T-27         |
-| Checkpoints / rewind                          | ✗            | ✓              | ✗         | ✗          | ✓         | ✓ T-20         |
-| Cost/usage tracking, per-conversation caching | partial      | ✓              | ✗         | ✗          | ✓         | ✓ T-28         |
+| Capability                                    | opencode     | Claude Code    | Codex CLI | Gemini CLI | Hermes    | **Lare Code** |
+| --------------------------------------------- | ------------ | -------------- | --------- | ---------- | --------- | ------------- |
+| Full TUI (multiline, autocomplete, streaming) | ✓            | ✗ (read-line)  | ✗         | ✗          | ✓         | ✓ T-10        |
+| Plan mode (read-only agent, Tab switch)       | ✓            | ✓              | ✓         | ✓          | ✗         | ✓ T-15        |
+| Subagents (parallel research)                 | ✓ `@general` | ✓ Task tool    | ✗         | ✗          | ✓         | ✓ T-15        |
+| Permission engine (grouped, policy-scoped)    | ✓            | ✓              | ✓ sandbox | ✓          | ✗ (light) | ✓ T-09        |
+| Multi-provider (75+, catalog)                 | ✓            | Anthropic only | OpenAI    | Google     | ✓         | ✓ T-04/05     |
+| LSP integration                               | ✓            | ✗              | ✗         | ✗          | ✗         | ✓ T-13        |
+| MCP client + server                           | ✓            | ✓              | ✓         | ✓          | ✓         | ✓ T-14        |
+| Skills (auto-load, SKILL.md)                  | ✗            | ✓              | ✗         | ✓          | ✓         | ✓ T-16        |
+| Hooks / plugins                               | ✗ plugins    | ✓ hooks        | ✗         | ✗          | ✓ plugins | ✓ T-17        |
+| Learning loop (curated memory, auto-skills)   | ✗            | ✗              | ✗         | ✗          | ✓         | ✓ T-22        |
+| Session sharing / HTTP server                 | ✓ share      | ✗              | ✗         | ✗          | ✗         | ✓ T-23/24     |
+| Cron / scheduled automations                  | ✗            | ✗              | ✗         | ✗          | ✓         | ✓ T-25        |
+| Messaging gateway (Telegram/Slack/…)          | ✗            | ✗              | ✗         | ✗          | ✓ ~20     | ✓ T-26        |
+| Execution backends (Docker/SSH/sandbox)       | ✗            | ✗              | ✓         | ✓          | ✓ 7       | ✓ T-27        |
+| Checkpoints / rewind                          | ✗            | ✓              | ✗         | ✗          | ✓         | ✓ T-20        |
+| Cost/usage tracking, per-conversation caching | partial      | ✓              | ✗         | ✗          | ✓         | ✓ T-28        |
 
 Sources: opencode README/docs (fetched 2026-10-17), Hermes Agent README + AGENTS.md (local checkout), known public feature sets of Claude Code / Codex CLI / Gemini CLI.
 
@@ -60,7 +60,7 @@ Sources: opencode README/docs (fetched 2026-10-17), Hermes Agent README + AGENTS
 
 **Goals (v1.0):** all capabilities in Section 6 shipped through milestones M0–M4; installable via one curl/npm command; MIT-licensed; every task CI-tested.
 
-**Non-Goals (v1.0):** desktop app (M4 stretch), voice I/O, own model training, mobile clients, hosted SaaS, **multi-user gateway tenancy, and a public hosted share-link frontend** (share links render from self-hosted `lumpscode serve` only). The PRD ends at the CLI + gateway + share links; everything else is future work.
+**Non-Goals (v1.0):** desktop app (M4 stretch), voice I/O, own model training, mobile clients, hosted SaaS, **multi-user gateway tenancy, and a public hosted share-link frontend** (share links render from self-hosted `larecode serve` only). The PRD ends at the CLI + gateway + share links; everything else is future work.
 
 ## 6. Functional Requirements
 
@@ -114,7 +114,7 @@ Memory curator with periodic nudges; automatic skill creation after complex task
 
 ### FR-13 Server & Sharing
 
-`lumpscode serve`: bearer-authenticated, scope-isolated HTTP API with SSE; share links render a session read-only replay.
+`larecode serve`: bearer-authenticated, scope-isolated HTTP API with SSE; share links render a session read-only replay.
 
 ### FR-14 Automation
 
@@ -130,7 +130,7 @@ Local default; Docker and SSH backends for isolated/unattended work.
 
 ### FR-17 Context Engine
 
-File indexing with relevance ranking; instruction files (`AGENTS.md`, `CLAUDE.md`, `LUMPCODE.md`, `.cursorrules`, `.github/copilot-instructions.md`) loaded with consent, hash-bound trust, and size budgets.
+File indexing with relevance ranking; instruction files (`AGENTS.md`, `CLAUDE.md`, `LARECODE.md`, `.cursorrules`, `.github/copilot-instructions.md`) loaded with consent, hash-bound trust, and size budgets.
 
 ### FR-18 Checkpoints & Worktrees
 
@@ -142,7 +142,7 @@ Status/diff/commit (permissioned), PR & CI inspection; remote writes require exp
 
 ### FR-20 Distribution & UX
 
-`lumpscode setup` / `doctor` / `update`; usage & cost display; install via npm, curl script, Homebrew, Scoop, pacman/AUR.
+`larecode setup` / `doctor` / `update`; usage & cost display; install via npm, curl script, Homebrew, Scoop, pacman/AUR.
 
 ## 7. Non-Functional Requirements
 
@@ -157,14 +157,14 @@ Status/diff/commit (permissioned), PR & CI inspection; remote writes require exp
 ## 8. Architecture Overview
 
 ```
-lumpscode/                     (monorepo, Bun workspaces)
+larecode/                     (monorepo, Bun workspaces)
 ├── packages/core/             agent loop, providers, tools, permissions,
 │                              sessions, memory, context, LSP, MCP client
 ├── packages/tui/              Ink/React terminal UI (client of core)
 ├── packages/cli/              entrypoint, commands (setup/doctor/run/serve/…)
 ├── packages/server/           HTTP API + SSE + share links
 ├── packages/gateway/          messaging platform adapters
-├── packages/sdk/              TypeScript SDK for embedding lumpscode
+├── packages/sdk/              TypeScript SDK for embedding larecode
 └── packages/skills/           built-in skills (shipped, not all active)
 ```
 
@@ -182,25 +182,25 @@ Client/server model: TUI and gateway are clients of the same core agent; `serve`
 
 ### M0: Foundation
 
-| ID   | Task                                                                                                          | Depends on | Acceptance                                                            |
-| ---- | ------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------- |
-| T-01 | Monorepo scaffold: Bun workspaces, TS strict, oxlint+prettier, vitest, GitHub Actions CI, MIT LICENSE, README | —          | `bun test` green in CI; hello-world binary runs                       |
-| T-02 | Config system: `~/.lumpscode/config.json`, project `lumpscode.json`, instruction-file discovery & consent     | T-01       | `lumpscode doctor` validates config, prints provider/permission state |
-| T-03 | Logging, error taxonomy, usage accounting skeleton                                                            | T-01       | structured logs, error codes, usage recorder API                      |
+| ID   | Task                                                                                                          | Depends on | Acceptance                                                           |
+| ---- | ------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------- |
+| T-01 | Monorepo scaffold: Bun workspaces, TS strict, oxlint+prettier, vitest, GitHub Actions CI, MIT LICENSE, README | —          | `bun test` green in CI; hello-world binary runs                      |
+| T-02 | Config system: `~/.larecode/config.json`, project `larecode.json`, instruction-file discovery & consent       | T-01       | `larecode doctor` validates config, prints provider/permission state |
+| T-03 | Logging, error taxonomy, usage accounting skeleton                                                            | T-01       | structured logs, error codes, usage recorder API                     |
 
 ### M1: Core Agent MVP
 
-| ID   | Task                                                                            | Depends on | Acceptance                                                     |
-| ---- | ------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------- |
-| T-04 | Provider abstraction + OpenAI-compatible adapter + model catalog                | T-02       | scripted chat round-trip against mock server; model hot-swap   |
-| T-05 | Anthropic, Ollama, OpenRouter, Z.ai adapters + capability metadata              | T-04       | all adapters pass shared contract tests                        |
-| T-06 | Agent loop: budgets, bounded iterations, cancellation, streaming                | T-03, T-04 | loop halts on budget; streamed tokens observed in test         |
-| T-07 | Tool framework: registry, JSON-schema defs, execution pipeline                  | T-06       | a dummy tool registered, called, logged                        |
-| T-08 | Core tools: read, write, edit, bash, glob, grep, patch (SHA-256 conflicts)      | T-07       | contract tests incl. patch-conflict rejection                  |
-| T-09 | Permission engine: groups, modes, policy scoping, audit log, redaction          | T-08       | destructive/secrets never auto-approved; audit entries written |
-| T-10 | TUI v1: chat, streaming, multiline input, slash palette, themes                 | T-06       | manual + snapshot tests; startup < 100 ms                      |
-| T-11 | Session persistence & resume                                                    | T-06       | resume reproduces context; secrets redacted on disk            |
-| T-12 | Non-interactive `lumpscode run "task"` + `--verify` (baseline-aware test check) | T-08, T-11 | run mode passes/fails per pre-existing-baseline logic          |
+| ID   | Task                                                                           | Depends on | Acceptance                                                     |
+| ---- | ------------------------------------------------------------------------------ | ---------- | -------------------------------------------------------------- |
+| T-04 | Provider abstraction + OpenAI-compatible adapter + model catalog               | T-02       | scripted chat round-trip against mock server; model hot-swap   |
+| T-05 | Anthropic, Ollama, OpenRouter, Z.ai adapters + capability metadata             | T-04       | all adapters pass shared contract tests                        |
+| T-06 | Agent loop: budgets, bounded iterations, cancellation, streaming               | T-03, T-04 | loop halts on budget; streamed tokens observed in test         |
+| T-07 | Tool framework: registry, JSON-schema defs, execution pipeline                 | T-06       | a dummy tool registered, called, logged                        |
+| T-08 | Core tools: read, write, edit, bash, glob, grep, patch (SHA-256 conflicts)     | T-07       | contract tests incl. patch-conflict rejection                  |
+| T-09 | Permission engine: groups, modes, policy scoping, audit log, redaction         | T-08       | destructive/secrets never auto-approved; audit entries written |
+| T-10 | TUI v1: chat, streaming, multiline input, slash palette, themes                | T-06       | manual + snapshot tests; startup < 100 ms                      |
+| T-11 | Session persistence & resume                                                   | T-06       | resume reproduces context; secrets redacted on disk            |
+| T-12 | Non-interactive `larecode run "task"` + `--verify` (baseline-aware test check) | T-08, T-11 | run mode passes/fails per pre-existing-baseline logic          |
 
 ### M2: Intelligence & Extensibility
 
@@ -223,7 +223,7 @@ Adoption notes: the external tech worth folding into this milestone is cataloged
 | ID   | Task                                                                         | Depends on | Acceptance                                                                 |
 | ---- | ---------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
 | T-22 | Learning loop: memory curator, auto-skill creation, FTS cross-session search | T-16, T-19 | complex task produces a persisted skill; search returns summarized history |
-| T-23 | `lumpscode serve`: HTTP API + SSE, bearer auth, scope isolation              | T-06       | SDK-less curl drives a session end-to-end                                  |
+| T-23 | `larecode serve`: HTTP API + SSE, bearer auth, scope isolation               | T-06       | SDK-less curl drives a session end-to-end                                  |
 | T-24 | Session share links (read-only replay)                                       | T-23       | link renders full session without leaking secrets                          |
 | T-25 | Cron automations + background tasks                                          | T-23       | scheduled job runs unattended, reports result                              |
 | T-26 | Messaging gateway: Telegram first, then Discord/Slack                        | T-23       | send task from Telegram, receive result                                    |
@@ -260,7 +260,7 @@ Adoption notes: the external tech worth folding into this milestone is cataloged
 
 ## 12. Open Questions
 
-1. Binary alias `lc` in addition to `lumpscode`?
+1. Binary alias `lc` in addition to `larecode`?
 2. Default reasoning profile for unknown models?
 3. Apache-2.0 (predecessor) vs **MIT (default, matches opencode)**: confirm.
 
@@ -290,7 +290,7 @@ An independent builder review raised nine questions before planning could procee
 
 ```
 ╭─────────────────────────────────────────────╮
-│  Lumps Code v1.0.0                          │
+│  Lare Code v1.0.0                          │
 │  Every agent's best, in one CLI.            │
 ╰─────────────────────────────────────────────╯
 
@@ -306,17 +306,17 @@ An independent builder review raised nine questions before planning could procee
   [2/3] Base URL : http://localhost:20128/v1
   [3/3] API key  : ••••••••••
 
-  » doctor: config written to ~/.lumpscode/config.json
+  » doctor: config written to ~/.larecode/config.json
 ```
 
 ### A.2 Main screen
 
 ```
-╭─ lumpscode ──────────────────────────────────╮
+╭─ larecode ──────────────────────────────────╮
 │                                              │
 │  > refactor the config loader                │
 │                                              │
-│  ● lumps · plan                              │
+│  ● lare · plan                              │
 │  Reading src/config.ts…                      │
 │  ⎿ read(2) grep(1)                           │
 │  I'll rename loadConfig → loadAppConfig      │
@@ -337,9 +337,9 @@ Screen elements:
 - `/` = command palette (`/model`, `/skill`, `/session`, `/share`); `@general` = invoke research subagent.
 - Footer: active mode · model · real-time token/cost counter.
 - Interrupt: `Esc` / `ctrl+c` for stop-and-redirect.
-- Dark theme by default, themable via `lumpscode.json`.
+- Dark theme by default, themable via `larecode.json`.
 
 ### A.3 Other modes
 
-- `lumpscode "task"`: plain non-interactive streaming output, then a summary.
-- `lumpscode serve`: API banner with host/port and bearer-token hint.
+- `larecode "task"`: plain non-interactive streaming output, then a summary.
+- `larecode serve`: API banner with host/port and bearer-token hint.

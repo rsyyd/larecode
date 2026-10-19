@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
-import { formatCost, formatTokens, type UsageAggregate } from '@lumpscode/core';
+import { formatCost, formatTokens, type UsageAggregate } from '@larecode/core';
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
 import { filterCommands } from './palette.js';
@@ -268,7 +268,7 @@ function MessageRow({
   return (
     <Box flexDirection="column">
       <Text color={theme.agent}>
-        {'● '}lumps · {agent}
+        {'● '}lare · {agent}
       </Text>
       <Text>{message.text}</Text>
     </Box>

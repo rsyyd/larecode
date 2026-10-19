@@ -1,4 +1,4 @@
-# External tech adoption for LumpsCode
+# External tech adoption for LareCode
 
 > **Sources**: web search, GitHub REST API via `gh api repos/<owner>/<repo>` (license, stars, last push), `npm view` (package license, version), retrieved **2026-10-18**; local inspection of `/root/hermes-agent` as the project feature reference. Star counts are rounded. Vendor-published benchmark numbers are labeled as such.
 
@@ -26,7 +26,7 @@ Scan driven by four goals: broad capability access, agent accuracy (facts over g
 ## 3. Humanized output (anti slop)
 
 - **blader/humanizer** (MIT, ~58k stars) is the canonical anti-slop skill: a SKILL.md distilled from Wikipedia's _Signs of AI writing_ (em-dash overuse, "not just X, but Y", forced rule-of-three, promotional tone, inflated transitions). Ports with the same lineage: `doctorzorro/humanize-writing` (MIT), `aihxp/humanizer` (MIT).
-- The reference agent already on this machine ships one: `/root/hermes-agent/skills/creative/humanizer`. Hermes is the stated feature reference for LumpsCode, so its phrasing rules are the base to adapt.
+- The reference agent already on this machine ships one: `/root/hermes-agent/skills/creative/humanizer`. Hermes is the stated feature reference for LareCode, so its phrasing rules are the base to adapt.
 - Application points: commit messages, PR bodies, docs, and user-facing replies. TUI chrome rules (FR-2) already cover the terminal surface.
 
 **Adoption (T-16):** bundle an adapted humanizer skill and apply its rules whenever the agent writes prose.

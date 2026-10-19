@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Sessions } from '@lumpscode/core';
+import { Sessions } from '@larecode/core';
 import {
   ChatSessions,
   TelegramGateway,
@@ -75,7 +75,7 @@ function gateway(overrides: Partial<ConstructorParameters<typeof TelegramGateway
 }
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-gateway-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-gateway-'));
   sessions = new Sessions(join(dir, 'sessions'));
   chatSessions = new ChatSessions(join(dir, 'gateway.json'), sessions);
 });

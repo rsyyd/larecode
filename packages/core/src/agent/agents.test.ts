@@ -28,7 +28,7 @@ function registryFor(agent: 'build' | 'plan' | 'general'): Tools {
 }
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'lumps-agents-'));
+  dir = mkdtempSync(join(tmpdir(), 'lare-agents-'));
 });
 
 afterEach(() => {

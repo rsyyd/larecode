@@ -6,7 +6,7 @@ import {
   type CompletionOptions,
   type ModelInfo,
 } from '../provider/provider.js';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { createUsageRecorder, estimateTokens } from '../usage/usage.js';
 
 class FakeAdapter implements ProviderAdapter {
@@ -159,7 +159,7 @@ describe('AgentLoop', () => {
   });
 
   it('reports provider failures through onError and rethrows', async () => {
-    const failure = new LumpsError('PROVIDER_UNAVAILABLE', 'endpoint down');
+    const failure = new LareError('PROVIDER_UNAVAILABLE', 'endpoint down');
     const onError = vi.fn();
     const loop = new AgentLoop(
       { ...BASE, providers: registry(new FakeAdapter(['x'], { fail: failure })) },

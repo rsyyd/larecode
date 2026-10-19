@@ -7,7 +7,7 @@ import { Context } from './context.js';
 let project: string;
 
 beforeEach(() => {
-  project = mkdtempSync(join(tmpdir(), 'lumps-context-'));
+  project = mkdtempSync(join(tmpdir(), 'lare-context-'));
   mkdirSync(join(project, 'src'), { recursive: true });
   writeFileSync(
     join(project, 'src', 'parser.ts'),

@@ -73,7 +73,7 @@ export const ERROR_CATEGORIES: Record<
   CANCELLED: 'system',
 };
 
-export interface LumpsErrorJSON {
+export interface LareErrorJSON {
   name: string;
   code: ErrorCode;
   category: string;
@@ -84,7 +84,7 @@ export interface LumpsErrorJSON {
   cause?: { name: string; message: string; stack?: string };
 }
 
-export class LumpsError extends Error {
+export class LareError extends Error {
   public readonly code: ErrorCode;
   public readonly category: string;
   public readonly retryable: boolean;
@@ -96,7 +96,7 @@ export class LumpsError extends Error {
     options: { cause?: Error; context?: Record<string, unknown>; retryable?: boolean } = {}
   ) {
     super(message);
-    this.name = 'LumpsError';
+    this.name = 'LareError';
     this.code = code;
     this.category = ERROR_CATEGORIES[code];
     this.retryable = options.retryable ?? false;
@@ -106,15 +106,15 @@ export class LumpsError extends Error {
     }
   }
 
-  static from(code: ErrorCode, message: string, context?: Record<string, unknown>): LumpsError {
-    return new LumpsError(code, message, { context });
+  static from(code: ErrorCode, message: string, context?: Record<string, unknown>): LareError {
+    return new LareError(code, message, { context });
   }
 
-  static wrap(code: ErrorCode, error: Error, context?: Record<string, unknown>): LumpsError {
-    return new LumpsError(code, error.message, { cause: error, context, retryable: false });
+  static wrap(code: ErrorCode, error: Error, context?: Record<string, unknown>): LareError {
+    return new LareError(code, error.message, { cause: error, context, retryable: false });
   }
 
-  toJSON(): LumpsErrorJSON {
+  toJSON(): LareErrorJSON {
     return {
       name: this.name,
       code: this.code,
@@ -131,13 +131,13 @@ export class LumpsError extends Error {
   }
 }
 
-export function isLumpsError(err: unknown): err is LumpsError {
-  return err instanceof LumpsError;
+export function isLareError(err: unknown): err is LareError {
+  return err instanceof LareError;
 }
 
-export function assertLumpsError(err: unknown): LumpsError {
-  if (!isLumpsError(err)) {
-    throw new LumpsError('UNKNOWN', 'Expected LumpsError', { context: { received: String(err) } });
+export function assertLareError(err: unknown): LareError {
+  if (!isLareError(err)) {
+    throw new LareError('UNKNOWN', 'Expected LareError', { context: { received: String(err) } });
   }
   return err;
 }

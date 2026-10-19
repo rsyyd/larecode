@@ -1,7 +1,7 @@
 import { Providers, providersFromConfig } from '../provider/provider.js';
 import type { ProviderUsage } from '../provider/provider.js';
 import { loadEffectiveConfig } from '../config/config.js';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import {
   DEFAULT_MODEL_PRICING,
   estimateCost,
@@ -66,8 +66,8 @@ export class AgentLoop {
     return this.usage.getAggregate();
   }
 
-  private cancelled(): LumpsError {
-    return new LumpsError('CANCELLED', 'agent loop cancelled');
+  private cancelled(): LareError {
+    return new LareError('CANCELLED', 'agent loop cancelled');
   }
 
   private halt(reason: HaltReason): void {
@@ -94,7 +94,7 @@ export class AgentLoop {
 
     const provider = this.providers.get(this.options.provider);
     if (!provider) {
-      throw new LumpsError(
+      throw new LareError(
         'PROVIDER_UNAVAILABLE',
         `Provider "${this.options.provider}" is not available`
       );

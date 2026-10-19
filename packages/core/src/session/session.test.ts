@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Sessions, renderSessionContext } from './session.js';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'lumpscode-sessions-'));
+  dir = mkdtempSync(join(tmpdir(), 'larecode-sessions-'));
 });
 
 afterEach(() => {
@@ -112,8 +112,8 @@ describe('Sessions persistence', () => {
       sessions.get('bad');
       expect.unreachable('expected get to throw');
     } catch (error) {
-      expect(error).toBeInstanceOf(LumpsError);
-      expect((error as LumpsError).code).toBe('SESSION_CORRUPTED');
+      expect(error).toBeInstanceOf(LareError);
+      expect((error as LareError).code).toBe('SESSION_CORRUPTED');
     }
   });
 

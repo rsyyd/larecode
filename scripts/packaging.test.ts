@@ -15,7 +15,7 @@ import {
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-packaging-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-packaging-'));
 });
 
 afterEach(async () => {
@@ -24,7 +24,7 @@ afterEach(async () => {
 
 const input: ManifestInput = {
   version: '1.2.3',
-  baseUrl: 'https://github.com/rsyyd/lumpscode/releases/download/v1.2.3',
+  baseUrl: 'https://github.com/rsyyd/lare/releases/download/v1.2.3',
   sha256: {
     'linux-x64': 'a'.repeat(64),
     'linux-arm64': 'b'.repeat(64),
@@ -37,10 +37,10 @@ const input: ManifestInput = {
 describe('manifest generation', () => {
   it('renders a homebrew formula pinned to per-platform shas', () => {
     const formula = homebrewFormula(input);
-    expect(formula).toContain('class Lumpscode < Formula');
+    expect(formula).toContain('class Larecode < Formula');
     expect(formula).toContain('version "1.2.3"');
     expect(formula).toContain(`sha256 "${input.sha256['darwin-arm64']}"`);
-    expect(formula).toContain('bin.install Dir["lumpscode-*"].first => "lumpscode"');
+    expect(formula).toContain('bin.install Dir["larecode-*"].first => "larecode"');
   });
 
   it('refuses to render a formula without a sha', () => {
@@ -56,9 +56,9 @@ describe('manifest generation', () => {
       autoupdate: { architecture: { '64bit': { url: string } } };
     };
     expect(manifest.version).toBe('1.2.3');
-    expect(manifest.bin).toEqual([['lumpscode-windows-x64.exe', 'lumpscode']]);
+    expect(manifest.bin).toEqual([['larecode-windows-x64.exe', 'larecode']]);
     expect(manifest.autoupdate.architecture['64bit'].url).toBe(
-      'https://github.com/rsyyd/lumpscode/releases/download/v$version/lumpscode-windows-x64.exe'
+      'https://github.com/rsyyd/lare/releases/download/v$version/larecode-windows-x64.exe'
     );
   });
 
@@ -83,7 +83,7 @@ describe('manifest generation', () => {
     );
     expect(files).toHaveLength(3);
 
-    const formula = await readFile(join(dir, 'out', 'lumpscode.rb'), 'utf8');
+    const formula = await readFile(join(dir, 'out', 'larecode.rb'), 'utf8');
     const expected = createHash('sha256').update(`content of ${ASSETS['linux-x64']}`).digest('hex');
     expect(formula).toContain(`sha256 "${expected}"`);
   });
@@ -94,6 +94,6 @@ describe('manifest generation', () => {
     await writeFile(join(binaries, ASSETS['windows-x64']), 'windows build');
     await expect(
       generateManifests({ version: '1.2.3', baseUrl: input.baseUrl }, binaries, join(dir, 'out'))
-    ).rejects.toThrow(/missing binary .*lumpscode-linux-x64/);
+    ).rejects.toThrow(/missing binary .*larecode-linux-x64/);
   });
 });

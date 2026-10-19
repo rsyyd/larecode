@@ -1,13 +1,13 @@
 import {
   AgentLoop,
-  LumpsError,
+  LareError,
   Sessions,
   loadEffectiveConfig,
   type AgentLoopOptions,
   type HaltReason,
   type Session,
   type UsageAggregate,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
 export interface LoopLike {
   run(prompt: string): AsyncGenerator<string>;
@@ -15,7 +15,7 @@ export interface LoopLike {
   getHaltReason(): HaltReason | null;
 }
 
-export interface LumpsClientOptions {
+export interface LareClientOptions {
   workingDir?: string;
   provider?: string;
   model?: string;
@@ -44,10 +44,10 @@ export const DEFAULT_MAX_TOOL_CALLS = 200;
 export const DEFAULT_TOKEN_BUDGET = 200_000;
 export const DEFAULT_DURATION_BUDGET = 600_000;
 
-export class LumpsClient {
+export class LareClient {
   readonly sessions: Sessions;
 
-  constructor(private readonly options: LumpsClientOptions = {}) {
+  constructor(private readonly options: LareClientOptions = {}) {
     this.sessions = options.sessions ?? new Sessions();
   }
 
@@ -70,7 +70,7 @@ export class LumpsClient {
   session(sessionId: string): Session {
     const session = this.sessions.get(sessionId);
     if (!session) {
-      throw new LumpsError('SESSION_NOT_FOUND', `no session with id "${sessionId}"`);
+      throw new LareError('SESSION_NOT_FOUND', `no session with id "${sessionId}"`);
     }
     return session;
   }
@@ -95,7 +95,7 @@ export class LumpsClient {
         options.onChunk?.(chunk);
       }
     } catch (error) {
-      if (!(error instanceof LumpsError && error.code === 'CANCELLED')) throw error;
+      if (!(error instanceof LareError && error.code === 'CANCELLED')) throw error;
       cancelled = true;
     }
 

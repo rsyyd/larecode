@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Jobs, type CronLoop } from '@lumpscode/core';
+import { Jobs, type CronLoop } from '@larecode/core';
 import {
   cronAdd,
   cronList,
@@ -40,7 +40,7 @@ function harness(overrides: Partial<CronDeps> = {}) {
 }
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-cron-cli-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-cron-cli-'));
   jobs = new Jobs(join(dir, 'cron.json'));
 });
 

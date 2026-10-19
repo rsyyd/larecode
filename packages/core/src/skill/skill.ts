@@ -8,8 +8,8 @@ import {
   chmodSync,
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { lumpscodeHome } from '../config/config.js';
-import { LumpsError } from '../error/error.js';
+import { larecodeHome } from '../config/config.js';
+import { LareError } from '../error/error.js';
 
 export type SkillState = 'draft' | 'active' | 'disabled';
 
@@ -53,7 +53,7 @@ export interface SkillsOptions {
 }
 
 export function skillConsentPath(): string {
-  return join(lumpscodeHome(), 'skill-consent.json');
+  return join(larecodeHome(), 'skill-consent.json');
 }
 
 export function parseSkillFile(
@@ -98,9 +98,9 @@ export function discoverSkills(
   const consentFile = options.consentPath ?? skillConsentPath();
   const consent = loadConsent(consentFile);
   const dirs: Array<{ dir: string; bundled: boolean }> = [
-    { dir: join(projectDir, '.lumpscode', 'skills'), bundled: false },
+    { dir: join(projectDir, '.larecode', 'skills'), bundled: false },
     { dir: join(projectDir, '.agents', 'skills'), bundled: false },
-    { dir: join(lumpscodeHome(), 'skills'), bundled: false },
+    { dir: join(larecodeHome(), 'skills'), bundled: false },
     ...(options.bundledDir ? [{ dir: options.bundledDir, bundled: true }] : []),
   ];
   const byName = new Map<string, DiscoveredSkill>();
@@ -223,12 +223,12 @@ export class Skills {
         : stale.status === 'pending'
           ? `skill "${name}" is pending approval`
           : `skill "${name}" changed on disk; re-approval required`;
-      throw new LumpsError('SKILL_LOAD_FAILED', reason, { context: { skill: name } });
+      throw new LareError('SKILL_LOAD_FAILED', reason, { context: { skill: name } });
     }
     const content = readFileSync(skill.path, 'utf8');
     const hash = createHash('sha256').update(content).digest('hex');
     if (!skill.bundled && loadConsent(this.consentFile)[resolve(skill.path)] !== hash) {
-      throw new LumpsError(
+      throw new LareError(
         'SKILL_LOAD_FAILED',
         `skill "${name}" changed on disk; re-approval required`,
         {

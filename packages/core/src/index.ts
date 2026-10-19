@@ -130,7 +130,7 @@ export { MemoryCurator, CURATE_EVERY_TURNS } from './memory/curator.js';
 export type { CuratorOptions } from './memory/curator.js';
 
 export {
-  lumpscodeHome,
+  larecodeHome,
   configPath,
   projectConfigPath,
   defaultConfig,
@@ -256,11 +256,11 @@ export {
 } from './logger/logger.js';
 
 export {
-  LumpsError,
-  isLumpsError,
-  assertLumpsError,
+  LareError,
+  isLareError,
+  assertLareError,
   type ErrorCode,
-  type LumpsErrorJSON,
+  type LareErrorJSON,
 } from './error/error.js';
 
 export {

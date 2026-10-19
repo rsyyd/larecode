@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { nextRun, parseSchedule } from './schedule.js';
 
 const at = (year: number, month: number, day: number, hour = 0, minute = 0, second = 0) =>
@@ -45,11 +45,11 @@ describe('parseSchedule', () => {
       'daily at 25:00',
       '* * *',
     ]) {
-      expect(() => parseSchedule(bad)).toThrowError(LumpsError);
+      expect(() => parseSchedule(bad)).toThrowError(LareError);
       try {
         parseSchedule(bad);
       } catch (error) {
-        expect((error as LumpsError).code).toBe('CRON_INVALID_SCHEDULE');
+        expect((error as LareError).code).toBe('CRON_INVALID_SCHEDULE');
       }
     }
   });

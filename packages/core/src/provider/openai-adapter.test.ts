@@ -4,7 +4,7 @@ import { OpenAIAdapter, openAIAdapterFromConfig } from './openai-adapter.js';
 import { AnthropicAdapter } from './anthropic-adapter.js';
 import { OllamaAdapter } from './ollama-adapter.js';
 import { providersFromConfig, Providers } from './provider.js';
-import type { LumpsCodeFetch } from './fetch.js';
+import type { LareCodeFetch } from './fetch.js';
 
 function okJson(data: unknown): Response {
   return { ok: true, json: async () => data } as unknown as Response;
@@ -16,7 +16,7 @@ describe('OpenAIAdapter specifics', () => {
     const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
       calls.push({ url: String(_url), init });
       return okJson({ choices: [{ message: { content: 'hi' } }] });
-    }) as LumpsCodeFetch;
+    }) as LareCodeFetch;
 
     const plain = openAIAdapterFromConfig(
       'p1',
@@ -46,8 +46,8 @@ describe('OpenAIAdapter specifics', () => {
     );
     await router.complete('hi', { model: 'm' });
     const routerHeaders = (calls[0].init?.headers ?? {}) as Record<string, string>;
-    expect(routerHeaders['HTTP-Referer']).toBe('https://github.com/rsyyd/lumpscode');
-    expect(routerHeaders['X-Title']).toBe('lumpscode');
+    expect(routerHeaders['HTTP-Referer']).toBe('https://github.com/rsyyd/lare');
+    expect(routerHeaders['X-Title']).toBe('larecode');
     expect(router.capabilities.vision).toBe(true);
   });
 
@@ -56,7 +56,7 @@ describe('OpenAIAdapter specifics', () => {
       .fn()
       .mockResolvedValueOnce(okJson({ choices: [{ message: { content: 'from a' } }] }))
       .mockResolvedValueOnce(okJson({ choices: [{ message: { content: 'from b' } }] }));
-    const fetchImpl = mockFn as unknown as LumpsCodeFetch;
+    const fetchImpl = mockFn as unknown as LareCodeFetch;
 
     const adapter = new OpenAIAdapter({
       name: 't',

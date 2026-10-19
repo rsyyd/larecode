@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ServerOptions } from '@lumpscode/server';
+import type { ServerOptions } from '@larecode/server';
 import { serveCommand, type ServeDeps } from './commands/serve.js';
 
 function harness(overrides: Partial<ServeDeps> = {}) {
@@ -38,13 +38,13 @@ describe('serve command', () => {
     const code = await serveCommand({ port: '5000', token: 'abc' }, ui.deps);
     expect(code).toBe(0);
     expect(ui.created[0]).toEqual({ port: 5000, host: '127.0.0.1', token: 'abc' });
-    expect(ui.out.join('')).toContain('lumpscode server listening on http://127.0.0.1:5000');
+    expect(ui.out.join('')).toContain('larecode server listening on http://127.0.0.1:5000');
     expect(ui.out.join('')).not.toContain('bearer token:');
     expect(ui.stopped).toBe(true);
   });
 
-  it('uses LUMPSCODE_SERVER_TOKEN when no flag is given', async () => {
-    const ui = harness({ env: { LUMPSCODE_SERVER_TOKEN: 'env-token' } });
+  it('uses LARECODE_SERVER_TOKEN when no flag is given', async () => {
+    const ui = harness({ env: { LARECODE_SERVER_TOKEN: 'env-token' } });
     expect(await serveCommand({}, ui.deps)).toBe(0);
     expect(ui.created[0]?.token).toBe('env-token');
     expect(ui.out.join('')).not.toContain('bearer token:');

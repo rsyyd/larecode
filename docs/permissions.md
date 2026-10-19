@@ -39,9 +39,9 @@ The default is `ask` with `read` allowed.
 Cron jobs, the gateway, and the MCP server run without a human to confirm anything. They use the same default-deny rule: only groups you list with `--allow` are pre-authorized, and `secrets`/`destructive` are rejected at argument parsing time.
 
 ```bash
-lumpscode cron add "daily at 09:00" "summarize new issues" --allow shell,network
-lumpscode gateway --allow network
-lumpscode mcp serve --allow write
+larecode cron add "daily at 09:00" "summarize new issues" --allow shell,network
+larecode gateway --allow network
+larecode mcp serve --allow write
 ```
 
 ## Tool to group mapping
@@ -61,6 +61,6 @@ Unknown tool names fall back to the `write` group so new tools are never silentl
 
 ## Audit log
 
-Every decision (allowed, refused, or requiring confirmation) is recorded with the group, source, and reason. The audit log is the record of what ran on your machine and why. `lumpscode doctor` surfaces pending or changed instruction files, which are the other untrusted input in the system.
+Every decision (allowed, refused, or requiring confirmation) is recorded with the group, source, and reason. The audit log is the record of what ran on your machine and why. `larecode doctor` surfaces pending or changed instruction files, which are the other untrusted input in the system.
 
 See [SECURITY.md](../SECURITY.md) for the full trust model.

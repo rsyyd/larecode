@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
-  LumpsError,
-  isLumpsError,
-  assertLumpsError,
+  LareError,
+  isLareError,
+  assertLareError,
   type ErrorCode,
   ERROR_CATEGORIES,
 } from './error.js';
 
 describe('Error taxonomy', () => {
   it('creates error with code, category, context, retryable', () => {
-    const err = new LumpsError('PROVIDER_UNAVAILABLE', 'model down', {
+    const err = new LareError('PROVIDER_UNAVAILABLE', 'model down', {
       context: { model: 'gpt-4o' },
       retryable: true,
     });
@@ -21,21 +21,21 @@ describe('Error taxonomy', () => {
   });
 
   it('from() creates error with context', () => {
-    const err = LumpsError.from('TOOL_NOT_FOUND', 'missing tool', { tool: 'bash' });
+    const err = LareError.from('TOOL_NOT_FOUND', 'missing tool', { tool: 'bash' });
     expect(err.code).toBe('TOOL_NOT_FOUND');
     expect(err.context.tool).toBe('bash');
   });
 
   it('wrap() preserves cause', () => {
     const cause = new Error('network');
-    const err = LumpsError.wrap('NETWORK_ERROR', cause, { endpoint: '/api' });
+    const err = LareError.wrap('NETWORK_ERROR', cause, { endpoint: '/api' });
     expect(err.code).toBe('NETWORK_ERROR');
     expect(err.cause).toBe(cause);
     expect(err.context.endpoint).toBe('/api');
   });
 
   it('toJSON serializes correctly', () => {
-    const err = new LumpsError('PERMISSION_DENIED', 'nope', { context: { group: 'shell' } });
+    const err = new LareError('PERMISSION_DENIED', 'nope', { context: { group: 'shell' } });
     const json = err.toJSON();
     expect(json.code).toBe('PERMISSION_DENIED');
     expect(json.category).toBe('permission');
@@ -44,15 +44,15 @@ describe('Error taxonomy', () => {
     expect(json.stack).toBeDefined();
   });
 
-  it('isLumpsError type guard', () => {
-    expect(isLumpsError(new LumpsError('UNKNOWN', 'x'))).toBe(true);
-    expect(isLumpsError(new Error('x'))).toBe(false);
-    expect(isLumpsError(null)).toBe(false);
+  it('isLareError type guard', () => {
+    expect(isLareError(new LareError('UNKNOWN', 'x'))).toBe(true);
+    expect(isLareError(new Error('x'))).toBe(false);
+    expect(isLareError(null)).toBe(false);
   });
 
-  it('assertLumpsError throws on non-LumpsError', () => {
-    expect(() => assertLumpsError(new Error('x'))).toThrow(LumpsError);
-    expect(() => assertLumpsError(new LumpsError('UNKNOWN', 'ok'))).not.toThrow();
+  it('assertLareError throws on non-LareError', () => {
+    expect(() => assertLareError(new Error('x'))).toThrow(LareError);
+    expect(() => assertLareError(new LareError('UNKNOWN', 'ok'))).not.toThrow();
   });
 
   it('all ErrorCode values have a category', () => {

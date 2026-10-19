@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool, ToolContext } from './tool.js';
 import { parseHttpUrl } from './web.js';
 
@@ -7,7 +7,7 @@ export const CDP_TIMEOUT_MS = 10_000;
 export const BROWSER_SNAPSHOT_MAX_CHARS = 20_000;
 
 export function cdpEndpoint(): string {
-  return process.env.LUMPSCODE_CDP_URL ?? DEFAULT_CDP_ENDPOINT;
+  return process.env.LARECODE_CDP_URL ?? DEFAULT_CDP_ENDPOINT;
 }
 
 interface WsEvent {
@@ -60,20 +60,20 @@ class CdpSession {
     const target = existing ?? (await createTarget(endpoint));
     const wsUrl = target?.webSocketDebuggerUrl;
     if (!wsUrl) {
-      throw new LumpsError(
+      throw new LareError(
         'NETWORK_ERROR',
         'no debuggable page target found; open a tab in the browser'
       );
     }
     const Ctor = (globalThis as { WebSocket?: WebSocketCtor }).WebSocket;
     if (!Ctor) {
-      throw new LumpsError('NETWORK_ERROR', 'WebSocket is not available in this runtime');
+      throw new LareError('NETWORK_ERROR', 'WebSocket is not available in this runtime');
     }
     const ws = new Ctor(wsUrl);
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(
         () =>
-          reject(new LumpsError('NETWORK_ERROR', 'timed out connecting to the browser websocket')),
+          reject(new LareError('NETWORK_ERROR', 'timed out connecting to the browser websocket')),
         5000
       );
       ws.addEventListener(
@@ -88,7 +88,7 @@ class CdpSession {
         'error',
         () => {
           clearTimeout(timer);
-          reject(new LumpsError('NETWORK_ERROR', 'failed to open the browser websocket'));
+          reject(new LareError('NETWORK_ERROR', 'failed to open the browser websocket'));
         },
         { once: true }
       );
@@ -110,7 +110,7 @@ class CdpSession {
     clearTimeout(entry.timer);
     if (message.error) {
       entry.reject(
-        new LumpsError('NETWORK_ERROR', `cdp error: ${message.error.message ?? 'unknown'}`)
+        new LareError('NETWORK_ERROR', `cdp error: ${message.error.message ?? 'unknown'}`)
       );
     } else {
       entry.resolve(message.result);
@@ -119,13 +119,13 @@ class CdpSession {
 
   send<T = unknown>(method: string, params: Record<string, unknown> = {}): Promise<T> {
     if (this.closed) {
-      return Promise.reject(new LumpsError('NETWORK_ERROR', 'browser connection closed'));
+      return Promise.reject(new LareError('NETWORK_ERROR', 'browser connection closed'));
     }
     const id = this.nextId++;
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new LumpsError('NETWORK_ERROR', `cdp call timed out: ${method}`));
+        reject(new LareError('NETWORK_ERROR', `cdp call timed out: ${method}`));
       }, CDP_TIMEOUT_MS);
       this.pending.set(id, { resolve: resolve as (value: unknown) => void, reject, timer });
       this.ws.send(JSON.stringify({ id, method, params }));
@@ -136,7 +136,7 @@ class CdpSession {
     this.closed = true;
     for (const entry of this.pending.values()) {
       clearTimeout(entry.timer);
-      entry.reject(new LumpsError('NETWORK_ERROR', 'browser connection closed'));
+      entry.reject(new LareError('NETWORK_ERROR', 'browser connection closed'));
     }
     this.pending.clear();
     try {
@@ -152,12 +152,12 @@ async function listTargets(endpoint: string): Promise<CdpTarget[]> {
   try {
     response = await fetch(`${endpoint}/json/list`, { signal: AbortSignal.timeout(3000) });
   } catch (error) {
-    throw new LumpsError('NETWORK_ERROR', `browser not reachable at ${endpoint}`, {
+    throw new LareError('NETWORK_ERROR', `browser not reachable at ${endpoint}`, {
       cause: error instanceof Error ? error : undefined,
     });
   }
   if (!response.ok) {
-    throw new LumpsError(
+    throw new LareError(
       'NETWORK_ERROR',
       `browser not reachable at ${endpoint} (HTTP ${response.status})`
     );
@@ -200,7 +200,7 @@ export function browserTool(options: { endpoint?: string } = {}): Tool {
   const endpoint = options.endpoint ?? cdpEndpoint();
   return {
     name: 'browser',
-    description: `Control a Chrome browser over the DevTools protocol at ${endpoint} (override with LUMPSCODE_CDP_URL). Actions: navigate (http/https), snapshot (title, url, visible text), click (CSS selector), type (CSS selector + text). Requires the browser permission group.`,
+    description: `Control a Chrome browser over the DevTools protocol at ${endpoint} (override with LARECODE_CDP_URL). Actions: navigate (http/https), snapshot (title, url, visible text), click (CSS selector), type (CSS selector + text). Requires the browser permission group.`,
     schema: {
       type: 'object',
       properties: {
@@ -217,7 +217,7 @@ export function browserTool(options: { endpoint?: string } = {}): Tool {
     async execute(args, context) {
       const { action, url, selector, text } = (args ?? {}) as BrowserArgs;
       if (typeof action !== 'string' || !BROWSER_ACTIONS.includes(action)) {
-        throw new LumpsError(
+        throw new LareError(
           'TOOL_EXECUTION_FAILED',
           `browser action must be one of: ${BROWSER_ACTIONS.join(', ')}`
         );
@@ -229,10 +229,10 @@ export function browserTool(options: { endpoint?: string } = {}): Tool {
         (action === 'click' || action === 'type') &&
         (typeof selector !== 'string' || selector.trim() === '')
       ) {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', `${action} requires a selector`);
+        throw new LareError('TOOL_EXECUTION_FAILED', `${action} requires a selector`);
       }
       if (action === 'type' && typeof text !== 'string') {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', 'type requires text');
+        throw new LareError('TOOL_EXECUTION_FAILED', 'type requires text');
       }
 
       const session = await CdpSession.attach(endpoint);
@@ -262,7 +262,7 @@ export function browserTool(options: { endpoint?: string } = {}): Tool {
             `(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return false; el.scrollIntoView({ block: 'center' }); el.click(); return true; })()`
           );
           if (clicked !== true) {
-            throw new LumpsError('TOOL_EXECUTION_FAILED', `selector not found: ${selector}`);
+            throw new LareError('TOOL_EXECUTION_FAILED', `selector not found: ${selector}`);
           }
           return { action, clicked: true };
         }
@@ -271,7 +271,7 @@ export function browserTool(options: { endpoint?: string } = {}): Tool {
           `(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return false; el.focus(); if ('value' in el) { el.value = ${JSON.stringify(text)}; } else if (el.isContentEditable) { el.textContent = ${JSON.stringify(text)}; } else { return false; } el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`
         );
         if (typed !== true) {
-          throw new LumpsError(
+          throw new LareError(
             'TOOL_EXECUTION_FAILED',
             `selector not found or not typable: ${selector}`
           );
@@ -287,7 +287,7 @@ export function browserTool(options: { endpoint?: string } = {}): Tool {
 function requireBrowserPermission(context: ToolContext, source: string): void {
   const decision = context.permissions.check('browser', { source });
   if (!decision.allowed) {
-    throw new LumpsError(
+    throw new LareError(
       'PERMISSION_DENIED',
       decision.reason ?? 'browser control requires the browser permission group',
       { context: { source } }

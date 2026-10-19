@@ -1,16 +1,16 @@
 # MCP
 
-Lumps Code speaks the Model Context Protocol in both directions.
+Lare Code speaks the Model Context Protocol in both directions.
 
 ## As a client
 
 Add servers with commands or URLs and call their tools with an explicit permission check:
 
 ```bash
-lumpscode mcp add context7 --preset context7
-lumpscode mcp add local-tools --command npx --arg -y --arg my-mcp-server
-lumpscode mcp list
-lumpscode mcp call context7 resolve-library-id --args '{"libraryName":"express"}'
+larecode mcp add context7 --preset context7
+larecode mcp add local-tools --command npx --arg -y --arg my-mcp-server
+larecode mcp list
+larecode mcp call context7 resolve-library-id --args '{"libraryName":"express"}'
 ```
 
 Presets cover `context7`, `playwright`, and `serena`. Calls check the `external-services` group; if your policy requires confirmation, re-run with `--yes`.
@@ -20,7 +20,7 @@ Presets cover `context7`, `playwright`, and `serena`. Calls check the `external-
 Expose the built-in tools to other agents and editors:
 
 ```bash
-lumpscode mcp serve --cwd /path/to/project --allow write
+larecode mcp serve --cwd /path/to/project --allow write
 ```
 
 Protocol: newline-delimited JSON-RPC over stdio. The server implements `initialize`, `tools/list`, and `tools/call`.
@@ -42,12 +42,12 @@ Any MCP-capable editor works. For a generic stdio client:
 ```json
 {
   "mcpServers": {
-    "lumpscode": {
-      "command": "lumpscode",
+    "larecode": {
+      "command": "larecode",
       "args": ["mcp", "serve", "--cwd", "."]
     }
   }
 }
 ```
 
-Logs go to stderr so stdout stays a clean protocol channel. Set `LUMPSCODE_LOG_LEVEL=debug` when you need to see tool activity.
+Logs go to stderr so stdout stays a clean protocol channel. Set `LARECODE_LOG_LEVEL=debug` when you need to see tool activity.

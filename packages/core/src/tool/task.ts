@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { Tool } from '../tool/tool.js';
 import type { AgentName } from '../agent/agents.js';
 import type { Subagents } from '../agent/subagent.js';
@@ -25,12 +25,12 @@ export function taskTool(subagents: Subagents, options: TaskToolOptions): Tool {
     async execute(args, context) {
       const input = (args ?? {}) as { prompt?: string; agent?: string };
       if (typeof input.prompt !== 'string' || input.prompt.trim() === '') {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', 'task requires a prompt');
+        throw new LareError('TOOL_EXECUTION_FAILED', 'task requires a prompt');
       }
       const agent = (input.agent ?? 'general') as AgentName;
       const decision = context.permissions.check('subagent', { source: `task:${agent}` });
       if (!decision.allowed) {
-        throw new LumpsError(
+        throw new LareError(
           'PERMISSION_DENIED',
           decision.reason ?? `subagent "${agent}" requires approval`,
           { context: { agent } }

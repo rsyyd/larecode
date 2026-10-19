@@ -1,4 +1,4 @@
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import { renderHistoryDigest, searchSessions, type SessionSearchHit } from '../session/search.js';
 import type { Tool } from './tool.js';
 
@@ -32,11 +32,11 @@ export function sessionSearchTool(): Tool {
     async execute(args, context) {
       const { query, limit } = (args ?? {}) as SessionSearchArgs;
       if (typeof query !== 'string' || query.trim() === '') {
-        throw new LumpsError('TOOL_EXECUTION_FAILED', 'query is required');
+        throw new LareError('TOOL_EXECUTION_FAILED', 'query is required');
       }
       const decision = context.permissions.check('read', { source: 'session_search' });
       if (!decision.allowed) {
-        throw new LumpsError(
+        throw new LareError(
           'PERMISSION_DENIED',
           decision.reason ?? 'session search requires the read permission group'
         );

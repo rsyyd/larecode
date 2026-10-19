@@ -19,9 +19,9 @@ afterEach(() => {
 });
 
 describe('cdpEndpoint', () => {
-  it('defaults to the local chrome port and honors LUMPSCODE_CDP_URL', () => {
+  it('defaults to the local chrome port and honors LARECODE_CDP_URL', () => {
     expect(cdpEndpoint()).toBe('http://127.0.0.1:9222');
-    vi.stubEnv('LUMPSCODE_CDP_URL', 'http://127.0.0.1:9333');
+    vi.stubEnv('LARECODE_CDP_URL', 'http://127.0.0.1:9333');
     expect(cdpEndpoint()).toBe('http://127.0.0.1:9333');
   });
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@lumpscode/sdk",
+  "name": "@larecode/sdk",
   "version": "0.0.0",
   "type": "module",
   "main": "src/index.ts",
@@ -11,7 +11,7 @@
     "lint": "oxlint"
   },
   "dependencies": {
-    "@lumpscode/core": "*"
+    "@larecode/core": "*"
   },
   "devDependencies": {
     "vitest": "^2.0.0",

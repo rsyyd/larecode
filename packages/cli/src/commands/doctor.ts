@@ -3,13 +3,13 @@ import {
   VERSION,
   configPath,
   loadEffectiveConfig,
-  lumpscodeHome,
+  larecodeHome,
   validateConfig,
   discoverInstructions,
   projectConfigPath,
   type Config,
   type ProviderConfig,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
 const ok = (text: string) => `\x1b[32m${text}\x1b[0m`;
 const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
@@ -56,7 +56,7 @@ function printInstructions(): void {
 }
 
 function homeRow(): { line: string; problem?: string } {
-  const home = lumpscodeHome();
+  const home = larecodeHome();
   if (!existsSync(home)) {
     return { line: `  home            ${home} ${dim('(missing — created on first write)')}` };
   }
@@ -77,7 +77,7 @@ export async function runDoctor(): Promise<void> {
   const home = homeRow();
   if (home.problem) problems.push(home.problem);
 
-  console.log(`lumpscode ${VERSION} doctor\n`);
+  console.log(`larecode ${VERSION} doctor\n`);
 
   const path = configPath();
   const pathState = existsSync(path) ? '' : dim(' (missing — defaults active)');

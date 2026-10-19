@@ -125,7 +125,7 @@ describe('Permissions audit', () => {
   });
 
   it('persists audit entries as JSONL through the file sink', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'lumps-audit-'));
+    const dir = await mkdtemp(join(tmpdir(), 'lare-audit-'));
     const path = join(dir, 'nested', 'audit.jsonl');
     const permissions = new Permissions(
       { mode: 'ask', allowedGroups: ['read'] },

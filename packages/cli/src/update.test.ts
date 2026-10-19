@@ -31,7 +31,7 @@ describe('updateCommand', () => {
     const { out, fetchImpl, write } = harness({ version: '9.9.9' });
     await updateCommand({}, { fetchImpl, write, version: '0.0.0' });
     expect(out.join('')).toContain('update available: 0.0.0 -> 9.9.9');
-    expect(out.join('')).toContain('npm install -g lumpscode@9.9.9');
+    expect(out.join('')).toContain('npm install -g larecode@9.9.9');
   });
 
   it('reports only the fact with --check', async () => {

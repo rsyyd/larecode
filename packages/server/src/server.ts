@@ -4,13 +4,7 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from 'node:http';
-import {
-  AgentLoop,
-  Sessions,
-  VERSION,
-  loadEffectiveConfig,
-  type HaltReason,
-} from '@lumpscode/core';
+import { AgentLoop, Sessions, VERSION, loadEffectiveConfig, type HaltReason } from '@larecode/core';
 import { Shares, renderSharePage } from './share.js';
 
 export const DEFAULT_SERVER_PORT = 4096;

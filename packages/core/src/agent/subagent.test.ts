@@ -4,7 +4,7 @@ import { taskTool } from '../tool/task.js';
 import { Tools, type ToolContext } from '../tool/tool.js';
 import { Permissions, type PermissionPolicy } from '../permission/permission.js';
 import { Logger } from '../logger/logger.js';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { HaltReason } from './loop.js';
 import type { UsageAggregate } from '../usage/usage.js';
 import { estimateTokens } from '../usage/usage.js';
@@ -134,7 +134,7 @@ describe('subagents', () => {
         async *run() {
           controller.abort();
           yield 'partial';
-          throw new LumpsError('CANCELLED', 'agent loop cancelled');
+          throw new LareError('CANCELLED', 'agent loop cancelled');
         },
         getUsage: () => usage(1),
         getHaltReason: () => null,

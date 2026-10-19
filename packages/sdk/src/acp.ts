@@ -1,6 +1,6 @@
 import { createInterface } from 'node:readline';
-import { Sessions, VERSION } from '@lumpscode/core';
-import { LumpsClient } from './client.js';
+import { Sessions, VERSION } from '@larecode/core';
+import { LareClient } from './client.js';
 
 export const ACP_PROTOCOL_VERSION = 1;
 
@@ -51,13 +51,13 @@ export class AcpAgent {
   private readonly pending = new Map<string, PendingSession>();
 
   constructor(options: AcpAgentOptions = {}) {
-    this.name = options.name ?? 'lumpscode';
+    this.name = options.name ?? 'larecode';
     this.title = options.title ?? "Every agent's best, in one CLI";
     this.version = options.version ?? VERSION;
     this.send =
       options.send ?? ((message: unknown) => process.stdout.write(`${JSON.stringify(message)}\n`));
     this.sessions = options.sessions ?? new Sessions();
-    const client = new LumpsClient({
+    const client = new LareClient({
       workingDir: options.workingDir,
       sessions: this.sessions,
     });

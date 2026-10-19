@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { LumpsError } from '../error/error.js';
+import { LareError } from '../error/error.js';
 import type { SessionMessage } from '../session/session.js';
 import { SKILL_BODY_MAX_CHARS, SKILL_FILE } from './skill.js';
 
@@ -48,7 +48,7 @@ export function slugifySkillName(input: string): string {
 }
 
 export function skillDraftPath(name: string, projectDir = process.cwd()): string {
-  return join(resolve(projectDir), '.lumpscode', 'skills', name, SKILL_FILE);
+  return join(resolve(projectDir), '.larecode', 'skills', name, SKILL_FILE);
 }
 
 export function renderSkillDraft(draft: SkillDraft): string {
@@ -66,17 +66,17 @@ export function renderSkillDraft(draft: SkillDraft): string {
 export function writeSkillDraft(draft: SkillDraft, options: { projectDir?: string } = {}): string {
   const name = slugifySkillName(draft.name);
   if (!SKILL_NAME_RE.test(name)) {
-    throw new LumpsError('SKILL_WRITE_FAILED', `invalid skill name: "${draft.name}"`);
+    throw new LareError('SKILL_WRITE_FAILED', `invalid skill name: "${draft.name}"`);
   }
   if (draft.description.replace(/\s+/g, ' ').trim() === '') {
-    throw new LumpsError('SKILL_WRITE_FAILED', `skill "${name}" needs a description`);
+    throw new LareError('SKILL_WRITE_FAILED', `skill "${name}" needs a description`);
   }
   if (draft.body.trim() === '') {
-    throw new LumpsError('SKILL_WRITE_FAILED', `skill "${name}" needs a body`);
+    throw new LareError('SKILL_WRITE_FAILED', `skill "${name}" needs a body`);
   }
   const path = skillDraftPath(name, options.projectDir);
   if (existsSync(path)) {
-    throw new LumpsError('SKILL_WRITE_FAILED', `skill "${name}" already exists`, {
+    throw new LareError('SKILL_WRITE_FAILED', `skill "${name}" already exists`, {
       context: { path },
     });
   }

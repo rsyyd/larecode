@@ -1,5 +1,5 @@
 {
-  "name": "@lumpscode/cli",
+  "name": "@larecode/cli",
   "version": "0.0.0",
   "type": "module",
   "main": "src/index.ts",
@@ -7,10 +7,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@lumpscode/core": "*",
-    "@lumpscode/gateway": "*",
-    "@lumpscode/sdk": "*",
-    "@lumpscode/server": "*",
+    "@larecode/core": "*",
+    "@larecode/gateway": "*",
+    "@larecode/sdk": "*",
+    "@larecode/server": "*",
     "commander": "^15.0.0"
   }
 }

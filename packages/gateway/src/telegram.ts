@@ -3,9 +3,9 @@ import { dirname, join } from 'node:path';
 import {
   Sessions,
   assertPreAuthorizable,
-  lumpscodeHome,
+  larecodeHome,
   type PermissionGroup,
-} from '@lumpscode/core';
+} from '@larecode/core';
 
 export const TELEGRAM_MAX_MESSAGE_CHARS = 4096;
 export const TELEGRAM_DEFAULT_API_BASE = 'https://api.telegram.org';
@@ -32,7 +32,7 @@ export interface ChatSessionsStore {
 }
 
 export function gatewayPath(): string {
-  return join(lumpscodeHome(), 'gateway.json');
+  return join(larecodeHome(), 'gateway.json');
 }
 
 export class ChatSessions implements ChatSessionsStore {
@@ -186,7 +186,7 @@ export class TelegramGateway {
     if (this.allowedChatId === undefined || this.allowedChatId !== chatId) {
       await this.sendMessage(
         chatId,
-        `this bot is not authorized for this chat (chat id ${chatId}). set LUMPSCODE_TELEGRAM_CHAT_ID=${chatId} to enable it.`
+        `this bot is not authorized for this chat (chat id ${chatId}). set LARECODE_TELEGRAM_CHAT_ID=${chatId} to enable it.`
       );
       return;
     }

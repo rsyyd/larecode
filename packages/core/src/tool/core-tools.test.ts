@@ -13,7 +13,7 @@ let tools: Tools;
 let callId = 0;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'lumps-tools-'));
+  dir = await mkdtemp(join(tmpdir(), 'lare-tools-'));
   tools = new Tools({ logger: new Logger({ level: 'error', handlers: [() => {}] }) });
   for (const tool of coreTools()) tools.register(tool);
 });
@@ -124,10 +124,10 @@ describe('write', () => {
 describe('edit', () => {
   it('replaces a unique fragment and returns the new hash', async () => {
     await writeFile(join(dir, 'e.txt'), 'hello world');
-    const result = await call('edit', { path: 'e.txt', oldString: 'world', newString: 'lumps' });
+    const result = await call('edit', { path: 'e.txt', oldString: 'world', newString: 'lare' });
     expect(result.success).toBe(true);
-    expect((result.output as { sha256: string }).sha256).toBe(sha256('hello lumps'));
-    expect(await readFile(join(dir, 'e.txt'), 'utf8')).toBe('hello lumps');
+    expect((result.output as { sha256: string }).sha256).toBe(sha256('hello lare'));
+    expect(await readFile(join(dir, 'e.txt'), 'utf8')).toBe('hello lare');
   });
 
   it('fails when the fragment is missing', async () => {
@@ -278,11 +278,11 @@ describe('patch', () => {
       path: 'p.txt',
       sha256: sha256('hello world'),
       find: 'world',
-      replace: 'lumps',
+      replace: 'lare',
     });
     expect(result.success).toBe(true);
-    expect((result.output as { sha256: string }).sha256).toBe(sha256('hello lumps'));
-    expect(await readFile(join(dir, 'p.txt'), 'utf8')).toBe('hello lumps');
+    expect((result.output as { sha256: string }).sha256).toBe(sha256('hello lare'));
+    expect(await readFile(join(dir, 'p.txt'), 'utf8')).toBe('hello lare');
   });
 
   it('rejects with PATCH_CONFLICT when the file changed after hashing', async () => {

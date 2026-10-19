@@ -16,15 +16,15 @@ jobs:
       matrix:
         include:
           - target: bun-linux-x64
-            asset: lumpscode-linux-x64
+            asset: larecode-linux-x64
           - target: bun-linux-arm64
-            asset: lumpscode-linux-arm64
+            asset: larecode-linux-arm64
           - target: bun-darwin-x64
-            asset: lumpscode-darwin-x64
+            asset: larecode-darwin-x64
           - target: bun-darwin-arm64
-            asset: lumpscode-darwin-arm64
+            asset: larecode-darwin-arm64
           - target: bun-windows-x64
-            asset: lumpscode-windows-x64.exe
+            asset: larecode-windows-x64.exe
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
