@@ -5,6 +5,7 @@ import { runCommand } from './commands/run.js';
 import { serveCommand } from './commands/serve.js';
 import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
 import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cron.js';
+import { gatewayCommand } from './commands/gateway.js';
 
 const program = new Command();
 
@@ -23,6 +24,17 @@ program
   .option('--token <token>', 'bearer token (default: LUMPSCODE_SERVER_TOKEN or generated)')
   .action(async (options: Parameters<typeof serveCommand>[0]) => {
     process.exitCode = await serveCommand(options);
+  });
+
+program
+  .command('gateway')
+  .description('Serve tasks from a messaging platform (Telegram)')
+  .option('--platform <name>', 'platform to connect (telegram)', 'telegram')
+  .option('--token <token>', 'bot token (default: LUMPSCODE_TELEGRAM_TOKEN)')
+  .option('--chat <id>', 'only serve this chat id (default: LUMPSCODE_TELEGRAM_CHAT_ID)')
+  .option('--allow <groups>', 'comma-separated permission groups pre-authorized for gateway tasks')
+  .action(async (options: Parameters<typeof gatewayCommand>[0]) => {
+    process.exitCode = await gatewayCommand(options);
   });
 
 program

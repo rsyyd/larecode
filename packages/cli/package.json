@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@lumpscode/core": "*",
+    "@lumpscode/gateway": "*",
     "@lumpscode/server": "*",
     "commander": "^15.0.0"
   }

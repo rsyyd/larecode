@@ -4,8 +4,7 @@ import { dirname, join } from 'node:path';
 import { lumpscodeHome } from '../config/config.js';
 import { LumpsError } from '../error/error.js';
 import {
-  NEVER_AUTO_APPROVED,
-  PERMISSION_GROUPS,
+  assertPreAuthorizable,
   Permissions,
   type PermissionGroup,
 } from '../permission/permission.js';
@@ -103,7 +102,7 @@ export class Jobs {
     const parsed = parseSchedule(schedule);
     const prompt = input.prompt.trim();
     if (!prompt) throw new LumpsError('CONFIG_INVALID', 'cron job needs a prompt');
-    const policy = validatePolicy(input.policy ?? []);
+    const policy = assertPreAuthorizable(input.policy ?? []);
     const id = randomBytes(4).toString('hex');
     const job: CronJob = {
       id,
@@ -158,21 +157,6 @@ export class Jobs {
     this.write(jobs);
     return job;
   }
-}
-
-function validatePolicy(policy: PermissionGroup[]): PermissionGroup[] {
-  for (const group of policy) {
-    if (!(PERMISSION_GROUPS as readonly string[]).includes(group)) {
-      throw new LumpsError('CONFIG_INVALID', `unknown permission group "${group}"`);
-    }
-    if (NEVER_AUTO_APPROVED.includes(group)) {
-      throw new LumpsError(
-        'PERMISSION_DENIED',
-        `${group} is never pre-authorizable in unattended flows`
-      );
-    }
-  }
-  return [...new Set(policy)];
 }
 
 function tail(output: string, max: number): string {

@@ -47,7 +47,12 @@ export { coreTools } from './tool/core.js';
 export { taskTool } from './tool/task.js';
 export type { TaskToolOptions } from './tool/task.js';
 
-export { Permissions, PERMISSION_GROUPS, NEVER_AUTO_APPROVED } from './permission/permission.js';
+export {
+  Permissions,
+  PERMISSION_GROUPS,
+  NEVER_AUTO_APPROVED,
+  assertPreAuthorizable,
+} from './permission/permission.js';
 export type {
   PermissionGroup,
   PermissionMode,

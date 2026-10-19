@@ -1,3 +1,4 @@
+import { LumpsError } from '../error/error.js';
 import { AuditLog } from './audit.js';
 
 export const PERMISSION_GROUPS = [
@@ -119,4 +120,19 @@ export class Permissions {
       reason: `${group} requires confirmation (mode: ask)`,
     };
   }
+}
+
+export function assertPreAuthorizable(policy: PermissionGroup[]): PermissionGroup[] {
+  for (const group of policy) {
+    if (!(PERMISSION_GROUPS as readonly string[]).includes(group)) {
+      throw new LumpsError('CONFIG_INVALID', `unknown permission group "${group}"`);
+    }
+    if (NEVER_AUTO_APPROVED.includes(group)) {
+      throw new LumpsError(
+        'PERMISSION_DENIED',
+        `${group} is never pre-authorizable in unattended flows`
+      );
+    }
+  }
+  return [...new Set(policy)];
 }
