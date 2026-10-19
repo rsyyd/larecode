@@ -103,22 +103,31 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     env:
-      PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
+      PACKAGING_SSH_KEY_TAP: ${{ secrets.PACKAGING_SSH_KEY_TAP }}
+      PACKAGING_SSH_KEY_BUCKET: ${{ secrets.PACKAGING_SSH_KEY_BUCKET }}
     steps:
-      - name: Skip without a packaging token
-        if: env.PACKAGING_TOKEN == ''
-        run: echo "PACKAGING_TOKEN is not set; the tap and bucket stay unchanged."
+      - name: Skip without deploy keys
+        if: env.PACKAGING_SSH_KEY_TAP == '' || env.PACKAGING_SSH_KEY_BUCKET == ''
+        run: echo "Deploy keys are not set; the tap and bucket stay unchanged."
+      - name: Write deploy keys
+        if: env.PACKAGING_SSH_KEY_TAP != '' && env.PACKAGING_SSH_KEY_BUCKET != ''
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/tap_key"
+          printf '%s\n' "$PACKAGING_SSH_KEY_TAP" > "$RUNNER_TEMP/tap_key"
+          install -m 600 /dev/null "$RUNNER_TEMP/bucket_key"
+          printf '%s\n' "$PACKAGING_SSH_KEY_BUCKET" > "$RUNNER_TEMP/bucket_key"
       - name: Download generated manifests
-        if: env.PACKAGING_TOKEN != ''
+        if: env.PACKAGING_SSH_KEY_TAP != '' && env.PACKAGING_SSH_KEY_BUCKET != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p packaging/out
           gh release download "$GITHUB_REF_NAME" --pattern larecode.rb --pattern larecode.json --dir packaging/out
       - name: Push the formula to the tap
-        if: env.PACKAGING_TOKEN != ''
+        if: env.PACKAGING_SSH_KEY_TAP != '' && env.PACKAGING_SSH_KEY_BUCKET != ''
         run: |
-          git clone --depth 1 "https://x-access-token:${PACKAGING_TOKEN}@github.com/rsyyd/homebrew-larecode.git" tap
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/tap_key -o StrictHostKeyChecking=accept-new"
+          git clone --depth 1 git@github.com:rsyyd/homebrew-larecode.git tap
           mkdir -p tap/Formula
           cp packaging/out/larecode.rb tap/Formula/larecode.rb
           cd tap
@@ -128,9 +137,10 @@ jobs:
           git diff --cached --quiet || git commit -m "larecode ${GITHUB_REF_NAME#v}"
           git push
       - name: Push the manifest to the bucket
-        if: env.PACKAGING_TOKEN != ''
+        if: env.PACKAGING_SSH_KEY_TAP != '' && env.PACKAGING_SSH_KEY_BUCKET != ''
         run: |
-          git clone --depth 1 "https://x-access-token:${PACKAGING_TOKEN}@github.com/rsyyd/larecode-scoop.git" bucket
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/bucket_key -o StrictHostKeyChecking=accept-new"
+          git clone --depth 1 git@github.com:rsyyd/larecode-scoop.git bucket
           cp packaging/out/larecode.json bucket/larecode.json
           cd bucket
           git config user.name larecode-release
