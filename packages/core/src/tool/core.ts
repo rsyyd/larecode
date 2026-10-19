@@ -1,3 +1,4 @@
+import type { ExecutionBackend } from '../exec/backend.js';
 import type { Tool } from './tool.js';
 import { astGrepTool } from './astgrep.js';
 import { bashTool } from './bash.js';
@@ -11,12 +12,12 @@ import { sessionSearchTool } from './session-search.js';
 import { webFetchTool, webSearchTool } from './web.js';
 import { writeTool } from './write.js';
 
-export function coreTools(): Tool[] {
+export function coreTools(options: { backend?: ExecutionBackend } = {}): Tool[] {
   return [
     readTool(),
     writeTool(),
     editTool(),
-    bashTool(),
+    bashTool(options.backend),
     globTool(),
     grepTool(),
     astGrepTool(),

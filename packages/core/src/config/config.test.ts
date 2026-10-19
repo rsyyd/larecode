@@ -69,4 +69,20 @@ describe('config', () => {
   it('passes validation for a healthy config', () => {
     expect(validateConfig(defaultConfig())).toEqual([]);
   });
+
+  it('flags incomplete execution backends', () => {
+    const docker = defaultConfig();
+    docker.execution = { backend: 'docker' };
+    expect(validateConfig(docker)).toEqual([
+      'execution backend "docker" requires execution.docker.image',
+    ]);
+
+    const ssh = defaultConfig();
+    ssh.execution = { backend: 'ssh' };
+    expect(validateConfig(ssh)).toEqual(['execution backend "ssh" requires execution.ssh.host']);
+
+    const complete = defaultConfig();
+    complete.execution = { backend: 'docker', docker: { image: 'alpine' } };
+    expect(validateConfig(complete)).toEqual([]);
+  });
 });

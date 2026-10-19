@@ -64,6 +64,18 @@ export { AuditLog, fileAuditSink } from './permission/audit.js';
 export type { AuditEntry, AuditSink, AuditInput } from './permission/audit.js';
 export { redactSecrets, redactValue } from './permission/redact.js';
 
+export {
+  LocalBackend,
+  DockerBackend,
+  SshBackend,
+  backendFromConfig,
+  runProcess,
+  dockerArgs,
+  sshArgs,
+  shellQuote,
+} from './exec/backend.js';
+export type { ExecRequest, ExecResult, ExecutionBackend, ExecutionConfig } from './exec/backend.js';
+
 export { Jobs, cronPath, cronPermissions, CRON_OUTPUT_MAX_CHARS } from './cron/job.js';
 export type { CronJob, CronJobInput, CronResult } from './cron/job.js';
 export { parseSchedule, nextRun, CRON_LOOKAHEAD_DAYS } from './cron/schedule.js';

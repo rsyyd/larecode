@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import type { PermissionPolicy } from '../permission/permission.js';
 import type { MCPServerConfig } from '../mcp/mcp.js';
+import type { ExecutionConfig } from '../exec/backend.js';
 
 export interface ProviderConfig {
   type: 'openai-compatible' | 'anthropic' | 'ollama' | 'openrouter' | 'zai' | 'custom';
@@ -18,6 +19,7 @@ export interface Config {
   permissions: PermissionPolicy;
   providers: Record<string, ProviderConfig>;
   mcpServers: Record<string, MCPServerConfig>;
+  execution?: ExecutionConfig;
 }
 
 export function lumpscodeHome(): string {
@@ -51,6 +53,7 @@ export function defaultConfig(): Config {
       },
     },
     mcpServers: {},
+    execution: { backend: 'local' },
   };
 }
 
@@ -92,6 +95,16 @@ export function validateConfig(config: Config): string[] {
   }
   for (const [name, entry] of Object.entries(config.providers)) {
     if (!entry.baseUrl) problems.push(`provider "${name}" has no baseUrl`);
+  }
+  const execution = config.execution;
+  if (execution) {
+    if (!['local', 'docker', 'ssh'].includes(execution.backend)) {
+      problems.push(`execution backend "${execution.backend}" is not one of local, docker, ssh`);
+    } else if (execution.backend === 'docker' && !execution.docker?.image) {
+      problems.push('execution backend "docker" requires execution.docker.image');
+    } else if (execution.backend === 'ssh' && !execution.ssh?.host) {
+      problems.push('execution backend "ssh" requires execution.ssh.host');
+    }
   }
   for (const [name, server] of Object.entries(config.mcpServers ?? {})) {
     const transport = server.transport ?? (server.url ? 'http' : 'stdio');
