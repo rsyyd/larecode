@@ -2,6 +2,7 @@
 
 ## 0.1.0 — 2026-10-19
 
+- Release binaries: each cross-compiled target now installs its own `@ast-grep/napi` native binding before `bun build --compile`, so the four non-host platforms no longer crash at startup with "Cannot find native binding"; verified by running the released linux-arm64 binary, whose embedded binding was built on a linux-x64 runner.
 - T-32: desktop app closed as deferred per PRD Non-Goals, recorded in docs/architecture/adr/0001-desktop-app-deferred.md; v1.0 ships as the CLI plus gateway and share links, with serve, the SDK, ACP, and MCP server as the seams a future shell will consume. M4 complete: all 32 PRD tasks are done.
 - Rename: Lumps Code becomes Lare Code. Binary and npm package `larecode`, workspace scope `@larecode/*`, environment variables `LARECODE_*`, state directory `~/.larecode`, project config `larecode.json`, and the instruction alias `LARECODE.md`; the repository moved to rsyyd/larecode.
 - T-31: MCP server mode: `larecode mcp serve` exposes the built-in tools to editors and other agents over stdio with a centralized tool-to-group permission map (unknown tools fall back to write), read-only by default, extra groups via `--allow` with secrets and destructive refused at startup, denied calls answered as MCP errors, and logs kept on stderr so stdout stays a clean protocol channel, while the docs site gains getting-started, configuration, providers, permissions, tools, MCP, automation, and SDK pages plus a SECURITY.md trust-model pass.
