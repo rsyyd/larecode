@@ -1,4 +1,4 @@
-# Lare Code docs
+# Lare Code
 
 Lare Code is an open-source, provider-neutral AI coding agent for the terminal. This folder is the documentation site source, published with GitHub Pages.
 
