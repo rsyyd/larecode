@@ -31,4 +31,4 @@ Lare Code is an open-source, provider-neutral AI coding agent for the terminal. 
 | `larecode acp`                                | Speak Agent Client Protocol over stdio for editors      |
 | `larecode update`                             | Check for a newer release                               |
 
-See [SECURITY.md](../SECURITY.md) for the trust model.
+See [SECURITY.md](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for the trust model.
