@@ -96,7 +96,13 @@ jobs:
         working-directory: npm
       - name: Publish to npm
         if: env.NPM_TOKEN != ''
-        run: npm publish
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if npm view "larecode@$version" version >/dev/null 2>&1; then
+            echo "larecode@$version is already published; skipping."
+          else
+            npm publish
+          fi
         working-directory: npm
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
@@ -124,7 +130,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p packaging/out
-          gh release download "$GITHUB_REF_NAME" --pattern larecode.rb --pattern larecode.json --dir packaging/out
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern larecode.rb --pattern larecode.json --dir packaging/out
       - name: Push the formula to the tap
         if: env.PACKAGING_SSH_KEY_TAP != '' && env.PACKAGING_SSH_KEY_BUCKET != ''
         run: |
