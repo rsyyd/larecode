@@ -8,7 +8,7 @@ brew tap rsyyd/larecode && brew install larecode
 curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
 ```
 
-See [install.md](install.md) for Scoop, AUR, and manual binary installs.
+See [install.md](install.md) for Scoop, PKGBUILD, and manual binary installs.
 
 ## First run
 

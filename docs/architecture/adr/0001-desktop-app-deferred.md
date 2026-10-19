@@ -6,17 +6,17 @@ Accepted
 
 ## Context
 
-The PRD lists a desktop app as T-32, marked as a stretch goal whose acceptance criteria are "out of scope if M4 overruns", and §63 lists the desktop app among the v1.0 Non-Goals: "The PRD ends at the CLI + gateway + share links; everything else is future work."
+The original plan listed a desktop app as a stretch goal, with acceptance criteria explicitly out of scope if the final milestone overran. The same plan put the desktop app among the v1.0 non-goals: v1.0 ends at the CLI, gateway, and share links; everything else is future work.
 
 Every v1.0 surface that a desktop shell would need already exists and is tested:
 
-- `larecode serve`: HTTP API with SSE streaming, bearer tokens, read/write/run scopes (T-23).
-- `@larecode/sdk`: pure TypeScript client over the same core, Node 20+, session continuity and usage reporting (T-30).
-- `larecode acp`: Agent Client Protocol over stdio for editors such as Zed (T-30).
-- `larecode mcp serve`: tool exposure to other agents, default read-only (T-31).
-- Share links render from self-hosted `serve` only; a public hosted frontend is explicitly excluded (T-24, §5).
+- `larecode serve`: HTTP API with SSE streaming, bearer tokens, read/write/run scopes.
+- `@larecode/sdk`: pure TypeScript client over the same core, Node 20+, session continuity and usage reporting.
+- `larecode acp`: Agent Client Protocol over stdio for editors such as Zed.
+- `larecode mcp serve`: tool exposure to other agents, default read-only.
+- Share links render from self-hosted `serve` only; a public hosted frontend is explicitly excluded.
 
-A native shell (Tauri/Electron) carries a heavy toolchain, packaging, signing, and update burden that cannot be built and verified within the CLI milestone budget, and the PRD grants no acceptance criteria beyond deferral.
+A native shell (Tauri/Electron) carries a heavy toolchain, packaging, signing, and update burden that cannot be built and verified within the CLI milestone budget, and the plan set no acceptance criteria beyond deferral.
 
 ## Decision
 

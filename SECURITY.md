@@ -38,9 +38,9 @@ Lare Code runs on your machine with your permissions. Everything below is about 
 - Release binaries are built in GitHub Actions from tagged commits and uploaded with checksums; `install.sh` verifies the checksum when one is provided.
 - `larecode update` reports versions and instructions; it never executes an upgrade on its own.
 
-## Boundary review (T-31)
+## Boundary review
 
-This pass reviewed every surface added through M4. One finding was fixed:
+This pass covered every surface before the 0.1.0 release. One finding was fixed:
 
 - MCP server mode (`larecode mcp serve`) initially relied on per-tool checks, but file and shell tools carried no internal gates, so an editor agent could write or execute freely. Fixed by centralizing the tool-to-group mapping in core (`toolPermissionGroup`, unknown tools fall back to `write`) and enforcing it at the MCP server boundary before any tool runs. The same mapping is now documented in `docs/permissions.md` and covered by tests that assert write is denied by default and only opens with `--allow write`.
 

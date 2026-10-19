@@ -1,13 +1,8 @@
 # Lare Code
 
-> Every agent's best, in one CLI.
+Lare Code is an open-source AI coding agent for the terminal. It runs on your machine, works with any OpenAI-compatible provider (plus Anthropic, Ollama, OpenRouter, and custom endpoints), and checks every tool call against a permission policy before it runs.
 
-Lare Code is an open-source, provider-neutral AI coding agent for the terminal.
-It combines the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI,
-and Hermes Agent into one coherent, local-first CLI.
-
-**Status:** pre-1.0; all milestones (M0-M4) built. The M4 desktop-app stretch is deferred per [ADR-0001](docs/architecture/adr/0001-desktop-app-deferred.md).
-**Spec:** [PRD.md](PRD.md) · **License:** [MIT](LICENSE)
+**Status:** early release (0.1.x), see [CHANGELOG.md](CHANGELOG.md) · **License:** [MIT](LICENSE)
 
 ## Install
 
@@ -17,6 +12,8 @@ curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
 brew tap rsyyd/larecode && brew install larecode
 ```
 
+Windows: `scoop bucket add larecode https://github.com/rsyyd/larecode-scoop && scoop install larecode`. Arch Linux and manual binaries are covered in [install options](docs/install.md).
+
 Then `larecode setup`, `larecode doctor`, `larecode run "explain this repository"`.
 
 ## Docs
@@ -25,8 +22,6 @@ Then `larecode setup`, `larecode doctor`, `larecode run "explain this repository
 - [Permissions](docs/permissions.md) · [Tools](docs/tools.md) · [MCP](docs/mcp.md)
 - [Automation](docs/automation.md) · [SDK and editors](docs/sdk.md) · [Install options](docs/install.md)
 - [Security and trust model](SECURITY.md)
-
-The docs publish as a site from `docs/` on every push to main.
 
 ## Usage
 
@@ -60,19 +55,3 @@ const result = await client.run('explain this repository', {
 });
 console.log(result.usage.totalTokens.total);
 ```
-
-## Task index
-
-The PRD splits the build into 32 independent tasks across 5 milestones:
-
-| Milestone | Theme                                                           | Tasks       |
-| --------- | --------------------------------------------------------------- | ----------- |
-| M0        | Foundation (repo, config, CI)                                   | T-01 – T-03 |
-| M1        | Core agent MVP (providers, tools, TUI)                          | T-04 – T-12 |
-| M2        | Intelligence & extensibility (LSP, MCP, skills, plan mode)      | T-13 – T-21 |
-| M3        | Differentiators (learning loop, server, sharing, gateway, cron) | T-22 – T-28 |
-| M4        | Polish & distribution                                           | T-29 – T-32 |
-
-Each task lists its scope, dependencies, and acceptance criteria in
-[PRD.md § 9](PRD.md#9-execution-model-task-splitting-rules-mandatory). One task
-per focused session: never the whole build in one process.

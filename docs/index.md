@@ -12,7 +12,7 @@ Lare Code is an open-source, provider-neutral AI coding agent for the terminal. 
 | [mcp.md](mcp.md)                                                   | MCP client config and `larecode mcp serve` server mode     |
 | [automation.md](automation.md)                                     | HTTP server, share links, cron jobs, Telegram gateway      |
 | [sdk.md](sdk.md)                                                   | TypeScript SDK and the ACP adapter for editors             |
-| [install.md](install.md)                                           | npm, curl, Homebrew, Scoop, AUR, manual installs           |
+| [install.md](install.md)                                           | npm, curl, Homebrew, Scoop, PKGBUILD, manual installs      |
 | [architecture/adr/](architecture/adr/0001-desktop-app-deferred.md) | Architecture decision records                              |
 
 ## Full command reference
@@ -31,4 +31,4 @@ Lare Code is an open-source, provider-neutral AI coding agent for the terminal. 
 | `larecode acp`                                | Speak Agent Client Protocol over stdio for editors      |
 | `larecode update`                             | Check for a newer release                               |
 
-See [PRD.md](../PRD.md) for the product spec and [SECURITY.md](../SECURITY.md) for the trust model.
+See [SECURITY.md](../SECURITY.md) for the trust model.
