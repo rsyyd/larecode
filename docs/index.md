@@ -2,17 +2,18 @@
 
 Lare Code is an open-source, provider-neutral AI coding agent for the terminal. This folder is the documentation site source, published with GitHub Pages.
 
-| Page                                     | What it covers                                             |
-| ---------------------------------------- | ---------------------------------------------------------- |
-| [getting-started.md](getting-started.md) | Install, first run, config location                        |
-| [configuration.md](configuration.md)     | Global and project config, environment variables           |
-| [providers.md](providers.md)             | OpenAI-compatible, Anthropic, Ollama, and custom providers |
-| [permissions.md](permissions.md)         | Permission groups, modes, unattended flows, audit log      |
-| [tools.md](tools.md)                     | Built-in tools and how they map to permission groups       |
-| [mcp.md](mcp.md)                         | MCP client config and `larecode mcp serve` server mode     |
-| [automation.md](automation.md)           | HTTP server, share links, cron jobs, Telegram gateway      |
-| [sdk.md](sdk.md)                         | TypeScript SDK and the ACP adapter for editors             |
-| [install.md](install.md)                 | npm, curl, Homebrew, Scoop, AUR, manual installs           |
+| Page                                                               | What it covers                                             |
+| ------------------------------------------------------------------ | ---------------------------------------------------------- |
+| [getting-started.md](getting-started.md)                           | Install, first run, config location                        |
+| [configuration.md](configuration.md)                               | Global and project config, environment variables           |
+| [providers.md](providers.md)                                       | OpenAI-compatible, Anthropic, Ollama, and custom providers |
+| [permissions.md](permissions.md)                                   | Permission groups, modes, unattended flows, audit log      |
+| [tools.md](tools.md)                                               | Built-in tools and how they map to permission groups       |
+| [mcp.md](mcp.md)                                                   | MCP client config and `larecode mcp serve` server mode     |
+| [automation.md](automation.md)                                     | HTTP server, share links, cron jobs, Telegram gateway      |
+| [sdk.md](sdk.md)                                                   | TypeScript SDK and the ACP adapter for editors             |
+| [install.md](install.md)                                           | npm, curl, Homebrew, Scoop, AUR, manual installs           |
+| [architecture/adr/](architecture/adr/0001-desktop-app-deferred.md) | Architecture decision records                              |
 
 ## Full command reference
 
