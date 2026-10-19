@@ -6,7 +6,7 @@ Lare Code is an open-source, provider-neutral AI coding agent for the terminal.
 It combines the proven advantages of opencode, Claude Code, Codex CLI, Gemini CLI,
 and Hermes Agent into one coherent, local-first CLI.
 
-**Status:** early development (M0).
+**Status:** pre-1.0; all milestones (M0-M4) built. The M4 desktop-app stretch is deferred per [ADR-0001](docs/architecture/adr/0001-desktop-app-deferred.md).
 **Spec:** [PRD.md](PRD.md) · **License:** [MIT](LICENSE)
 
 ## Install

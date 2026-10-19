@@ -237,7 +237,7 @@ Adoption notes: the external tech worth folding into this milestone is cataloged
 | T-29 | Distribution: npm package, curl installer, Homebrew, Scoop, pacman/AUR | M1         | fresh-machine install to first prompt < 60 s |
 | T-30 | TypeScript SDK + ACP adapter (editor/IDE integration)                  | T-23       | SDK drives core in integration test          |
 | T-31 | Docs site + SECURITY.md pass + MCP-server mode                         | all        | full docs; boundary review done              |
-| T-32 | Desktop app (stretch)                                                  | T-23       | out of scope if M4 overruns                  |
+| T-32 | Desktop app (stretch)                                                  | T-23       | Deferred post-v1.0 (ADR-0001; Non-Goal §63)  |
 
 ## 10. Success Metrics
 
