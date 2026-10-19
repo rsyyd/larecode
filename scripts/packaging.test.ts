@@ -24,7 +24,7 @@ afterEach(async () => {
 
 const input: ManifestInput = {
   version: '1.2.3',
-  baseUrl: 'https://github.com/rsyyd/lare/releases/download/v1.2.3',
+  baseUrl: 'https://github.com/rsyyd/larecode/releases/download/v1.2.3',
   sha256: {
     'linux-x64': 'a'.repeat(64),
     'linux-arm64': 'b'.repeat(64),
@@ -58,7 +58,7 @@ describe('manifest generation', () => {
     expect(manifest.version).toBe('1.2.3');
     expect(manifest.bin).toEqual([['larecode-windows-x64.exe', 'larecode']]);
     expect(manifest.autoupdate.architecture['64bit'].url).toBe(
-      'https://github.com/rsyyd/lare/releases/download/v$version/larecode-windows-x64.exe'
+      'https://github.com/rsyyd/larecode/releases/download/v$version/larecode-windows-x64.exe'
     );
   });
 

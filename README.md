@@ -13,8 +13,8 @@ and Hermes Agent into one coherent, local-first CLI.
 
 ```bash
 npm install -g larecode        # Node 20+
-curl -fsSL https://raw.githubusercontent.com/rsyyd/lare/main/install.sh | sh
-brew tap rsyyd/lare && brew install larecode
+curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
+brew tap rsyyd/larecode && brew install larecode
 ```
 
 Then `larecode setup`, `larecode doctor`, `larecode run "explain this repository"`.

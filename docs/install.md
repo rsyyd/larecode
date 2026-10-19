@@ -13,7 +13,7 @@ Requires Node 20+.
 ## curl (Linux and macOS)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rsyyd/lare/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
 ```
 
 The script detects your OS and architecture, downloads the matching binary from the latest GitHub release into `~/.local/bin`, and verifies it runs before moving it into place. Optional environment variables:
@@ -27,7 +27,7 @@ The script detects your OS and architecture, downloads the matching binary from 
 ## Homebrew (macOS and Linux)
 
 ```bash
-brew tap rsyyd/lare
+brew tap rsyyd/larecode
 brew install larecode
 ```
 
@@ -36,7 +36,7 @@ The formula installed by the tap is generated from the release binaries on every
 ## Scoop (Windows)
 
 ```powershell
-scoop bucket add larecode https://github.com/rsyyd/lare-scoop
+scoop bucket add larecode https://github.com/rsyyd/larecodecode-scoop
 scoop install larecode
 ```
 
@@ -48,7 +48,7 @@ yay -S larecode
 
 ## Manual
 
-Download the binary for your platform from [releases](https://github.com/rsyyd/lare/releases), then:
+Download the binary for your platform from [releases](https://github.com/rsyyd/larecode/releases), then:
 
 ```bash
 chmod +x larecode-linux-x64

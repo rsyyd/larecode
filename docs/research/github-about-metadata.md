@@ -51,7 +51,7 @@ Best-in-class (most concise → context-rich, all human-sounding):
 4. **openai/gemini-cli**, **plandex**, **openinterpreter**: 55–90, one or two clauses, differentiator included.
 5. **claude-code**: the outlier (240): effective for READMEs/search but not a model for an About line; it enumerates capabilities instead of naming the tool's identity.
 
-## Implication for rsyyd/lare
+## Implication for rsyyd/larecode
 
 1. **Claim in a fragment, sentence case, ≤ ~80 chars, trailing period.** The community norm is `qualifier + what it is + where it runs` as a noun phrase: e.g. the opencode/codex/uv shape. Do not mention license, installation, or parenthetical feature lists; no top repo does, and extra clauses read as noise.
 2. **Make the differentiator structural, not superlative.** Perspective: uv/ruff put "written in Rust" inside the one sentence; gemini-cli puts "directly into your terminal" at the end; claude-code's clause-listing is the anti-pattern. One differentiator, embedded where a clause naturally sits: no buzzwords, no emoji (unless your brand voice is deliberately Charm-style).

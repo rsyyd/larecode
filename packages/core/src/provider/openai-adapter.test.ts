@@ -46,7 +46,7 @@ describe('OpenAIAdapter specifics', () => {
     );
     await router.complete('hi', { model: 'm' });
     const routerHeaders = (calls[0].init?.headers ?? {}) as Record<string, string>;
-    expect(routerHeaders['HTTP-Referer']).toBe('https://github.com/rsyyd/lare');
+    expect(routerHeaders['HTTP-Referer']).toBe('https://github.com/rsyyd/larecode');
     expect(routerHeaders['X-Title']).toBe('larecode');
     expect(router.capabilities.vision).toBe(true);
   });

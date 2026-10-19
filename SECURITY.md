@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Open a private security advisory at https://github.com/rsyyd/lare/security/advisories/new, or email the maintainer listed on the GitHub profile. Please include a repro and the version (`larecode --version`). Do not open public issues for exploitable bugs.
+Open a private security advisory at https://github.com/rsyyd/larecode/security/advisories/new, or email the maintainer listed on the GitHub profile. Please include a repro and the version (`larecode --version`). Do not open public issues for exploitable bugs.
 
 Supported: the latest release and `main`.
 

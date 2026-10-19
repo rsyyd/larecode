@@ -4,8 +4,8 @@
 
 ```bash
 npm install -g larecode                # Node 20+
-brew tap rsyyd/lare && brew install larecode
-curl -fsSL https://raw.githubusercontent.com/rsyyd/lare/main/install.sh | sh
+brew tap rsyyd/larecode && brew install larecode
+curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
 ```
 
 See [install.md](install.md) for Scoop, AUR, and manual binary installs.

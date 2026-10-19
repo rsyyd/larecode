@@ -1,9 +1,9 @@
 #!/bin/sh
 # Install larecode from GitHub releases.
-# Usage: curl -fsSL https://raw.githubusercontent.com/rsyyd/lare/main/install.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
 set -eu
 
-REPO="${LARECODE_REPO:-rsyyd/lare}"
+REPO="${LARECODE_REPO:-rsyyd/larecode}"
 BASE_URL="${LARECODE_INSTALL_BASE:-https://github.com/${REPO}/releases/latest/download}"
 INSTALL_DIR="${LARECODE_INSTALL_DIR:-$HOME/.local/bin}"
 

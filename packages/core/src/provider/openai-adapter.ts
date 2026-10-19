@@ -238,7 +238,7 @@ export function openAIAdapterFromConfig(
     capabilities: capabilitiesFor(config.type),
     ...(config.type === 'openrouter'
       ? {
-          headers: { 'HTTP-Referer': 'https://github.com/rsyyd/lare', 'X-Title': 'larecode' },
+          headers: { 'HTTP-Referer': 'https://github.com/rsyyd/larecode', 'X-Title': 'larecode' },
         }
       : {}),
     ...(fetchImpl ? { fetchImpl } : {}),

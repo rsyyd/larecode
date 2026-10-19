@@ -15,4 +15,4 @@ larecode setup
 larecode run "explain this repository"
 ```
 
-Full documentation: https://github.com/rsyyd/lare
+Full documentation: https://github.com/rsyyd/larecode

@@ -35,7 +35,7 @@ function url(input: ManifestInput, key: keyof ManifestInput['sha256']): string {
 export function homebrewFormula(input: ManifestInput): string {
   return `class Larecode < Formula
   desc "Provider-neutral AI coding agent for the terminal"
-  homepage "https://github.com/rsyyd/lare"
+  homepage "https://github.com/rsyyd/larecode"
   version "${input.version}"
   license "MIT"
 
@@ -79,7 +79,7 @@ export function scoopManifest(input: ManifestInput): string {
     {
       version: input.version,
       description: 'Provider-neutral AI coding agent for the terminal',
-      homepage: 'https://github.com/rsyyd/lare',
+      homepage: 'https://github.com/rsyyd/larecode',
       license: 'MIT',
       architecture: {
         '64bit': {
@@ -89,7 +89,7 @@ export function scoopManifest(input: ManifestInput): string {
       },
       bin: [[ASSETS['windows-x64'], 'larecode']],
       checkver: {
-        github: 'https://github.com/rsyyd/lare',
+        github: 'https://github.com/rsyyd/larecode',
       },
       autoupdate: {
         architecture: {
@@ -111,7 +111,7 @@ pkgver=${input.version}
 pkgrel=1
 pkgdesc="Provider-neutral AI coding agent for the terminal"
 arch=('x86_64' 'aarch64')
-url="https://github.com/rsyyd/lare"
+url="https://github.com/rsyyd/larecode"
 license=('MIT')
 provides=('larecode')
 conflicts=('larecode-bin')
@@ -175,7 +175,7 @@ async function main(argv: string[]): Promise<void> {
   const version = args.get('version');
   const binaries = args.get('binaries');
   const baseUrl =
-    args.get('base-url') ?? `https://github.com/rsyyd/lare/releases/download/v${version}`;
+    args.get('base-url') ?? `https://github.com/rsyyd/larecode/releases/download/v${version}`;
   const outDir = args.get('out') ?? 'packaging/out';
   if (!version || !binaries) {
     console.error(

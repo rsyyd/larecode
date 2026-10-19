@@ -1,6 +1,6 @@
 # Lare Code: Product Requirements Document
 
-**Repo:** `github.com/rsyyd/lare`
+**Repo:** `github.com/rsyyd/larecode`
 **Version:** 1.0.0-draft · **Date:** 2026-10-17 · **Status:** PRD stage · **License:** MIT
 
 ---

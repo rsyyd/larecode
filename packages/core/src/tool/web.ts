@@ -6,7 +6,7 @@ export const WEB_FETCH_MAX_CHARS = 50_000;
 export const WEB_SEARCH_LIMIT = 5;
 export const WEB_SEARCH_MAX_LIMIT = 10;
 
-const USER_AGENT = 'Mozilla/5.0 (compatible; LareCode/0.0.0; +https://github.com/rsyyd/lare)';
+const USER_AGENT = 'Mozilla/5.0 (compatible; LareCode/0.0.0; +https://github.com/rsyyd/larecode)';
 
 const ENTITIES: Record<string, string> = {
   amp: '&',
