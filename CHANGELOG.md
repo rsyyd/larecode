@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 — 2026-10-19
+
+- Repackaged release: CI installs each target platform's ast-grep binding before cross-compiling, publishes to npm with NPM_TOKEN, and pushes the generated formula and manifest to the tap and bucket through per-repo deploy keys; the release also ships checksums.txt with SHA-256 sums for every binary. No product code changed.
+
 ## 0.1.0 — 2026-10-19
 
 - Distribution: the generated 0.1.0 manifests are published in the Homebrew tap `rsyyd/homebrew-larecode` and the Scoop bucket `rsyyd/larecode-scoop`, so `brew tap rsyyd/larecode && brew install larecode` and `scoop bucket add larecode https://github.com/rsyyd/larecode-scoop` work against the released binaries.

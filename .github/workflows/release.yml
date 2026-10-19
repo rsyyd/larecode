@@ -67,6 +67,8 @@ jobs:
         run: gh release create "$GITHUB_REF_NAME" artifacts/* --title "$GITHUB_REF_NAME" --generate-notes
       - name: Generate packaging manifests
         run: bun run scripts/packaging.ts --version "${GITHUB_REF_NAME#v}" --binaries artifacts --out packaging/out
+      - name: Generate checksums
+        run: sha256sum artifacts/* | sed 's|artifacts/||' > packaging/out/checksums.txt
       - name: Upload packaging manifests
         env:
           GH_TOKEN: ${{ github.token }}

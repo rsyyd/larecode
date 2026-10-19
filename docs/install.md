@@ -18,10 +18,12 @@ curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
 
 The script detects your OS and architecture, downloads the matching binary from the latest GitHub release into `~/.local/bin`, and verifies it runs before moving it into place. Optional environment variables:
 
-| Variable                | Default            | Purpose                          |
-| ----------------------- | ------------------ | -------------------------------- |
-| `LARECODE_INSTALL_DIR`  | `$HOME/.local/bin` | where the binary is placed       |
-| `LARECODE_SHA256`       | unset              | verified against the download    |
+| Variable               | Default            | Purpose                       |
+| ---------------------- | ------------------ | ----------------------------- |
+| `LARECODE_INSTALL_DIR` | `$HOME/.local/bin` | where the binary is placed    |
+| `LARECODE_SHA256`      | unset              | verified against the download |
+
+Every release publishes a `checksums.txt` asset with the SHA-256 of each binary, so you can pin `LARECODE_SHA256` to the matching line.
 | `LARECODE_INSTALL_BASE` | latest release URL | mirror or pin a specific version |
 
 ## Homebrew (macOS and Linux)
