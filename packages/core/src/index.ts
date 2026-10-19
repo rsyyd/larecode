@@ -47,7 +47,7 @@ export { coreTools } from './tool/core.js';
 export { taskTool } from './tool/task.js';
 export type { TaskToolOptions } from './tool/task.js';
 
-export { Permissions } from './permission/permission.js';
+export { Permissions, PERMISSION_GROUPS, NEVER_AUTO_APPROVED } from './permission/permission.js';
 export type {
   PermissionGroup,
   PermissionMode,
@@ -58,6 +58,13 @@ export type {
 export { AuditLog, fileAuditSink } from './permission/audit.js';
 export type { AuditEntry, AuditSink, AuditInput } from './permission/audit.js';
 export { redactSecrets, redactValue } from './permission/redact.js';
+
+export { Jobs, cronPath, cronPermissions, CRON_OUTPUT_MAX_CHARS } from './cron/job.js';
+export type { CronJob, CronJobInput, CronResult } from './cron/job.js';
+export { parseSchedule, nextRun, CRON_LOOKAHEAD_DAYS } from './cron/schedule.js';
+export type { CronSpec } from './cron/schedule.js';
+export { runCronJob, runScheduler } from './cron/runner.js';
+export type { CronLoop, CronRunDeps, SchedulerDeps } from './cron/runner.js';
 
 export { Sessions, renderSessionContext, sessionsDir } from './session/session.js';
 export type { Session, SessionMetadata, SessionMessage } from './session/session.js';

@@ -1,17 +1,22 @@
 import { AuditLog } from './audit.js';
 
-export type PermissionGroup =
-  | 'read'
-  | 'write'
-  | 'shell'
-  | 'network'
-  | 'git'
-  | 'secrets'
-  | 'destructive'
-  | 'external-services'
-  | 'subagent'
-  | 'browser'
-  | 'skills';
+export const PERMISSION_GROUPS = [
+  'read',
+  'write',
+  'shell',
+  'network',
+  'git',
+  'secrets',
+  'destructive',
+  'external-services',
+  'subagent',
+  'browser',
+  'skills',
+] as const;
+
+export type PermissionGroup = (typeof PERMISSION_GROUPS)[number];
+
+export const NEVER_AUTO_APPROVED: readonly PermissionGroup[] = ['destructive', 'secrets'];
 
 export type PermissionMode = 'ask' | 'allow' | 'deny';
 
@@ -32,8 +37,6 @@ export interface PermissionDecision {
   requiresConfirmation?: boolean;
   reason?: string;
 }
-
-const NEVER_AUTO_APPROVED: PermissionGroup[] = ['destructive', 'secrets'];
 
 export class Permissions {
   private policy: PermissionPolicy;

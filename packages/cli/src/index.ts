@@ -4,6 +4,7 @@ import { runDoctor } from './commands/doctor.js';
 import { runCommand } from './commands/run.js';
 import { serveCommand } from './commands/serve.js';
 import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
+import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cron.js';
 
 const program = new Command();
 
@@ -73,6 +74,51 @@ mcp
   .option('--yes', 'confirm the call when the permission mode requires it')
   .action(async (server: string, tool: string, options: Parameters<typeof mcpCall>[2]) => {
     process.exitCode = await mcpCall(server, tool, options);
+  });
+
+const cron = program.command('cron').description('Scheduled unattended tasks');
+
+cron
+  .command('add')
+  .description(
+    'Add a cron job ("every 30 minutes", "daily at 09:00", "weekdays at 9am", or a 5-field cron)'
+  )
+  .argument('<schedule>', 'schedule expression')
+  .argument('<prompt...>', 'task for the agent')
+  .option('--name <name>', 'job name')
+  .option('--allow <groups>', 'comma-separated permission groups pre-authorized for this job')
+  .action((schedule: string, prompt: string[], options: { name?: string; allow?: string }) => {
+    process.exitCode = cronAdd({ schedule, prompt, name: options.name, allow: options.allow });
+  });
+
+cron
+  .command('list')
+  .description('List cron jobs with their next run and last result')
+  .action(() => {
+    process.exitCode = cronList();
+  });
+
+cron
+  .command('remove')
+  .description('Remove a cron job')
+  .argument('<id>', 'job id')
+  .action((id: string) => {
+    process.exitCode = cronRemove(id);
+  });
+
+cron
+  .command('run')
+  .description('Run a job now, unattended')
+  .argument('<id>', 'job id')
+  .action(async (id: string) => {
+    process.exitCode = await cronRun(id);
+  });
+
+cron
+  .command('start')
+  .description('Run due jobs on their schedule until interrupted')
+  .action(async () => {
+    process.exitCode = await cronStart();
   });
 
 program.parseAsync(process.argv);

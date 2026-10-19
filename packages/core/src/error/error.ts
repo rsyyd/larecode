@@ -21,6 +21,7 @@ export type ErrorCode =
   | 'SKILL_WRITE_FAILED'
   | 'HOOK_EXECUTION_FAILED'
   | 'GIT_OPERATION_FAILED'
+  | 'CRON_INVALID_SCHEDULE'
   | 'NETWORK_ERROR'
   | 'RATE_LIMITED'
   | 'BUDGET_EXCEEDED'
@@ -65,6 +66,7 @@ export const ERROR_CATEGORIES: Record<
   SKILL_WRITE_FAILED: 'skill',
   HOOK_EXECUTION_FAILED: 'hook',
   GIT_OPERATION_FAILED: 'tool',
+  CRON_INVALID_SCHEDULE: 'user',
   NETWORK_ERROR: 'network',
   RATE_LIMITED: 'provider',
   BUDGET_EXCEEDED: 'budget',
