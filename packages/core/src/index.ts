@@ -1,4 +1,4 @@
-export const VERSION = '0.0.0';
+export { VERSION } from './version.js';
 
 export { AgentLoop } from './agent/loop.js';
 export type { AgentLoopOptions, AgentLoopCallbacks, HaltReason } from './agent/loop.js';

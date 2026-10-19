@@ -3,6 +3,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { LareError, type ErrorCode } from '../error/error.js';
 import { defaultLogger, type Logger } from '../logger/logger.js';
+import { VERSION } from '../version.js';
 
 export interface MCPServerConfig {
   name: string;
@@ -20,8 +21,7 @@ export interface MCPTool {
   inputSchema: Record<string, unknown>;
 }
 
-// ponytail: literal client version, importing VERSION from the barrel would cycle
-const CLIENT_INFO = { name: 'larecode', version: '0.0.0' };
+const CLIENT_INFO = { name: 'larecode', version: VERSION };
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function transportOf(config: MCPServerConfig): 'stdio' | 'http' {

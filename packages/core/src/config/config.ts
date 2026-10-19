@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync, chmodSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
+import { VERSION } from '../version.js';
 import type { PermissionPolicy } from '../permission/permission.js';
 import type { MCPServerConfig } from '../mcp/mcp.js';
 import type { ExecutionConfig } from '../exec/backend.js';
@@ -36,7 +37,7 @@ export function projectConfigPath(projectDir: string = process.cwd()): string {
 
 export function defaultConfig(): Config {
   return {
-    version: '0.0.0',
+    version: VERSION,
     defaultProvider: 'openai-compatible',
     defaultModel: 'gpt-4o',
     permissions: { mode: 'ask', allowedGroups: ['read'] },

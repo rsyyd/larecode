@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (M1)
+## 0.1.0 — 2026-10-19
 
 - T-32: desktop app closed as deferred per PRD Non-Goals, recorded in docs/architecture/adr/0001-desktop-app-deferred.md; v1.0 ships as the CLI plus gateway and share links, with serve, the SDK, ACP, and MCP server as the seams a future shell will consume. M4 complete: all 32 PRD tasks are done.
 - Rename: Lumps Code becomes Lare Code. Binary and npm package `larecode`, workspace scope `@larecode/*`, environment variables `LARECODE_*`, state directory `~/.larecode`, project config `larecode.json`, and the instruction alias `LARECODE.md`; the repository moved to rsyyd/larecode.
@@ -32,8 +32,6 @@
 - T-06: agent loop with budgets, bounded iterations, cancellation, and streaming: mid-stream token and duration budget halting with halt reasons, iteration caps checked before each provider call, abort-signal cancellation mapped to a CANCELLED error code, streamed token passthrough, and per-turn usage accounting wired to the usage recorder.
 - T-05: Anthropic, Ollama, OpenRouter, and Z.ai adapters with capability metadata: Anthropic messages API with SSE events, Ollama `/api/chat` NDJSON streaming and `/api/tags` catalog, OpenRouter/Z.ai via the OpenAI-compatible adapter with attribution headers, per-provider capability defaults, model-id capability heuristics, and a shared contract test suite across all adapters.
 - T-04: provider abstraction and OpenAI-compatible adapter: ModelInfo catalog with capabilities, complete and streamComplete with SSE parsing, models endpoint fetch with catalog fallback, model hot-swap, and config-based adapter instantiation.
-
-## Unreleased (M0)
 
 - T-03: logging, error taxonomy, usage accounting skeleton: structured logger with pluggable handlers and child contexts, typed LareError taxonomy with categories and serialization, and in-memory UsageRecorder with token and cost estimation per model and conversation.
 - UI rule (PRD FR-2/§7): UI chrome is emoji-free: text-presentation glyphs only (`●` `⎿` `❯` `»` `✓` `✗` `?` `~`); emoji may appear only inside model-generated content. Appendix A mockups updated to the glyph set: `>` user, `●` agent turn, `⎿` tool result.
