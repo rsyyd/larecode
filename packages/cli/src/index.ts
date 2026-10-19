@@ -8,6 +8,7 @@ import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cr
 import { gatewayCommand } from './commands/gateway.js';
 import { updateCommand } from './commands/update.js';
 import { setupCommand } from './commands/setup.js';
+import { acpCommand } from './commands/acp.js';
 
 const program = new Command();
 
@@ -17,6 +18,11 @@ program
   .command('doctor', { isDefault: false })
   .description('Check configuration, providers, permissions, and instruction files')
   .action(runDoctor);
+
+program
+  .command('acp')
+  .description('Speak Agent Client Protocol over stdio for editors such as Zed')
+  .action(acpCommand);
 
 program
   .command('setup')

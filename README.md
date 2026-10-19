@@ -38,6 +38,20 @@ bun run lint           # oxlint
 bun run format         # prettier
 ```
 
+## Editors and SDK
+
+`lumpscode acp` speaks the Agent Client Protocol over stdio, ready for editor integrations such as Zed. The same core is embeddable from TypeScript:
+
+```ts
+import { LumpsClient } from '@lumpscode/sdk';
+
+const client = new LumpsClient();
+const result = await client.run('explain this repository', {
+  onChunk: (chunk) => process.stdout.write(chunk),
+});
+console.log(result.usage.totalTokens.total);
+```
+
 ## Task index
 
 The PRD splits the build into 32 independent tasks across 5 milestones:

@@ -18,6 +18,7 @@
       "dependencies": {
         "@lumpscode/core": "*",
         "@lumpscode/gateway": "*",
+        "@lumpscode/sdk": "*",
         "@lumpscode/server": "*",
         "commander": "^15.0.0",
       },
