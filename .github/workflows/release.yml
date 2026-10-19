@@ -98,3 +98,43 @@ jobs:
         working-directory: npm
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
+
+  manifests:
+    needs: publish
+    runs-on: ubuntu-latest
+    env:
+      PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
+    steps:
+      - name: Skip without a packaging token
+        if: env.PACKAGING_TOKEN == ''
+        run: echo "PACKAGING_TOKEN is not set; the tap and bucket stay unchanged."
+      - name: Download generated manifests
+        if: env.PACKAGING_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p packaging/out
+          gh release download "$GITHUB_REF_NAME" --pattern larecode.rb --pattern larecode.json --dir packaging/out
+      - name: Push the formula to the tap
+        if: env.PACKAGING_TOKEN != ''
+        run: |
+          git clone --depth 1 "https://x-access-token:${PACKAGING_TOKEN}@github.com/rsyyd/homebrew-larecode.git" tap
+          mkdir -p tap/Formula
+          cp packaging/out/larecode.rb tap/Formula/larecode.rb
+          cd tap
+          git config user.name larecode-release
+          git config user.email releases@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet || git commit -m "larecode ${GITHUB_REF_NAME#v}"
+          git push
+      - name: Push the manifest to the bucket
+        if: env.PACKAGING_TOKEN != ''
+        run: |
+          git clone --depth 1 "https://x-access-token:${PACKAGING_TOKEN}@github.com/rsyyd/larecode-scoop.git" bucket
+          cp packaging/out/larecode.json bucket/larecode.json
+          cd bucket
+          git config user.name larecode-release
+          git config user.email releases@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet || git commit -m "larecode ${GITHUB_REF_NAME#v}"
+          git push
