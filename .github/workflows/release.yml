@@ -107,6 +107,38 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
 
+  aur:
+    needs: publish
+    runs-on: ubuntu-latest
+    env:
+      AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+    steps:
+      - name: Skip without an AUR key
+        if: env.AUR_SSH_KEY == ''
+        run: echo "AUR_SSH_KEY is not set; the AUR package stays unchanged."
+      - name: Download the AUR recipe
+        if: env.AUR_SSH_KEY != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p aur
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern PKGBUILD --pattern SRCINFO --dir aur
+      - name: Push to the AUR
+        if: env.AUR_SSH_KEY != ''
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/aur_key"
+          printf '%s\n' "$AUR_SSH_KEY" > "$RUNNER_TEMP/aur_key"
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/aur_key -o StrictHostKeyChecking=accept-new"
+          git clone ssh://aur@aur.archlinux.org/larecode.git aur-repo
+          cp aur/PKGBUILD aur/SRCINFO aur-repo/
+          mv aur-repo/SRCINFO aur-repo/.SRCINFO
+          cd aur-repo
+          git config user.name rsyyd
+          git config user.email rsyyd@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet || git commit -m "larecode ${GITHUB_REF_NAME#v}"
+          git push
+
   manifests:
     needs: publish
     runs-on: ubuntu-latest

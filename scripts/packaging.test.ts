@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   ASSETS,
   archPkgbuild,
+  archSrcinfo,
   generateManifests,
   homebrewFormula,
   scoopManifest,
@@ -69,7 +70,15 @@ describe('manifest generation', () => {
     expect(pkgbuild).toContain("sha256sums_aarch64=('" + input.sha256['linux-arm64'] + "')");
   });
 
-  it('writes all three manifests from a binaries directory', async () => {
+  it('renders a SRCINFO for the AUR', () => {
+    const srcinfo = archSrcinfo(input);
+    expect(srcinfo).toContain('pkgbase = larecode');
+    expect(srcinfo).toContain('pkgver = 1.2.3');
+    expect(srcinfo).toContain('sha256sums_x86_64 = ' + input.sha256['linux-x64']);
+    expect(srcinfo).toContain('pkgname = larecode');
+  });
+
+  it('writes all four manifests from a binaries directory', async () => {
     const binaries = join(dir, 'binaries');
     await (await import('node:fs/promises')).mkdir(binaries, { recursive: true });
     for (const asset of Object.values(ASSETS)) {
@@ -81,7 +90,7 @@ describe('manifest generation', () => {
       binaries,
       join(dir, 'out')
     );
-    expect(files).toHaveLength(3);
+    expect(files).toHaveLength(4);
 
     const formula = await readFile(join(dir, 'out', 'larecode.rb'), 'utf8');
     const expected = createHash('sha256').update(`content of ${ASSETS['linux-x64']}`).digest('hex');

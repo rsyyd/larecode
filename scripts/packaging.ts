@@ -130,6 +130,26 @@ package_aarch64() {
 `;
 }
 
+export function archSrcinfo(input: ManifestInput): string {
+  return `pkgbase = larecode
+	pkgdesc = Provider-neutral AI coding agent for the terminal
+	pkgver = ${input.version}
+	pkgrel = 1
+	url = https://github.com/rsyyd/larecode
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	provides = larecode
+	conflicts = larecode-bin
+	source_x86_64 = larecode-linux-x64::${url(input, 'linux-x64')}
+	source_aarch64 = larecode-linux-arm64::${url(input, 'linux-arm64')}
+	sha256sums_x86_64 = ${requireSha(input, 'linux-x64')}
+	sha256sums_aarch64 = ${requireSha(input, 'linux-arm64')}
+
+pkgname = larecode
+`;
+}
+
 export async function generateManifests(
   options: { version: string; baseUrl: string },
   binariesDir: string,
@@ -151,6 +171,7 @@ export async function generateManifests(
     ['larecode.rb', homebrewFormula(input)],
     ['larecode.json', scoopManifest(input)],
     ['PKGBUILD', archPkgbuild(input)],
+    ['SRCINFO', archSrcinfo(input)],
   ];
   for (const [name, content] of files) {
     await writeFile(join(outDir, name), content);
