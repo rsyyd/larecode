@@ -3,6 +3,8 @@ import { VERSION } from '@lumpscode/core';
 import { runDoctor } from './commands/doctor.js';
 import { runCommand } from './commands/run.js';
 import { serveCommand } from './commands/serve.js';
+import { serveMcp } from '@lumpscode/server';
+import type { PermissionGroup } from '@lumpscode/core';
 import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
 import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cron.js';
 import { gatewayCommand } from './commands/gateway.js';
@@ -104,6 +106,27 @@ mcp
   .argument('<name>', 'server name')
   .action(async (name: string) => {
     process.exitCode = await mcpRemove(name);
+  });
+
+mcp
+  .command('serve')
+  .description('Expose lumpscode tools as an MCP server over stdio for editors and other agents')
+  .option(
+    '--allow <groups>',
+    'comma-separated permission groups to pre-authorize (read is always on)'
+  )
+  .option('--cwd <path>', 'working directory for tool execution')
+  .action(async (options: { allow?: string; cwd?: string }) => {
+    const allow = (options.allow ?? '')
+      .split(',')
+      .map((group) => group.trim())
+      .filter((group) => group.length > 0) as PermissionGroup[];
+    try {
+      await serveMcp({ allow, cwd: options.cwd });
+    } catch (error) {
+      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+      process.exitCode = 1;
+    }
   });
 
 mcp

@@ -17,7 +17,16 @@ curl -fsSL https://raw.githubusercontent.com/rsyyd/lumpscode/main/install.sh | s
 brew tap rsyyd/lumpscode && brew install lumpscode
 ```
 
-Then `lumpscode setup`, `lumpscode doctor`, `lumpscode run "explain this repository"`. See [docs/install.md](docs/install.md) for Scoop, AUR, and manual installs.
+Then `lumpscode setup`, `lumpscode doctor`, `lumpscode run "explain this repository"`.
+
+## Docs
+
+- [Getting started](docs/getting-started.md) · [Configuration](docs/configuration.md) · [Providers](docs/providers.md)
+- [Permissions](docs/permissions.md) · [Tools](docs/tools.md) · [MCP](docs/mcp.md)
+- [Automation](docs/automation.md) · [SDK and editors](docs/sdk.md) · [Install options](docs/install.md)
+- [Security and trust model](SECURITY.md)
+
+The docs publish as a site from `docs/` on every push to main.
 
 ## Usage
 

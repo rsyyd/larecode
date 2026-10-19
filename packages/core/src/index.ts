@@ -62,6 +62,7 @@ export type {
   PermissionCheckContext,
 } from './permission/permission.js';
 export { AuditLog, fileAuditSink } from './permission/audit.js';
+export { TOOL_PERMISSION_GROUPS, toolPermissionGroup } from './permission/tool-groups.js';
 export type { AuditEntry, AuditSink, AuditInput } from './permission/audit.js';
 export { redactSecrets, redactValue } from './permission/redact.js';
 
