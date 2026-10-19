@@ -6,6 +6,7 @@ import type {
   ModelInfo,
   ProviderAdapter,
   ProviderCapabilities,
+  ProviderUsage,
   ToolSpec,
 } from './provider.js';
 import type { LumpsCodeFetch } from './fetch.js';
@@ -20,8 +21,15 @@ export interface AnthropicAdapterOptions {
   fetchImpl?: LumpsCodeFetch;
 }
 
+interface AnthropicUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_read_input_tokens?: number;
+}
+
 interface AnthropicMessageResponse {
   content?: { type: string; text?: string }[];
+  usage?: AnthropicUsage;
 }
 
 interface AnthropicModelsResponse {
@@ -32,6 +40,16 @@ interface AnthropicStreamEvent {
   type?: string;
   delta?: { type?: string; text?: string };
   error?: { message?: string };
+  message?: { usage?: AnthropicUsage };
+  usage?: AnthropicUsage;
+}
+
+function anthropicUsage(usage: AnthropicUsage, outputOverride?: number): ProviderUsage {
+  return {
+    input: usage.input_tokens ?? 0,
+    output: outputOverride ?? usage.output_tokens ?? 0,
+    ...(usage.cache_read_input_tokens ? { cacheRead: usage.cache_read_input_tokens } : {}),
+  };
 }
 
 export class AnthropicAdapter implements ProviderAdapter {
@@ -155,6 +173,7 @@ export class AnthropicAdapter implements ProviderAdapter {
       throw LumpsError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
         provider: this.name,
       });
+    if (data.usage && options.onUsage) options.onUsage(anthropicUsage(data.usage));
     return text;
   }
 
@@ -184,6 +203,14 @@ export class AnthropicAdapter implements ProviderAdapter {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let seenUsage: AnthropicUsage | null = null;
+    let outputTokens = 0;
+    let reported = false;
+    const reportUsage = () => {
+      if (reported || !seenUsage || !options.onUsage) return;
+      reported = true;
+      options.onUsage(anthropicUsage(seenUsage, outputTokens || seenUsage.output_tokens));
+    };
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -201,7 +228,11 @@ export class AnthropicAdapter implements ProviderAdapter {
           defaultLogger.debug('unparseable stream chunk', { provider: this.name });
           continue;
         }
-        if (
+        if (event.type === 'message_start' && event.message?.usage) {
+          seenUsage = event.message.usage;
+        } else if (event.type === 'message_delta' && event.usage) {
+          if (event.usage.output_tokens !== undefined) outputTokens = event.usage.output_tokens;
+        } else if (
           event.type === 'content_block_delta' &&
           event.delta?.type === 'text_delta' &&
           event.delta.text
@@ -212,9 +243,13 @@ export class AnthropicAdapter implements ProviderAdapter {
             context: { provider: this.name },
           });
         }
-        if (event.type === 'message_stop') return;
+        if (event.type === 'message_stop') {
+          reportUsage();
+          return;
+        }
       }
     }
+    reportUsage();
   }
 }
 

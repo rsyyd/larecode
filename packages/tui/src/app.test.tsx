@@ -1,5 +1,6 @@
 import { render } from 'ink-testing-library';
 import { describe, expect, it } from 'vitest';
+import type { UsageAggregate } from '@lumpscode/core';
 import { App } from './app.js';
 
 const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 60));
@@ -170,5 +171,35 @@ describe('App', () => {
   it('matches the main screen snapshot', () => {
     const { lastFrame } = render(<App model="gpt-4o" />);
     expect(lastFrame()).toMatchSnapshot();
+  });
+
+  it('shows per-conversation tokens and cost in the footer after a turn', async () => {
+    const runTurn = async (
+      _prompt: string,
+      onChunk: (chunk: string) => void,
+      _signal: AbortSignal
+    ): Promise<void> => {
+      onChunk('done');
+    };
+    const usage: UsageAggregate = {
+      totalTokens: { input: 900, output: 300, total: 1200, cacheRead: 400 },
+      totalCost: { inputCost: 0.004, outputCost: 0.002, totalCost: 0.006 },
+      byModel: {},
+      conversationId: 'conv-tui',
+      startedAt: 0,
+      updatedAt: 0,
+    };
+    const { stdin, lastFrame } = render(
+      <App runTurn={runTurn} model="gpt-4o" getUsage={() => usage} />
+    );
+    await flush();
+    stdin.write('hi');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    await flush();
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('1.2k tok');
+    expect(frame).toContain('$0.0060');
   });
 });

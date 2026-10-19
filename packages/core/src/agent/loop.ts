@@ -1,7 +1,10 @@
 import { Providers, providersFromConfig } from '../provider/provider.js';
+import type { ProviderUsage } from '../provider/provider.js';
 import { loadEffectiveConfig } from '../config/config.js';
 import { LumpsError } from '../error/error.js';
 import {
+  DEFAULT_MODEL_PRICING,
+  estimateCost,
   createUsageRecorder,
   estimateTokens,
   type UsageAggregate,
@@ -30,8 +33,6 @@ export interface AgentLoopCallbacks {
   onComplete?: (result: string) => void;
   onError?: (error: Error) => void;
 }
-
-const ZERO_COST = { inputCost: 0, outputCost: 0, totalCost: 0 };
 
 export class AgentLoop {
   private options: AgentLoopOptions;
@@ -74,15 +75,17 @@ export class AgentLoop {
     this.callbacks.onHalt?.(reason);
   }
 
-  private recordUsage(prompt: string, completion: string, iterationTokens: number): void {
-    const input = iterationTokens;
-    const output = estimateTokens(completion);
-    this.usage.record(
-      { input, output, total: input + output },
-      ZERO_COST,
-      this.options.model,
-      this.options.provider
-    );
+  private recordUsage(completion: string, iterationTokens: number, reported?: ProviderUsage): void {
+    const input = reported?.input ?? iterationTokens;
+    const output = reported?.output ?? estimateTokens(completion);
+    const tokens = {
+      input,
+      output,
+      total: input + output,
+      ...(reported?.cacheRead ? { cacheRead: reported.cacheRead } : {}),
+    };
+    const cost = estimateCost(tokens, this.options.model, DEFAULT_MODEL_PRICING);
+    this.usage.record(tokens, cost, this.options.model, this.options.provider);
   }
 
   async *run(prompt: string): AsyncGenerator<string> {
@@ -120,10 +123,14 @@ export class AgentLoop {
 
       let completion = '';
       let iterationTokens = estimateTokens(prompt);
+      let reported: ProviderUsage | undefined;
       try {
         const stream = provider.streamComplete(prompt, {
           model: this.options.model,
           abortSignal: signal,
+          onUsage: (usage) => {
+            reported = usage;
+          },
         });
         for await (const chunk of stream) {
           if (signal?.aborted) throw this.cancelled();
@@ -148,7 +155,7 @@ export class AgentLoop {
         throw err;
       }
 
-      this.recordUsage(prompt, completion, iterationTokens);
+      this.recordUsage(completion, iterationTokens, reported);
 
       if (this.haltReason) return;
 

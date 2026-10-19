@@ -174,6 +174,32 @@ describe('AgentLoop', () => {
     expect(onError).toHaveBeenCalledTimes(1);
   });
 
+  it('prefers provider-reported usage and prices it', async () => {
+    class ReportingAdapter extends FakeAdapter {
+      override async *streamComplete(
+        _prompt: string,
+        options: CompletionOptions
+      ): AsyncGenerator<string> {
+        options.onUsage?.({ input: 1000, output: 500, cacheRead: 400 });
+        yield 'done';
+      }
+    }
+    const loop = new AgentLoop(
+      { ...BASE, model: 'gpt-4o', providers: registry(new ReportingAdapter([])) },
+      {}
+    );
+
+    for await (const _chunk of loop.run('hi')) {
+      // drain
+    }
+
+    const usage = loop.getUsage();
+    expect(usage.totalTokens.input).toBe(1000);
+    expect(usage.totalTokens.output).toBe(500);
+    expect(usage.totalTokens.cacheRead).toBe(400);
+    expect(usage.totalCost.totalCost).toBeCloseTo(0.0125);
+  });
+
   it('records per-turn usage with estimated tokens', async () => {
     const prompt = 'hello world!';
     const chunks = ['abcd', 'efgh'];

@@ -18,6 +18,7 @@ export type {
   ProviderCapabilities,
   ModelInfo,
   CompletionOptions,
+  ProviderUsage,
   ToolSpec,
 } from './provider/provider.js';
 export {
@@ -266,6 +267,8 @@ export {
   createUsageRecorder,
   estimateCost,
   estimateTokens,
+  formatCost,
+  formatTokens,
   DEFAULT_MODEL_PRICING,
   type TokenUsage,
   type CostUsage,

@@ -6,6 +6,7 @@ import { serveCommand } from './commands/serve.js';
 import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
 import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cron.js';
 import { gatewayCommand } from './commands/gateway.js';
+import { updateCommand } from './commands/update.js';
 
 const program = new Command();
 
@@ -15,6 +16,14 @@ program
   .command('doctor', { isDefault: false })
   .description('Check configuration, providers, permissions, and instruction files')
   .action(runDoctor);
+
+program
+  .command('update')
+  .description('Check for a newer lumpscode release')
+  .option('--check', 'report without upgrade instructions')
+  .action(async (options: { check?: boolean }) => {
+    await updateCommand(options);
+  });
 
 program
   .command('serve')

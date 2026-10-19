@@ -2,6 +2,7 @@ export interface TokenUsage {
   input: number;
   output: number;
   total: number;
+  cacheRead?: number;
 }
 
 export interface CostUsage {
@@ -66,6 +67,12 @@ export class InMemoryUsageRecorder implements UsageRecorder {
     this.aggregate.totalCost.outputCost += cost.outputCost;
     this.aggregate.totalCost.totalCost += cost.totalCost;
 
+    const cacheRead = tokens.cacheRead ?? 0;
+    if (cacheRead > 0) {
+      this.aggregate.totalTokens.cacheRead =
+        (this.aggregate.totalTokens.cacheRead ?? 0) + cacheRead;
+    }
+
     const key = `${provider}:${model}`;
     if (!this.aggregate.byModel[key]) {
       this.aggregate.byModel[key] = {
@@ -80,6 +87,9 @@ export class InMemoryUsageRecorder implements UsageRecorder {
     existing.totalTokens.input += tokens.input;
     existing.totalTokens.output += tokens.output;
     existing.totalTokens.total += tokens.total;
+    if (cacheRead > 0) {
+      existing.totalTokens.cacheRead = (existing.totalTokens.cacheRead ?? 0) + cacheRead;
+    }
     existing.totalCost.inputCost += cost.inputCost;
     existing.totalCost.outputCost += cost.outputCost;
     existing.totalCost.totalCost += cost.totalCost;
@@ -132,6 +142,14 @@ export function createUsageRecorder(conversationId: string): UsageRecorder {
 
 export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
+}
+
+export function formatTokens(count: number): string {
+  return count >= 1000 ? `${(count / 1000).toFixed(1)}k` : String(count);
+}
+
+export function formatCost(cost: number): string {
+  return `$${cost.toFixed(4)}`;
 }
 
 export function estimateCost(

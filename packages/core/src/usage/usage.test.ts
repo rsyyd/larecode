@@ -3,6 +3,8 @@ import {
   createUsageRecorder,
   estimateCost,
   estimateTokens,
+  formatCost,
+  formatTokens,
   DEFAULT_MODEL_PRICING,
   type TokenUsage,
   type CostUsage,
@@ -107,5 +109,34 @@ describe('Usage accounting', () => {
     expect(estimateTokens('abcd')).toBe(1);
     expect(estimateTokens('abcde')).toBe(2);
     expect(estimateTokens('Hello world!')).toBe(3);
+  });
+
+  it('accumulates cache-read tokens when reported', () => {
+    const r = createUsageRecorder('conv-cache');
+    r.record(
+      { input: 100, output: 50, total: 150, cacheRead: 80 },
+      { inputCost: 0, outputCost: 0, totalCost: 0 },
+      'gpt-4o',
+      'openai'
+    );
+    r.record(
+      { input: 100, output: 50, total: 150 },
+      { inputCost: 0, outputCost: 0, totalCost: 0 },
+      'gpt-4o',
+      'openai'
+    );
+
+    const agg = r.getAggregate();
+    expect(agg.totalTokens.cacheRead).toBe(80);
+    expect(agg.byModel['openai:gpt-4o'].totalTokens.cacheRead).toBe(80);
+  });
+
+  it('formats tokens and cost for the footer', () => {
+    expect(formatTokens(0)).toBe('0');
+    expect(formatTokens(999)).toBe('999');
+    expect(formatTokens(1200)).toBe('1.2k');
+    expect(formatTokens(12500)).toBe('12.5k');
+    expect(formatCost(0.006)).toBe('$0.0060');
+    expect(formatCost(0)).toBe('$0.0000');
   });
 });

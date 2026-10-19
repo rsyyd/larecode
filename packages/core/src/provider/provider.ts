@@ -24,6 +24,12 @@ export interface ToolSpec {
   parameters: Record<string, unknown>;
 }
 
+export interface ProviderUsage {
+  input: number;
+  output: number;
+  cacheRead?: number;
+}
+
 export interface CompletionOptions {
   model: string;
   temperature?: number;
@@ -31,6 +37,7 @@ export interface CompletionOptions {
   tools?: ToolSpec[];
   systemPrompt?: string;
   abortSignal?: AbortSignal;
+  onUsage?: (usage: ProviderUsage) => void;
 }
 
 export interface ProviderAdapter {

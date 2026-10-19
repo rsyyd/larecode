@@ -6,6 +6,7 @@ import type {
   ModelInfo,
   ProviderAdapter,
   ProviderCapabilities,
+  ProviderUsage,
   ToolSpec,
 } from './provider.js';
 import type { LumpsCodeFetch } from './fetch.js';
@@ -22,6 +23,8 @@ export interface OllamaAdapterOptions {
 interface OllamaChatResponse {
   message?: { content?: string };
   error?: string;
+  prompt_eval_count?: number;
+  eval_count?: number;
 }
 
 interface OllamaTagsResponse {
@@ -32,6 +35,12 @@ interface OllamaStreamLine {
   message?: { content?: string };
   done?: boolean;
   error?: string;
+  prompt_eval_count?: number;
+  eval_count?: number;
+}
+
+function ollamaUsage(chunk: { prompt_eval_count?: number; eval_count?: number }): ProviderUsage {
+  return { input: chunk.prompt_eval_count ?? 0, output: chunk.eval_count ?? 0 };
 }
 
 export class OllamaAdapter implements ProviderAdapter {
@@ -136,6 +145,12 @@ export class OllamaAdapter implements ProviderAdapter {
     if (data.error) {
       throw LumpsError.from('PROVIDER_UNAVAILABLE', data.error, { provider: this.name });
     }
+    if (
+      options.onUsage &&
+      (data.prompt_eval_count !== undefined || data.eval_count !== undefined)
+    ) {
+      options.onUsage(ollamaUsage(data));
+    }
     const text = data.message?.content;
     if (text === undefined || text === null) {
       throw LumpsError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
@@ -186,7 +201,10 @@ export class OllamaAdapter implements ProviderAdapter {
           throw LumpsError.from('PROVIDER_UNAVAILABLE', chunk.error, { provider: this.name });
         }
         if (chunk.message?.content) yield chunk.message.content;
-        if (chunk.done) return;
+        if (chunk.done) {
+          if (options.onUsage) options.onUsage(ollamaUsage(chunk));
+          return;
+        }
       }
     }
   }

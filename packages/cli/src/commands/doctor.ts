@@ -1,8 +1,9 @@
-import { existsSync } from 'node:fs';
+import { accessSync, constants, existsSync } from 'node:fs';
 import {
   VERSION,
   configPath,
   loadEffectiveConfig,
+  lumpscodeHome,
   validateConfig,
   discoverInstructions,
   projectConfigPath,
@@ -54,9 +55,27 @@ function printInstructions(): void {
   }
 }
 
+function homeRow(): { line: string; problem?: string } {
+  const home = lumpscodeHome();
+  if (!existsSync(home)) {
+    return { line: `  home            ${home} ${dim('(missing — created on first write)')}` };
+  }
+  try {
+    accessSync(home, constants.W_OK);
+    return { line: `  home            ${home} ${dim('writable')}` };
+  } catch {
+    return {
+      line: `  home            ${home} ${bad('not writable')}`,
+      problem: `home directory ${home} is not writable`,
+    };
+  }
+}
+
 export async function runDoctor(): Promise<void> {
   const config: Config = loadEffectiveConfig();
   const problems = validateConfig(config);
+  const home = homeRow();
+  if (home.problem) problems.push(home.problem);
 
   console.log(`lumpscode ${VERSION} doctor\n`);
 
@@ -64,6 +83,7 @@ export async function runDoctor(): Promise<void> {
   const pathState = existsSync(path) ? '' : dim(' (missing — defaults active)');
   console.log('Config');
   console.log(`  path            ${path}${pathState}`);
+  console.log(home.line);
   if (existsSync(projectConfigPath())) console.log(`  project         ${projectConfigPath()}`);
   console.log(`  provider        ${config.defaultProvider}`);
   console.log(`  model           ${config.defaultModel}`);

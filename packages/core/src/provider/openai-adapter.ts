@@ -6,6 +6,7 @@ import type {
   ModelInfo,
   ProviderAdapter,
   ProviderCapabilities,
+  ProviderUsage,
   ToolSpec,
 } from './provider.js';
 import type { LumpsCodeFetch } from './fetch.js';
@@ -21,8 +22,15 @@ export interface OpenAIAdapterOptions {
   fetchImpl?: LumpsCodeFetch;
 }
 
+interface OpenAIUsage {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  prompt_tokens_details?: { cached_tokens?: number };
+}
+
 interface OpenAIChatResponse {
   choices?: { message?: { content?: string | null } }[];
+  usage?: OpenAIUsage | null;
 }
 
 interface OpenAIModelsResponse {
@@ -31,6 +39,17 @@ interface OpenAIModelsResponse {
 
 interface OpenAIStreamChunk {
   choices?: { delta?: { content?: string | null } }[];
+  usage?: OpenAIUsage | null;
+}
+
+function mapUsage(usage: OpenAIUsage): ProviderUsage {
+  return {
+    input: usage.prompt_tokens ?? 0,
+    output: usage.completion_tokens ?? 0,
+    ...(usage.prompt_tokens_details?.cached_tokens
+      ? { cacheRead: usage.prompt_tokens_details.cached_tokens }
+      : {}),
+  };
 }
 
 export class OpenAIAdapter implements ProviderAdapter {
@@ -90,6 +109,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       ...(options.temperature === undefined ? {} : { temperature: options.temperature }),
       ...(options.maxTokens === undefined ? {} : { max_tokens: options.maxTokens }),
       ...(this.toolPayload(options.tools) ? { tools: this.toolPayload(options.tools) } : {}),
+      ...(stream && options.onUsage ? { stream_options: { include_usage: true } } : {}),
     };
   }
 
@@ -152,6 +172,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       throw LumpsError.from('PROVIDER_UNAVAILABLE', 'completion response had no text', {
         provider: this.name,
       });
+    if (data.usage && options.onUsage) options.onUsage(mapUsage(data.usage));
     return text;
   }
 
@@ -193,6 +214,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         if (payload === '[DONE]') return;
         try {
           const chunk = JSON.parse(payload) as OpenAIStreamChunk;
+          if (chunk.usage && options.onUsage) options.onUsage(mapUsage(chunk.usage));
           const text = chunk.choices?.[0]?.delta?.content;
           if (text) yield text;
         } catch {

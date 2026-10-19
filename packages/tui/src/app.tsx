@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
+import { formatCost, formatTokens, type UsageAggregate } from '@lumpscode/core';
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
 import { filterCommands } from './palette.js';
@@ -9,6 +10,7 @@ export interface AppProps {
   model?: string;
   theme?: ThemeName;
   initialMessages?: ChatMessage[];
+  getUsage?: () => UsageAggregate;
   runTurn?: (
     prompt: string,
     onChunk: (chunk: string) => void,
@@ -31,11 +33,13 @@ export function App({
   model = 'no model',
   theme: initialTheme = 'dark',
   initialMessages = [],
+  getUsage,
   runTurn,
   runSubagentTurn,
 }: AppProps) {
   const { exit } = useApp();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [usage, setUsage] = useState<UsageAggregate | null>(null);
   const [input, setInput] = useState<InputState>(emptyInput());
   const [agent, setAgent] = useState<'plan' | 'build'>('plan');
   const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
@@ -96,6 +100,7 @@ export function App({
     } finally {
       setStreaming(false);
       abortRef.current = null;
+      if (getUsage) setUsage(getUsage());
     }
   };
 
@@ -214,6 +219,9 @@ export function App({
         <Text color={theme.muted}>
           {agent} (Tab) · {model} · {themeName}
           {streaming ? ' · streaming' : ''}
+          {!streaming && usage && usage.totalTokens.total > 0
+            ? ` · ${formatTokens(usage.totalTokens.total)} tok · ${formatCost(usage.totalCost.totalCost)}`
+            : ''}
         </Text>
       </Box>
     </Box>
