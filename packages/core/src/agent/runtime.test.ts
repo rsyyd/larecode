@@ -4,6 +4,7 @@ import {
   Providers,
   type ModelInfo,
   type ProviderAdapter,
+  type ProviderMessage,
   type ProviderStreamEvent,
 } from '../provider/provider.js';
 import { Tools } from '../tool/tool.js';
@@ -29,6 +30,7 @@ function usage(): UsageAggregate {
 
 class TextAdapter implements ProviderAdapter {
   readonly name = 'fake';
+  readonly seen: ProviderMessage[][] = [];
   readonly capabilities = {
     tools: true,
     vision: false,
@@ -47,7 +49,8 @@ class TextAdapter implements ProviderAdapter {
 
   async *streamComplete(): AsyncGenerator<string> {}
 
-  async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+  async *streamChat(messages: ProviderMessage[]): AsyncGenerator<ProviderStreamEvent> {
+    this.seen.push(messages.map((message) => ({ ...message })));
     yield { type: 'text', text: 'hi' };
   }
 }
@@ -114,6 +117,36 @@ describe('AgentRuntime contract', () => {
 
     expect(events.map((event) => event.type)).toEqual(['text', 'usage', 'halt']);
     expect(events.at(-1)).toMatchObject({ type: 'halt', reason: 'completed' });
+  });
+
+  it('replays supplied history before the new prompt', async () => {
+    const adapter = new TextAdapter();
+    const providers = new Providers();
+    providers.register(adapter);
+    const instance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools: new Tools(),
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      history: [
+        { role: 'user', content: 'earlier question' },
+        { role: 'assistant', content: 'earlier answer' },
+      ],
+    });
+
+    for await (const _event of instance.run({
+      prompt: 'follow up',
+      signal: new AbortController().signal,
+    })) {
+      // drain
+    }
+
+    expect(adapter.seen[0]?.slice(1)).toEqual([
+      { role: 'user', content: 'earlier question' },
+      { role: 'assistant', content: 'earlier answer' },
+      { role: 'user', content: 'follow up' },
+    ]);
   });
 
   it('halts with cancelled when the turn signal is aborted', async () => {

@@ -70,6 +70,7 @@ export interface AgentRuntimeOptions {
   unattended?: boolean;
   agent?: AgentRuntimeAgentName;
   sessionId?: string;
+  history?: ProviderMessage[];
   maxIterations?: number;
   maxToolCalls?: number;
   tokenBudget?: number;
@@ -176,7 +177,12 @@ export class DefaultAgentRuntime implements AgentRuntime {
       for (const tool of coreTools()) this.tools.register(tool);
     }
 
-    this.messages = [{ role: 'system', content: this.systemPrompt() }];
+    this.messages = [
+      { role: 'system', content: this.systemPrompt() },
+      ...(options.history ?? [])
+        .filter((message) => message.role !== 'system')
+        .map((message) => ({ ...message })),
+    ];
   }
 
   getProvider(): string {

@@ -10,6 +10,7 @@ import {
   type CompletionOptions,
   type ModelInfo,
   type ProviderAdapter,
+  type ProviderMessage,
 } from '@larecode/core';
 import { LareClient } from './client.js';
 
@@ -84,7 +85,18 @@ describe('LareClient', () => {
 
   it('continues an existing session with its history in place', async () => {
     const sessions = new Sessions(join(dir, 'sessions'));
-    const sdk = client(['first'], { sessions });
+    const histories: ProviderMessage[][] = [];
+    const providers = new Providers();
+    providers.register(new FakeAdapter(['first']));
+    const sdk = new LareClient({
+      provider: 'fake',
+      model: 'test-model',
+      sessions,
+      loopFactory: (options) => {
+        histories.push(options.history ?? []);
+        return new AgentRuntimeLoop({ ...options, providers });
+      },
+    });
     const first = await sdk.run('one');
 
     const second = await sdk.run('two', { sessionId: first.sessionId });
@@ -97,6 +109,11 @@ describe('LareClient', () => {
       'assistant',
       'user',
       'assistant',
+    ]);
+    expect(histories[0]).toEqual([]);
+    expect(histories[1]).toEqual([
+      { role: 'user', content: 'one' },
+      { role: 'assistant', content: 'first' },
     ]);
   });
 

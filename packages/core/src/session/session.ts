@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { larecodeHome } from '../config/config.js';
 import { LareError } from '../error/error.js';
 import { redactValue } from '../permission/redact.js';
+import type { ProviderMessage } from '../provider/provider.js';
 import type { ToolCall, ToolResult } from '../tool/tool.js';
 
 export interface SessionMetadata {
@@ -66,6 +67,14 @@ export function sessionsDir(): string {
 
 export function renderSessionContext(session: Session): string {
   return session.messages.map((message) => `${message.role}: ${message.content}`).join('\n');
+}
+
+export function toProviderHistory(messages: SessionMessage[]): ProviderMessage[] {
+  return messages.flatMap((message) =>
+    message.role === 'user' || message.role === 'assistant'
+      ? [{ role: message.role, content: message.content }]
+      : []
+  );
 }
 
 function toStored(session: Session): StoredSession {

@@ -5,7 +5,9 @@ import {
   Sessions,
   assertPreAuthorizable,
   larecodeHome,
+  toProviderHistory,
   type PermissionGroup,
+  type ProviderMessage,
 } from '@larecode/core';
 
 export const TELEGRAM_MAX_MESSAGE_CHARS = 4096;
@@ -102,6 +104,7 @@ export interface TelegramGatewayOptions {
     model: string;
     permissions?: Permissions;
     unattended?: boolean;
+    history?: ProviderMessage[];
     abortSignal?: AbortSignal;
   }) => GatewayLoop;
   loadConfig?: (cwd?: string) => { defaultProvider: string; defaultModel: string };
@@ -216,22 +219,24 @@ export class TelegramGateway {
       await this.sendMessage(chatId, 'error: session store unavailable');
       return;
     }
+    const history = toProviderHistory(session.messages);
     session.messages.push({ role: 'user', content: text, timestamp: this.now() });
     this.sessions.save(session);
 
-    const reply = await this.runTurn(text);
+    const reply = await this.runTurn(text, history);
     session.messages.push({ role: 'assistant', content: reply, timestamp: this.now() });
     this.sessions.save(session);
     await this.sendMessage(chatId, reply.length > 0 ? reply : 'done (no output)');
   }
 
-  private async runTurn(prompt: string): Promise<string> {
+  private async runTurn(prompt: string, history: ProviderMessage[]): Promise<string> {
     const config = this.loadConfig();
     const loop = this.createLoop({
       provider: config.defaultProvider,
       model: config.defaultModel,
       permissions: this.permissions,
       unattended: true,
+      history,
     });
     let output = '';
     try {

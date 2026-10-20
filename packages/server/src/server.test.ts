@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { Sessions } from '@larecode/core';
+import { Sessions, type ProviderMessage } from '@larecode/core';
 import { Shares } from './share.js';
 import { Server, type ServerOptions } from './server.js';
 
@@ -218,6 +218,34 @@ describe('sse turn', () => {
     expect(session?.messages.map((message) => message.role)).toEqual(['user', 'assistant']);
     expect(session?.messages[0].content).toBe('hello');
     expect(session?.messages[1].content).toBe('echo:hello done');
+  });
+
+  it('passes prior turns as history', async () => {
+    const histories: ProviderMessage[][] = [];
+    const instance = await start({
+      runTurn: async function* (prompt, context) {
+        histories.push(context.history);
+        yield prompt;
+        return { halt: null, tokens: 1, cost: 0 };
+      },
+    });
+    const id = await createSession(instance);
+
+    for (const content of ['one', 'two', 'three']) {
+      await fetch(`${instance.url}/sessions/${id}/messages`, {
+        method: 'POST',
+        headers: auth(),
+        body: JSON.stringify({ content }),
+      });
+    }
+
+    expect(histories.map((history) => history.length)).toEqual([0, 2, 4]);
+    expect(histories[2]).toEqual([
+      { role: 'user', content: 'one' },
+      { role: 'assistant', content: 'one' },
+      { role: 'user', content: 'two' },
+      { role: 'assistant', content: 'two' },
+    ]);
   });
 
   it('rejects missing sessions, empty content, and invalid json', async () => {

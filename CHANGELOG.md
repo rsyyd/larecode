@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `AgentRuntime` contract types and ADR-0002, the first step toward one runtime for every surface.
 - `DefaultAgentRuntime` now owns the chat loop; `ChatSession` is a thin adapter with unchanged behavior.
 - `run`, server, gateway, cron, and SDK/ACP now use `AgentRuntimeLoop` with the build agent; gateway and cron pass their pre-authorized policies through.
+- `AgentRuntime` accepts prior session history; server, gateway, and SDK/ACP replay it so multi-turn context survives turns.
 
 ## [0.1.1] - 2026-10-19
 

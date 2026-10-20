@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Sessions } from '@larecode/core';
+import { Sessions, type ProviderMessage } from '@larecode/core';
 import {
   ChatSessions,
   TelegramGateway,
@@ -104,8 +104,12 @@ describe('handleUpdate', () => {
   });
 
   it('runs a task, replies, and keeps conversation continuity', async () => {
+    const histories: ProviderMessage[][] = [];
     const { instance, api } = gateway({
-      createLoop: () => fakeLoop(['done with ', 'the task']),
+      createLoop: (options) => {
+        histories.push(options.history ?? []);
+        return fakeLoop(['done with ', 'the task']);
+      },
     });
     await instance.handleUpdate(update(7, ALLOWED, 'audit the repo'));
     expect(api.sends[0].text).toBe('done with the task');
@@ -120,6 +124,11 @@ describe('handleUpdate', () => {
     await instance.handleUpdate(update(8, ALLOWED, 'again'));
     expect(sessions.list()).toHaveLength(1);
     expect(sessions.get(meta.id)?.messages).toHaveLength(4);
+    expect(histories[0]).toEqual([]);
+    expect(histories[1]).toEqual([
+      { role: 'user', content: 'audit the repo' },
+      { role: 'assistant', content: 'done with the task' },
+    ]);
   });
 
   it('runs turns unattended with its pre-authorized policy', async () => {

@@ -9,7 +9,9 @@ import {
   Sessions,
   VERSION,
   loadEffectiveConfig,
+  toProviderHistory,
   type HaltReason,
+  type ProviderMessage,
 } from '@larecode/core';
 import { Shares, renderSharePage } from './share.js';
 
@@ -34,6 +36,7 @@ export interface TurnResult {
 export interface TurnContext {
   sessionId: string;
   signal: AbortSignal;
+  history: ProviderMessage[];
 }
 
 export type TurnHandler = (
@@ -63,6 +66,7 @@ function defaultTurnHandler(options: ServerOptions): TurnHandler {
       model: options.model ?? config.defaultModel,
       workingDir: options.workingDir,
       agent: 'build',
+      history: context.history,
       maxIterations: 40,
       maxToolCalls: 200,
       tokenBudget: 200_000,
@@ -381,6 +385,7 @@ export class Server {
       'x-accel-buffering': 'no',
     });
 
+    const history = toProviderHistory(session.messages);
     session.messages.push({ role: 'user', content, timestamp: new Date() });
     this.sessions.save(session);
 
@@ -392,7 +397,7 @@ export class Server {
     };
 
     try {
-      const iterator = this.turn(content, { sessionId, signal: controller.signal });
+      const iterator = this.turn(content, { sessionId, signal: controller.signal, history });
       let result: TurnResult | undefined;
       while (true) {
         const next = await iterator.next();

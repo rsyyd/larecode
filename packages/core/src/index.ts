@@ -112,7 +112,12 @@ export type { CronSpec } from './cron/schedule.js';
 export { runCronJob, runScheduler } from './cron/runner.js';
 export type { CronLoop, CronRunDeps, SchedulerDeps } from './cron/runner.js';
 
-export { Sessions, renderSessionContext, sessionsDir } from './session/session.js';
+export {
+  Sessions,
+  renderSessionContext,
+  sessionsDir,
+  toProviderHistory,
+} from './session/session.js';
 export type { Session, SessionMetadata, SessionMessage } from './session/session.js';
 export {
   searchSessions,

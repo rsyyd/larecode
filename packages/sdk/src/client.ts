@@ -3,8 +3,10 @@ import {
   LareError,
   Sessions,
   loadEffectiveConfig,
+  toProviderHistory,
   type AgentRuntimeLoopOptions,
   type HaltReason,
+  type ProviderMessage,
   type Session,
   type UsageAggregate,
 } from '@larecode/core';
@@ -51,13 +53,14 @@ export class LareClient {
     this.sessions = options.sessions ?? new Sessions();
   }
 
-  private loop(signal: AbortSignal): LoopLike {
+  private loop(signal: AbortSignal, history: ProviderMessage[]): LoopLike {
     const config = loadEffectiveConfig(this.options.workingDir);
     const loopOptions: AgentRuntimeLoopOptions = {
       provider: this.options.provider ?? config.defaultProvider,
       model: this.options.model ?? config.defaultModel,
       workingDir: this.options.workingDir,
       agent: 'build',
+      history,
       maxIterations: DEFAULT_MAX_ITERATIONS,
       maxToolCalls: DEFAULT_MAX_TOOL_CALLS,
       tokenBudget: DEFAULT_TOKEN_BUDGET,
@@ -81,13 +84,14 @@ export class LareClient {
     const session = options.sessionId
       ? this.session(options.sessionId)
       : this.sessions.create(prompt);
+    const history = options.sessionId ? toProviderHistory(session.messages) : [];
     if (options.sessionId) {
       appendMessage(session, 'user', prompt);
       this.sessions.save(session);
     }
 
     const signal = options.signal ?? new AbortController().signal;
-    const loop = this.loop(signal);
+    const loop = this.loop(signal, history);
 
     let text = '';
     let cancelled = false;
