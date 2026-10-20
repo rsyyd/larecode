@@ -77,6 +77,28 @@ interface PendingPermission {
 type PopupState =
   { kind: 'model'; index: number } | { kind: 'theme'; index: number } | { kind: 'help' };
 
+interface PickerRow {
+  text: string;
+  header?: boolean;
+  item?: number;
+}
+
+function modelListing(catalogs: ModelCatalog[]): {
+  choices: { provider: string; model: string }[];
+  rows: PickerRow[];
+} {
+  const choices: { provider: string; model: string }[] = [];
+  const rows: PickerRow[] = [];
+  for (const catalog of catalogs) {
+    rows.push({ text: catalog.provider, header: true });
+    for (const model of catalog.models) {
+      rows.push({ text: model, item: choices.length });
+      choices.push({ provider: catalog.provider, model });
+    }
+  }
+  return { choices, rows };
+}
+
 const THEME_CHOICES: ThemeName[] = ['dark', 'light'];
 
 export function App({
@@ -130,16 +152,14 @@ export function App({
   const theme = getTheme(themeName);
   const home = messages.length === 0;
   const agentLabel = agent === 'plan' ? 'Plan' : 'Build';
-  const columns = stdout?.columns ?? 80;
-  const rows = stdout?.rows ?? 24;
+  const columns = Math.max(1, (stdout?.columns ?? 80) - 1);
+  const rows = Math.max(1, (stdout?.rows ?? 24) - 1);
   const promptWidth = home ? Math.min(75, Math.max(20, columns - 4)) : columns;
-  const popupWidth = Math.min(60, Math.max(24, columns - 8));
-  const popupLimit = Math.max(4, Math.min(10, rows - 12));
+  const popupWidth = Math.min(60, Math.max(24, columns - 2));
+  const popupLimit = Math.max(1, Math.min(10, rows - 6));
   const palette = !popup && paletteOpen(input.text) ? filterCommands(input.text) : [];
   const selected = Math.min(paletteIndex, Math.max(0, palette.length - 1));
-  const modelChoices = catalogs.flatMap((catalog) =>
-    catalog.models.map((entry) => ({ provider: catalog.provider, model: entry }))
-  );
+  const { choices: modelChoices, rows: modelRows } = modelListing(catalogs);
   const usageLabel =
     usage && usage.totalTokens.total > 0
       ? `${formatTokens(usage.totalTokens.total)} tok · ${formatCost(usage.totalCost.totalCost)}`
@@ -487,11 +507,11 @@ export function App({
           alignItems="center"
         >
           {popup?.kind === 'model' ? (
-            <ListPopup
-              title={`models · ${popup.index + 1}/${modelChoices.length}`}
-              items={modelChoices.map((choice) => `${choice.provider}/${choice.model}`)}
+            <PickerPopup
+              title={`models · ${modelChoices[popup.index]?.provider ?? '?'} · ${popup.index + 1}/${modelChoices.length}`}
+              rows={modelRows}
               selected={popup.index}
-              footer="↑↓ move · enter select · esc close"
+              footer={listFooter(popupWidth)}
               theme={theme}
               width={popupWidth}
               limit={popupLimit}
@@ -501,7 +521,7 @@ export function App({
               title={`theme · ${THEME_CHOICES[popup.index]}`}
               items={THEME_CHOICES}
               selected={popup.index}
-              footer="↑↓ move · enter select · esc close"
+              footer={listFooter(popupWidth)}
               theme={theme}
               width={popupWidth}
               limit={popupLimit}
@@ -519,7 +539,7 @@ export function App({
               title={`commands · ${selected + 1}/${palette.length}`}
               items={palette.map((command) => `${command.name} ${command.description}`)}
               selected={selected}
-              footer="tab complete · ↑↓ move · enter run · esc close"
+              footer={commandFooter(popupWidth)}
               theme={theme}
               width={popupWidth}
               limit={popupLimit}
@@ -685,9 +705,18 @@ function windowItems<T>(
   return { items: items.slice(start, start + limit), start };
 }
 
+function listFooter(width: number): string {
+  return width < 44 ? '↑↓ · enter · esc' : '↑↓ move · enter select · esc close';
+}
+
+function commandFooter(width: number): string {
+  return width < 44 ? 'tab · ↑↓ · enter · esc' : 'tab complete · ↑↓ move · enter run · esc close';
+}
+
 function Popup({
   title,
   lines = [],
+  rows,
   body,
   active,
   footer,
@@ -696,6 +725,7 @@ function Popup({
 }: {
   title: string;
   lines?: string[];
+  rows?: PickerRow[];
   body?: string[];
   active?: number;
   footer: string;
@@ -708,17 +738,27 @@ function Popup({
       {` ${text.slice(0, inner - 2).padEnd(inner - 2)} `}
     </Text>
   );
-  const content = body
-    ? body
-        .flatMap((text) => wrapLine(text, inner))
-        .map((line, index) => row(line, theme.text, index))
-    : lines.map((line, index) =>
-        row(
-          `${index === active ? '❯ ' : '  '}${line}`,
-          index === active ? theme.text : theme.muted,
-          index
-        )
-      );
+  const content = rows
+    ? rows.map((entry, index) =>
+        entry.header
+          ? row(entry.text, theme.accent, `h${index}`)
+          : row(
+              `${index === active ? '❯ ' : '  '}${entry.text}`,
+              index === active ? theme.text : theme.muted,
+              `r${index}`
+            )
+      )
+    : body
+      ? body
+          .flatMap((text) => wrapLine(text, inner))
+          .map((line, index) => row(line, theme.text, index))
+      : lines.map((line, index) =>
+          row(
+            `${index === active ? '❯ ' : '  '}${line}`,
+            index === active ? theme.text : theme.muted,
+            index
+          )
+        );
   return (
     <Box
       flexDirection="column"
@@ -731,6 +771,37 @@ function Popup({
       {content}
       {row(footer, theme.muted, 'footer')}
     </Box>
+  );
+}
+
+function PickerPopup({
+  title,
+  rows,
+  selected,
+  footer,
+  theme,
+  width,
+  limit,
+}: {
+  title: string;
+  rows: PickerRow[];
+  selected: number;
+  footer: string;
+  theme: Theme;
+  width: number;
+  limit: number;
+}) {
+  const active = rows.findIndex((row) => row.item === selected);
+  const visible = windowItems(rows, active, limit);
+  return (
+    <Popup
+      title={title}
+      rows={visible.items}
+      active={active - visible.start}
+      footer={footer}
+      theme={theme}
+      width={width}
+    />
   );
 }
 
@@ -823,18 +894,14 @@ function MessageRow({
 }) {
   if (message.role === 'user') {
     return (
-      <Panel
-        width={width}
-        background={theme.panel}
-        borderColor={theme.accent}
-        paddingTop={1}
-        paddingBottom={1}
-        marginBottom={1}
-        lines={wrapLine(message.text, Math.max(1, width - 5)).map((line) => ({
-          content: <Text color={theme.text}>{line}</Text>,
-          length: line.length,
-        }))}
-      />
+      <Box paddingLeft={3} marginBottom={1} flexDirection="row">
+        <Text color={theme.accent}>› </Text>
+        <Box flexShrink={1}>
+          <Text color={theme.text} wrap="wrap">
+            {message.text}
+          </Text>
+        </Box>
+      </Box>
     );
   }
   if (message.role === 'tool') {

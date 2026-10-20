@@ -296,9 +296,11 @@ describe('App', () => {
     await flush();
     stdin.write('\r');
     await flush();
-    expect(lastFrame()).toContain('models · 1/3');
-    expect(lastFrame()).toContain('9router/Combo');
-    expect(lastFrame()).toContain('ollama/qwen2.5-coder');
+    expect(lastFrame()).toContain('models · 9router · 1/3');
+    expect(lastFrame()).toContain('9router');
+    expect(lastFrame()).toContain('Combo');
+    expect(lastFrame()).toContain('ollama');
+    expect(lastFrame()).toContain('qwen2.5-coder');
 
     stdin.write('\x1b[B');
     await flush();
