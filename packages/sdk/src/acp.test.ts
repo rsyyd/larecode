@@ -50,7 +50,9 @@ function harness(turn?: (prompt: string, context: AcpTurnContext) => Promise<Acp
       method: 'session/new',
       params: { cwd: dir, mcpServers: [] },
     });
-    return (out.at(-1)?.result as { sessionId: string }).sessionId;
+    const result = out.at(-1)?.result as { sessionId?: string } | undefined;
+    if (!result?.sessionId) throw new Error('session/new did not return a session id');
+    return result.sessionId;
   };
   const prompt = (sessionId: string, text: string, id = 2) =>
     line({
@@ -128,7 +130,7 @@ describe('AcpAgent', () => {
   });
 
   it('cancels the running turn on session/cancel', async () => {
-    const { agent, out, initialize, newSession, prompt, line } = harness(
+    const { out, initialize, newSession, prompt, line } = harness(
       (promptText, context) =>
         new Promise((resolve) => {
           context.signal.addEventListener('abort', () => resolve('cancelled'));

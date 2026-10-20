@@ -4,7 +4,6 @@ import { Permissions } from '../permission/permission.js';
 import { Tools } from '../tool/tool.js';
 import {
   Providers,
-  type CompletionOptions,
   type ModelInfo,
   type ProviderAdapter,
   type ProviderMessage,
@@ -22,7 +21,6 @@ class ScriptedAdapter implements ProviderAdapter {
   };
 
   requests: ProviderMessage[][] = [];
-  prompts: string[] = [];
 
   constructor(private script: ProviderStreamEvent[][]) {}
 
@@ -34,8 +32,8 @@ class ScriptedAdapter implements ProviderAdapter {
     return '';
   }
 
-  async *streamComplete(prompt: string): AsyncGenerator<string> {
-    this.prompts.push(prompt);
+  async *streamComplete(): AsyncGenerator<string> {
+    yield* [];
   }
 
   async *streamChat(messages: ProviderMessage[]): AsyncGenerator<ProviderStreamEvent> {
