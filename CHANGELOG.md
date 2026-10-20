@@ -1,20 +1,46 @@
 # Changelog
 
-## 0.1.1 — 2026-10-19
+All notable changes to this project are documented in this file.
 
-Release plumbing only; no code changes.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-- Cross-compiled binaries now install their own `@ast-grep/napi` binding, fixing startup crashes on the four non-host platforms.
-- Each release ships `checksums.txt`, so `install.sh` can verify downloads through `LARECODE_SHA256`.
-- Tagged releases publish to npm and update the Homebrew formula and Scoop manifest automatically.
+## [Unreleased]
 
-## 0.1.0 — 2026-10-19
+## [0.1.1] - 2026-10-19
+
+### Fixed
+
+- Cross-compiled binaries install their own `@ast-grep/napi` binding, fixing startup crashes on the four non-host platforms.
+
+### Added
+
+- Releases ship a `checksums.txt` asset with the SHA-256 of every binary; `install.sh` verifies downloads when a checksum is provided through `LARECODE_SHA256`.
+- Release manifests: a Homebrew formula, a Scoop manifest, and a PKGBUILD generated from the tagged release.
+
+### Changed
+
+- Tagged releases publish to npm and update the Homebrew tap and Scoop bucket automatically.
+
+## [0.1.0] - 2026-10-19
 
 First public release.
 
-- Agent CLI and TUI: multi-provider chat, plan mode, subagents, skills, hooks, plugins, LSP, MCP client and server, checkpoints, memory, and session search.
-- Automation: HTTP server with scoped tokens, share links, cron jobs, and a Telegram gateway.
-- Distribution: npm, curl installer, Homebrew, Scoop, and a release PKGBUILD; five platform binaries built in CI.
-- SDK (`@larecode/sdk`) and the ACP adapter for editors.
+### Added
 
-The desktop app is deferred; v1 is the CLI plus gateway and share links.
+- Agent CLI and TUI: multi-provider chat, plan mode, subagents, skills, hooks, plugins, LSP, MCP client and server, checkpoints, memory, and session search.
+- Permission engine: default-deny groups, audit log, and unattended flows limited to groups pre-authorized with `--allow`.
+- Automation: HTTP server with scoped bearer tokens, share links, cron jobs, and a Telegram gateway.
+- Distribution: npm, curl installer, Homebrew, Scoop, and a release PKGBUILD; five platform binaries built in CI.
+- SDK (`@larecode/sdk`) and the ACP adapter for editors such as Zed.
+
+### Fixed
+
+- `larecode mcp serve` enforces the central tool-to-permission-group mapping before any tool runs; write and shell tools are denied by default and only open with `--allow`.
+
+### Changed
+
+- The desktop app is deferred; v1 ships as the CLI plus gateway and share links.
+
+[Unreleased]: https://github.com/rsyyd/larecode/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/rsyyd/larecode/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/rsyyd/larecode/releases/tag/v0.1.0

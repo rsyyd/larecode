@@ -1,34 +1,45 @@
+---
+title: Lare Code
+layout: home
+nav_order: 1
+description: Open-source, provider-neutral AI coding agent for the terminal
+---
+
 # Lare Code
 
-Lare Code is an open-source, provider-neutral AI coding agent for the terminal. This folder is the documentation site source, published with GitHub Pages.
+Lare Code is an open-source AI coding agent for the terminal. It runs on your machine, works with any OpenAI-compatible provider, and checks every tool call against a permission policy before it runs.
 
-| Page                                                               | What it covers                                             |
-| ------------------------------------------------------------------ | ---------------------------------------------------------- |
-| [getting-started.md](getting-started.md)                           | Install, first run, config location                        |
-| [configuration.md](configuration.md)                               | Global and project config, environment variables           |
-| [providers.md](providers.md)                                       | OpenAI-compatible, Anthropic, Ollama, and custom providers |
-| [permissions.md](permissions.md)                                   | Permission groups, modes, unattended flows, audit log      |
-| [tools.md](tools.md)                                               | Built-in tools and how they map to permission groups       |
-| [mcp.md](mcp.md)                                                   | MCP client config and `larecode mcp serve` server mode     |
-| [automation.md](automation.md)                                     | HTTP server, share links, cron jobs, Telegram gateway      |
-| [sdk.md](sdk.md)                                                   | TypeScript SDK and the ACP adapter for editors             |
-| [install.md](install.md)                                           | npm, curl, Homebrew, Scoop, PKGBUILD, manual installs      |
-| [architecture/adr/](architecture/adr/0001-desktop-app-deferred.md) | Architecture decision records                              |
+## Quick start
 
-## Full command reference
+```bash
+npm install -g larecode
+larecode setup
+larecode doctor
+larecode run "explain this repository"
+```
 
-| Command                                       | Purpose                                                 |
-| --------------------------------------------- | ------------------------------------------------------- |
-| `larecode setup`                              | Write an initial config for your provider               |
-| `larecode doctor`                             | Check config, providers, permissions, instruction files |
-| `larecode run "<task>"`                       | Run a task non-interactively and stream the result      |
-| `larecode run "<task>" --verify`              | Baseline tests first, fail only on new test failures    |
-| `larecode serve`                              | Serve the HTTP API with SSE streaming                   |
-| `larecode gateway`                            | Serve tasks from Telegram                               |
-| `larecode cron add\|list\|remove\|run\|start` | Scheduled unattended tasks                              |
-| `larecode mcp add\|list\|remove\|call`        | Manage MCP servers and call their tools                 |
-| `larecode mcp serve`                          | Expose larecode tools as an MCP server over stdio       |
-| `larecode acp`                                | Speak Agent Client Protocol over stdio for editors      |
-| `larecode update`                             | Check for a newer release                               |
+Other install options, including Homebrew, Scoop, and a curl installer, are on the [install options](install.md) page.
 
-See [SECURITY.md](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for the trust model.
+## Documentation
+
+**Start here**
+
+- [Getting started](getting-started.md): install, first run, and where things live
+- [Install options](install.md): npm, curl, Homebrew, Scoop, PKGBUILD, manual
+- [Configuration](configuration.md): config files, execution backends, environment variables
+
+**Guides**
+
+- [Providers](providers.md): OpenAI-compatible, Anthropic, Ollama, OpenRouter, custom
+- [Permissions](permissions.md): groups, modes, unattended flows, audit log
+- [Tools](tools.md): built-in tools and their permission groups
+- [MCP](mcp.md): client and server modes
+- [Automation](automation.md): HTTP server, share links, cron, Telegram gateway
+- [SDK and editors](sdk.md): `@larecode/sdk` and the ACP adapter
+
+**Reference**
+
+- [CLI reference](cli.md): every command and option
+- [ADR-0001: Desktop app deferred](architecture/adr/0001-desktop-app-deferred.md): why v1 ends at the CLI
+
+See the [security policy and trust model](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for what larecode guards and what it does not.

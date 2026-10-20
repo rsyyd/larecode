@@ -1,4 +1,12 @@
+---
+title: ADR-0001 Desktop app deferred
+nav_order: 10
+description: Why v1 ends at the CLI, gateway, and share links
+---
+
 # ADR-0001: Desktop app deferred to post-v1.0
+
+Date: 2026-10-19
 
 ## Status
 
@@ -20,16 +28,16 @@ A native shell (Tauri/Electron) carries a heavy toolchain, packaging, signing, a
 
 ## Decision
 
-Close T-32 as deferred. v1.0 ships as the CLI plus gateway and share links. A desktop application remains future work and will get its own milestone, stack decision (for example Tauri versus Electron), and threat-model pass when it is scheduled.
+The desktop app is deferred. v1.0 ships as the CLI plus gateway and share links. A desktop application remains future work and will get its own milestone, stack decision (for example Tauri versus Electron), and threat-model pass when it is scheduled.
 
 ## Consequences
 
 Easier:
 
-- M4 finishes with no unverifiable GUI code and no new heavy dependencies.
+- The CLI milestone finishes with no unverifiable GUI code and no new heavy dependencies.
 - The integration seams stay focused: any desktop client is a consumer of `serve`, the SDK, ACP, or MCP rather than a fork of core.
 
 Harder:
 
 - No graphical experience for v1.0 users; the TUI and editors remain the interactive surfaces.
-- Whoever picks up the desktop work must first choose the shell framework, define packaging and signing, and extend the SECURITY.md trust model to the shell and its auto-update path.
+- Whoever picks up the desktop work must first choose the shell framework, define packaging and signing, and extend the security policy's trust model to the shell and its auto-update path.

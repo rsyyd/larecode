@@ -1,4 +1,19 @@
+---
+title: Getting started
+nav_order: 2
+has_children: true
+description: Install larecode, run your first task, and find where things live
+---
+
 # Getting started
+
+Install larecode, verify your setup, and run your first task.
+
+## Prerequisites
+
+- A terminal on Linux, macOS, or Windows.
+- Node 20+ if you install through npm. The curl installer, Homebrew, and Scoop need nothing else.
+- An endpoint and API key for a provider. Local Ollama works too.
 
 ## Install
 
@@ -8,7 +23,7 @@ brew tap rsyyd/larecode && brew install larecode
 curl -fsSL https://raw.githubusercontent.com/rsyyd/larecode/main/install.sh | sh
 ```
 
-See [install.md](install.md) for Scoop, PKGBUILD, and manual binary installs.
+See [install options](install.md) for Scoop, PKGBUILD, and manual binary installs.
 
 ## First run
 
@@ -46,4 +61,7 @@ With `--verify`, larecode records a baseline of your test failures first, applie
 | `~/.larecode/gateway.json` | Gateway chat sessions (0600)    |
 | `~/.larecode/consent.json` | Instruction file consent hashes |
 
-Next: [configuration.md](configuration.md) for the full config reference, [permissions.md](permissions.md) for the trust model.
+## Next steps
+
+- [Configuration](configuration.md) for the full config reference.
+- [Permissions](permissions.md) for the trust model and unattended flows.

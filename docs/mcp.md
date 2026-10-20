@@ -1,3 +1,9 @@
+---
+title: MCP
+nav_order: 6
+description: Use larecode as an MCP client, or expose it as an MCP server
+---
+
 # MCP
 
 Lare Code speaks the Model Context Protocol in both directions.
@@ -33,7 +39,7 @@ MCP clients run without a human at the keyboard, so the server is default-deny:
 - Everything else needs `--allow <groups>`.
 - `secrets` and `destructive` cannot be pre-authorized and are rejected at startup.
 
-Requests for a denied tool return an MCP error result naming the group and reason, so the calling agent can explain itself instead of failing silently.
+Requests for a denied tool return an MCP error result naming the group and reason, so the calling agent can explain the refusal instead of failing silently.
 
 ### Editor setup
 
@@ -51,3 +57,8 @@ Any MCP-capable editor works. For a generic stdio client:
 ```
 
 Logs go to stderr so stdout stays a clean protocol channel. Set `LARECODE_LOG_LEVEL=debug` when you need to see tool activity.
+
+## Next steps
+
+- [Permissions](permissions.md) for the groups `--allow` accepts.
+- [SDK and editors](sdk.md) for the ACP adapter as an alternative integration.

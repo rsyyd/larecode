@@ -1,3 +1,9 @@
+---
+title: Permissions
+nav_order: 4
+description: Permission groups, policy modes, unattended flows, and the audit log
+---
+
 # Permissions
 
 Every tool call is checked against a permission group before it runs. The engine is default-deny: a group must be allowed by policy, or the call is refused.
@@ -63,4 +69,4 @@ Unknown tool names fall back to the `write` group so new tools are never silentl
 
 Every decision (allowed, refused, or requiring confirmation) is recorded with the group, source, and reason. The audit log is the record of what ran on your machine and why. `larecode doctor` surfaces pending or changed instruction files, which are the other untrusted input in the system.
 
-See [SECURITY.md](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for the full trust model.
+See the [security policy](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for the full trust model.

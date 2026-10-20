@@ -1,6 +1,12 @@
+---
+title: Automation
+nav_order: 7
+description: HTTP server, share links, cron jobs, Telegram gateway, and updates
+---
+
 # Automation
 
-Three ways to run larecode without sitting in front of it, plus share links for handing a session to someone else.
+Run larecode without sitting in front of it: an HTTP server, cron jobs, and a Telegram gateway. Share links hand a finished session to someone else, read-only.
 
 ## HTTP server
 
@@ -29,7 +35,7 @@ larecode cron run <id>
 larecode cron start        # run due jobs until interrupted
 ```
 
-Schedules accept natural phrases (`every 30 minutes`, `weekdays at 9am`) or 5-field cron expressions. Each job records its last result (output tail and exit state) in `~/.larecode/jobs.json` (0600). Jobs are unattended: only groups listed with `--allow` are pre-authorized, and `secrets`/`destructive` are refused at parse time. See [permissions.md](permissions.md).
+Schedules accept natural phrases (`every 30 minutes`, `weekdays at 9am`) or 5-field cron expressions. Each job records its last result (output tail and exit state) in `~/.larecode/jobs.json` (0600). Jobs are unattended: only groups listed with `--allow` are pre-authorized, and `secrets`/`destructive` are refused at parse time. See [permissions](permissions.md).
 
 ## Telegram gateway
 
@@ -46,4 +52,4 @@ larecode update            # prints upgrade instructions for how you installed
 larecode update --check    # report the latest version without instructions
 ```
 
-Offline runs report `registry check failed (reason)` and exit non-zero, so scripts can notice.
+Offline runs report `registry check failed (reason)` and exit non-zero, so scripts can detect it.

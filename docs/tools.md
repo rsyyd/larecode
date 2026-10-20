@@ -1,6 +1,12 @@
+---
+title: Tools
+nav_order: 5
+description: Built-in tools and how they map to permission groups
+---
+
 # Tools
 
-Lare Code ships a set of built-in tools. Group names in the table map to [permissions.md](permissions.md).
+Lare Code ships a set of built-in tools. Group names in the table map to [permissions](permissions.md).
 
 | Tool             | Group      | What it does                                           |
 | ---------------- | ---------- | ------------------------------------------------------ |
@@ -22,17 +28,17 @@ Lare Code ships a set of built-in tools. Group names in the table map to [permis
 
 ## Execution backends
 
-`bash` runs through the backend set in `execution` config: `local`, `docker`, or `ssh`. Docker containers start with networking off unless you opt in. See [configuration.md](configuration.md).
+`bash` runs through the backend set in `execution` config: `local`, `docker`, or `ssh`. Docker containers start with networking off unless you opt in. See [configuration](configuration.md).
 
 ## MCP
 
 Two directions:
 
-- Client: connect external MCP servers and call their tools (`larecode mcp add|list|call`, group `external-services`).
+- Client: connect external MCP servers and call their tools (`larecode mcp add`, `mcp list`, `mcp call`; group `external-services`).
 - Server: expose larecode tools to other agents over stdio (`larecode mcp serve`, default read-only).
 
-See [mcp.md](mcp.md).
+See [MCP](mcp.md).
 
 ## Adding tools
 
-Tools are plain TypeScript objects: a name, a description, a JSON schema, and an `execute(args, context)` function. The registry rejects nothing and overwrites by name, so a tool is one `register` call away. See `packages/core/src/tool/` for the built-ins.
+A tool is a plain TypeScript object: a name, a description, a JSON schema, and an `execute(args, context)` function. The registry registers tools by name. See `packages/core/src/tool/` for the built-ins.

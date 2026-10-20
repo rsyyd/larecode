@@ -1,3 +1,18 @@
 title: Lare Code
 description: Open-source, provider-neutral AI coding agent for the terminal
-theme: jekyll-theme-minimal
+remote_theme: just-the-docs/just-the-docs@v0.12.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+search_enabled: true
+heading_anchors: true
+aux_links:
+  GitHub: https://github.com/rsyyd/larecode
+aux_links_new_tab: true
+nav_external_links:
+  - title: Changelog
+    url: https://github.com/rsyyd/larecode/blob/main/CHANGELOG.md
+  - title: Contributing
+    url: https://github.com/rsyyd/larecode/blob/main/CONTRIBUTING.md
+  - title: Security
+    url: https://github.com/rsyyd/larecode/blob/main/SECURITY.md

@@ -1,3 +1,9 @@
+---
+title: SDK and editors
+nav_order: 8
+description: The @larecode/sdk TypeScript client and the ACP adapter for editors
+---
+
 # SDK and editors
 
 Two integration surfaces, both built on the same core.
@@ -5,6 +11,10 @@ Two integration surfaces, both built on the same core.
 ## TypeScript SDK
 
 `@larecode/sdk` wraps the agent loop in a small client. It is pure TypeScript with no Bun-specific APIs, so it runs on Node 20+.
+
+```bash
+npm install @larecode/sdk
+```
 
 ```ts
 import { LareClient } from '@larecode/sdk';
@@ -60,9 +70,9 @@ The adapter implements `initialize`, `session/new`, `session/prompt` with stream
 
 ## Choosing between them
 
-| Need                              | Use                                               |
-| --------------------------------- | ------------------------------------------------- |
-| Embed the agent in a Node service | `@larecode/sdk`                                   |
-| Host inside an editor             | `larecode acp`                                    |
-| Expose tools to another agent     | `larecode mcp serve` ([mcp.md](mcp.md))           |
-| Drive it from other processes     | `larecode serve` ([automation.md](automation.md)) |
+| Need                              | Use                                            |
+| --------------------------------- | ---------------------------------------------- |
+| Embed the agent in a Node service | `@larecode/sdk`                                |
+| Host inside an editor             | `larecode acp`                                 |
+| Expose tools to another agent     | `larecode mcp serve` ([MCP](mcp.md))           |
+| Drive it from other processes     | `larecode serve` ([Automation](automation.md)) |

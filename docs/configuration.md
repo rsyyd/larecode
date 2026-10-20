@@ -1,3 +1,10 @@
+---
+title: Configuration
+parent: Getting started
+nav_order: 2
+description: Config files, execution backends, environment variables, and instruction files
+---
+
 # Configuration
 
 Lare Code reads two config files and merges them, with the project file winning:
@@ -13,7 +20,7 @@ Set `LARECODE_HOME` to move the global directory (used by tests and sandboxes).
 
 ```json
 {
-  "version": "0.0.0",
+  "version": "0.1.1",
   "defaultProvider": "openai-compatible",
   "defaultModel": "gpt-4o",
   "permissions": { "mode": "ask", "allowedGroups": ["read"] },
@@ -30,7 +37,7 @@ Set `LARECODE_HOME` to move the global directory (used by tests and sandboxes).
 }
 ```
 
-The config file is written with `0600` permissions. `larecode setup` creates a valid starting point:
+The `version` field tracks the CLI that wrote the file. The config file is written with `0600` permissions. `larecode setup` creates a valid starting point:
 
 ```bash
 larecode setup --provider openai --base-url https://api.openai.com/v1 --api-key sk-... --model gpt-4o

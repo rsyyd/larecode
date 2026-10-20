@@ -1,6 +1,19 @@
-# Install
+---
+title: Install options
+parent: Getting started
+nav_order: 1
+description: npm, curl installer, Homebrew, Scoop, PKGBUILD, and manual binary installs
+---
 
-Several ways in, all landing on the same binary. After installing, run `larecode setup` once, then `larecode setup` output tells you the next command. Total time from a cold machine is under a minute on a normal connection.
+# Install options
+
+The same larecode binary is available through several package managers and as a direct download. Pick one, then run `larecode setup` once.
+
+| Platform | Options                                      |
+| -------- | -------------------------------------------- |
+| Linux    | npm, curl, Homebrew, PKGBUILD, manual binary |
+| macOS    | npm, curl, Homebrew, manual binary           |
+| Windows  | npm, Scoop, manual binary                    |
 
 ## npm
 
@@ -49,11 +62,11 @@ curl -fsSLO https://github.com/rsyyd/larecode/releases/latest/download/PKGBUILD
 makepkg -si
 ```
 
-The release PKGBUILD pins the checksums and installs the prebuilt binary for x86_64 or aarch64. An AUR package is ready and will be published once AUR registration reopens.
+The release PKGBUILD pins the checksums and installs the prebuilt binary for x86_64 or aarch64. An AUR package is prepared and will be published once AUR registration reopens.
 
 ## Manual
 
-Download the binary for your platform from [releases](https://github.com/rsyyd/larecode/releases), then:
+Download the binary for your platform from [releases](https://github.com/rsyyd/larecode/releases): `larecode-linux-x64`, `larecode-linux-arm64`, `larecode-darwin-x64`, `larecode-darwin-arm64`, or `larecode-windows-x64.exe`. Then:
 
 ```bash
 chmod +x larecode-linux-x64
