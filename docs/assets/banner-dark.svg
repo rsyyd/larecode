@@ -241,10 +241,6 @@
       <stop offset="50%" stop-color="#9aa2b1" />
       <stop offset="100%" stop-color="#737d8b" />
     </linearGradient>
-    <linearGradient id="wordmark-cursor" gradientUnits="userSpaceOnUse" x1="0" y1="370" x2="0" y2="496">
-      <stop offset="0%" stop-color="#f0f4f9" />
-      <stop offset="100%" stop-color="#b6bfcc" />
-    </linearGradient>
   </defs>
 
   <!-- ========================================================================= -->
@@ -749,7 +745,6 @@
              C 1723 404, 1713 395, 1696 395
              C 1680 395, 1669 405, 1667 422 Z" />
     </g>
-    <rect x="1792" y="370" width="16" height="126" rx="4" fill="url(#wordmark-cursor)" filter="url(#led-pixel-glow)" />
   </g>
 
 </svg>
