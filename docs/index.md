@@ -39,6 +39,7 @@ Other install options, including Homebrew, Scoop, and a curl installer, are on t
 
 **Reference**
 
+- [Product requirements](PRD.md): roadmap, release gates, and the 280-task backlog
 - [CLI reference](cli.md): every command and option
 - [ADR-0001: Desktop app deferred](architecture/adr/0001-desktop-app-deferred.md): why v1 ends at the CLI
 

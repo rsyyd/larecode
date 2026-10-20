@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Product requirements document covering 16 sub-PRDs, 280 tasks, release gates, and the 0.2.0-1.0 version plan.
+
 ## [0.1.1] - 2026-10-19
 
 ### Fixed
