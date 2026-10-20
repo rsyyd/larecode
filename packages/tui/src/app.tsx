@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Box, Text, useApp, useInput, useStdout } from 'ink';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Box, Text, useApp, useInput, useStdin, useStdout, type Key } from 'ink';
 import { formatCost, formatTokens, type UsageAggregate } from '@larecode/core';
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
-import { filterCommands } from './palette.js';
+import { filterCommands, type SlashCommand } from './palette.js';
 import { appendChunk, type ChatMessage } from './messages.js';
 
 export interface PermissionPrompt {
@@ -40,6 +40,8 @@ export const HELP_TEXT =
 
 const GENERAL_PREFIX = /^@general\b\s*([\s\S]*)$/;
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+const HOME_KEYS = new Set(['\x1b[H', '\x1bOH', '\x1b[1~', '\x1b[7~']);
+const END_KEYS = new Set(['\x1b[F', '\x1bOF', '\x1b[4~', '\x1b[8~']);
 const PLACEHOLDERS = [
   'Fix a TODO in the codebase',
   'What is the tech stack of this project?',
@@ -75,10 +77,14 @@ export function App({
   runSubagentTurn,
 }: AppProps) {
   const { exit } = useApp();
+  const { internal_eventEmitter } = useStdin();
   const { stdout } = useStdout();
+  const rawInput = useRef('');
+  const inputHandlerRef = useRef<(raw: string, key: Key) => void>(() => {});
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [usage, setUsage] = useState<UsageAggregate | null>(null);
   const [input, setInput] = useState<InputState>(emptyInput());
+  const inputRef = useRef(input);
   const [agent, setAgent] = useState<'plan' | 'build'>('plan');
   const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
   const [paletteIndex, setPaletteIndex] = useState(0);
@@ -86,6 +92,21 @@ export function App({
   const [frame, setFrame] = useState(0);
   const [permission, setPermission] = useState<PendingPermission | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const updateInput = (next: InputState): void => {
+    inputRef.current = next;
+    setInput(next);
+  };
+
+  useEffect(() => {
+    const record = (chunk: string): void => {
+      rawInput.current = chunk;
+    };
+    internal_eventEmitter.on('input', record);
+    return () => {
+      internal_eventEmitter.removeListener('input', record);
+    };
+  }, [internal_eventEmitter]);
 
   const theme = getTheme(themeName);
   const palette = paletteOpen(input.text) ? filterCommands(input.text) : [];
@@ -166,7 +187,7 @@ export function App({
   const submit = async (value: string): Promise<void> => {
     const trimmed = value.trim();
     if (trimmed.length === 0) return;
-    setInput(emptyInput());
+    updateInput(emptyInput());
     setPaletteIndex(0);
 
     if (trimmed.startsWith('/')) {
@@ -202,8 +223,17 @@ export function App({
     );
   };
 
-  useInput((raw, key) => {
-    const event: KeyEvent = { input: raw, key };
+  const handleKey = (raw: string, key: Key): void => {
+    const terminalBackspace =
+      key.delete && (rawInput.current === '\x7f' || rawInput.current === '\x1b\x7f');
+    const keyFlags = terminalBackspace
+      ? { ...key, backspace: true, delete: false }
+      : HOME_KEYS.has(rawInput.current)
+        ? { ...key, home: true }
+        : END_KEYS.has(rawInput.current)
+          ? { ...key, end: true }
+          : key;
+    const event: KeyEvent = { input: raw, key: keyFlags };
 
     if (permission) {
       const answer = raw.toLowerCase();
@@ -238,12 +268,12 @@ export function App({
       }
       if (key.tab) {
         const command = palette[selected];
-        setInput({ text: `${command.name} `, cursor: command.name.length + 1 });
+        updateInput({ text: `${command.name} `, cursor: command.name.length + 1 });
         return;
       }
       if (key.return) {
         runCommand(palette[selected].name);
-        setInput(emptyInput());
+        updateInput(emptyInput());
         setPaletteIndex(0);
         return;
       }
@@ -254,22 +284,38 @@ export function App({
       return;
     }
 
-    const outcome = handleInput(input, event);
+    const outcome = handleInput(inputRef.current, event);
     if (outcome.type === 'submit') {
       void submit(outcome.value);
       return;
     }
     if (outcome.type === 'changed') {
       setPaletteIndex(0);
-      setInput(outcome.state);
+      updateInput(outcome.state);
     }
+  };
+
+  useEffect(() => {
+    inputHandlerRef.current = handleKey;
   });
+
+  const dispatchInput = useCallback((raw: string, key: Key) => {
+    inputHandlerRef.current(raw, key);
+  }, []);
+
+  useInput(dispatchInput);
 
   return (
     <Box flexDirection="column" width={columns} height={rows} overflow="hidden">
       <Box flexDirection="column" flexGrow={1} overflow="hidden">
         {home ? (
           <Home theme={theme} rows={rows} columns={columns}>
+            <SlashPalette
+              commands={palette}
+              selected={selected}
+              theme={theme}
+              width={promptWidth}
+            />
             <Prompt
               width={promptWidth}
               input={input}
@@ -298,18 +344,8 @@ export function App({
         )}
       </Box>
 
-      {palette.length > 0 && (
-        <Box flexDirection="column" paddingX={2}>
-          {palette.map((command, index) => (
-            <Text key={command.name}>
-              <Text color={index === selected ? theme.accent : theme.muted}>
-                {index === selected ? '❯ ' : '  '}
-              </Text>
-              <Text color={index === selected ? theme.text : theme.muted}>{command.name}</Text>
-              <Text color={theme.muted}> {command.description}</Text>
-            </Text>
-          ))}
-        </Box>
+      {!home && (
+        <SlashPalette commands={palette} selected={selected} theme={theme} width={promptWidth} />
       )}
 
       {permission ? (
@@ -372,7 +408,12 @@ function Home({
         </Box>
       )}
       <Box height={1} flexShrink={0} />
-      <Box width={Math.min(75, Math.max(20, columns - 4))} paddingTop={1} flexShrink={0}>
+      <Box
+        width={Math.min(75, Math.max(20, columns - 4))}
+        paddingTop={1}
+        flexDirection="column"
+        flexShrink={0}
+      >
         {children}
       </Box>
       <Box flexGrow={1} minHeight={0} />
@@ -480,6 +521,33 @@ function Prompt({
           </Text>
         </Box>
       </Box>
+    </Box>
+  );
+}
+
+function SlashPalette({
+  commands,
+  selected,
+  theme,
+  width,
+}: {
+  commands: SlashCommand[];
+  selected: number;
+  theme: Theme;
+  width: number;
+}) {
+  if (commands.length === 0) return null;
+  return (
+    <Box flexDirection="column" paddingX={2} width={width} alignSelf="center">
+      {commands.map((command, index) => (
+        <Text key={command.name}>
+          <Text color={index === selected ? theme.accent : theme.muted}>
+            {index === selected ? '❯ ' : '  '}
+          </Text>
+          <Text color={index === selected ? theme.text : theme.muted}>{command.name}</Text>
+          <Text color={theme.muted}> {command.description}</Text>
+        </Text>
+      ))}
     </Box>
   );
 }

@@ -168,6 +168,74 @@ describe('App', () => {
     expect(performance.now() - started).toBeLessThan(100);
   });
 
+  it('keeps rapid keystrokes without dropping any', async () => {
+    const { stdin, lastFrame } = render(<App />);
+    await flush();
+    stdin.write('a');
+    stdin.write('b');
+    stdin.write('c');
+    await flush();
+    expect(lastFrame()).toContain('abc');
+  });
+
+  it('moves the cursor with home and end', async () => {
+    const { stdin, lastFrame } = render(<App />);
+    await flush();
+    stdin.write('abc');
+    await flush();
+    stdin.write('\x1b[H');
+    await flush();
+    stdin.write('X');
+    await flush();
+    expect(lastFrame()).toContain('Xabc');
+    stdin.write('\x1b[F');
+    await flush();
+    stdin.write('Y');
+    await flush();
+    expect(lastFrame()).toContain('XabcY');
+  });
+
+  it('deletes with terminal backspace (DEL)', async () => {
+    const { stdin, lastFrame } = render(<App />);
+    await flush();
+    stdin.write('abcde');
+    await flush();
+    expect(lastFrame()).toContain('abcde');
+    stdin.write('\x7f');
+    await flush();
+    expect(lastFrame()).toContain('abcd');
+    expect(lastFrame()).not.toContain('abcde');
+  });
+
+  it('deletes forward with the delete key', async () => {
+    const { stdin, lastFrame } = render(<App />);
+    await flush();
+    stdin.write('abc');
+    await flush();
+    stdin.write('\x1b[D');
+    await flush();
+    stdin.write('\x1b[D');
+    await flush();
+    stdin.write('\x1b[3~');
+    await flush();
+    expect(lastFrame()).toContain('ac');
+    expect(lastFrame()).not.toContain('abc');
+  });
+
+  it('centers the slash palette above the prompt', async () => {
+    const { stdin, lastFrame } = render(<App />);
+    await flush();
+    stdin.write('/');
+    await flush();
+    const lines = (lastFrame() ?? '').split('\n');
+    const help = lines.findIndex((line) => line.includes('/help'));
+    const prompt = lines.findIndex((line) => line.includes('Plan ·'));
+    expect(help).toBeGreaterThanOrEqual(0);
+    expect(help).toBeLessThan(prompt);
+    const line = lines[help] ?? '';
+    expect(line.length - line.trimStart().length).toBeGreaterThan(10);
+  });
+
   it('matches the main screen snapshot', () => {
     const cwd = vi.spyOn(process, 'cwd').mockReturnValue('/home/user/app');
     const home = process.env.HOME;
