@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -40,6 +40,29 @@ function context(): ToolContext {
     permissions: new Permissions(),
     abortSignal: new AbortController().signal,
   };
+}
+
+async function waitForFile(path: string): Promise<string> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try {
+      return await readFile(path, 'utf8');
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+  }
+  throw new Error(`timed out waiting for ${path}`);
+}
+
+async function waitForExit(pid: number): Promise<boolean> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  return false;
 }
 
 async function fakeBinary(
@@ -104,6 +127,22 @@ describe('backends', () => {
     const result = await new LocalBackend().exec(request('echo local-ok'));
     expect(result.stdout.trim()).toBe('local-ok');
     expect(result.exitCode).toBe(0);
+  });
+
+  it('kills the process group when the turn is aborted', async () => {
+    const controller = new AbortController();
+    const pending = new LocalBackend().exec({
+      ...request('sleep 30 & echo $! > child.pid; echo $$ > shell.pid; wait'),
+      abortSignal: controller.signal,
+    });
+    const childPid = Number(await waitForFile(join(dir, 'child.pid')));
+    const shellPid = Number(await waitForFile(join(dir, 'shell.pid')));
+
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ code: 'CANCELLED' });
+    expect(await waitForExit(childPid)).toBe(true);
+    expect(await waitForExit(shellPid)).toBe(true);
   });
 
   it('runs docker with a stand-in binary', async () => {
