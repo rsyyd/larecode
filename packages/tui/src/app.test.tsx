@@ -12,8 +12,8 @@ describe('App', () => {
   it('renders the main screen chrome', () => {
     const { lastFrame } = render(<App model="test-model" />);
     const frame = lastFrame() ?? '';
-    expect(frame).toContain('❯');
-    expect(frame).toContain('plan (Tab) · test-model');
+    expect(frame).toContain('Ask anything');
+    expect(frame).toContain('Plan · test-model');
   });
 
   it('streams agent chunks into the conversation', async () => {
@@ -34,8 +34,8 @@ describe('App', () => {
     stdin.write('\r');
     await flush();
     const frame = lastFrame() ?? '';
-    expect(frame).toContain('> hi');
-    expect(frame).toContain('● lare · plan');
+    expect(frame).toContain('hi');
+    expect(frame).toContain('▣');
     expect(frame).toContain('Hello world');
   });
 
@@ -60,19 +60,19 @@ describe('App', () => {
     await flush();
     stdin.write('\t');
     await flush();
-    expect(lastFrame()).toContain('build (Tab)');
+    expect(lastFrame()).toContain('Build ·');
 
     stdin.write('hello');
     await flush();
     stdin.write('\r');
     await flush();
-    expect(lastFrame()).toContain('> hello');
+    expect(lastFrame()).toContain('hello');
 
     stdin.write('/clear');
     await flush();
     stdin.write('\r');
     await flush();
-    expect(lastFrame()).not.toContain('> hello');
+    expect(lastFrame()).not.toContain('hello');
   });
 
   it('passes the selected agent to runTurn', async () => {
@@ -211,9 +211,10 @@ describe('App permissions', () => {
       onChunk: (chunk: string) => void,
       _signal: AbortSignal,
       _agent: 'plan' | 'build',
-      confirm?: (request: { tool: string; group: string }) => Promise<boolean>
+      confirm?: (request: { tool: string; group: string; detail?: string }) => Promise<boolean>
     ): Promise<void> => {
-      const allowed = (await confirm?.({ tool: 'bash', group: 'shell' })) ?? false;
+      const allowed =
+        (await confirm?.({ tool: 'bash', group: 'shell', detail: 'echo hello' })) ?? false;
       onChunk(allowed ? 'approved' : 'denied');
     };
 
@@ -224,6 +225,7 @@ describe('App permissions', () => {
     stdin.write('\r');
     await flush();
     expect(lastFrame()).toContain('permission: shell · bash · y/n');
+    expect(lastFrame()).toContain('echo hello');
 
     stdin.write('y');
     await flush();

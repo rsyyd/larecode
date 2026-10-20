@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { Box, Text, useApp, useInput } from 'ink';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Box, Text, useApp, useInput, useStdout } from 'ink';
 import { formatCost, formatTokens, type UsageAggregate } from '@larecode/core';
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
@@ -9,6 +9,7 @@ import { appendChunk, type ChatMessage } from './messages.js';
 export interface PermissionPrompt {
   tool: string;
   group: string;
+  detail?: string;
 }
 
 export type PermissionConfirm = (request: PermissionPrompt) => Promise<boolean>;
@@ -16,6 +17,7 @@ export type PermissionConfirm = (request: PermissionPrompt) => Promise<boolean>;
 export interface AppProps {
   model?: string;
   theme?: ThemeName;
+  version?: string;
   initialMessages?: ChatMessage[];
   getUsage?: () => UsageAggregate;
   onClear?: () => void;
@@ -37,6 +39,25 @@ export const HELP_TEXT =
   'enter send · ctrl+j newline · esc stop · tab agent · @general subagent · / commands · ctrl+c quit';
 
 const GENERAL_PREFIX = /^@general\b\s*([\s\S]*)$/;
+const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+const PLACEHOLDERS = [
+  'Fix a TODO in the codebase',
+  'What is the tech stack of this project?',
+  'Fix broken tests',
+];
+
+const LOGO_LEFT = [
+  '█    █▀▀█ █▀▀▄ █▀▀▀',
+  '█    █▀▀█ █▀▀▄ █▀▀ ',
+  '█    █  █ █  █ █▄▄ ',
+  '▀▀▀▀ ▀▀▀▀ ▀  ▀ ▀▀▀▀',
+];
+const LOGO_RIGHT = [
+  '█▀▀▀ █▀▀█ █▀▀▄ █▀▀▀',
+  '█    █  █ █  █ █▀▀ ',
+  '█▄▄▄ █▄▄█ █▄▄▀ █▄▄ ',
+  '▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀',
+];
 
 interface PendingPermission {
   request: PermissionPrompt;
@@ -46,6 +67,7 @@ interface PendingPermission {
 export function App({
   model = 'no model',
   theme: initialTheme = 'dark',
+  version = '0.1.1',
   initialMessages = [],
   getUsage,
   onClear,
@@ -53,6 +75,7 @@ export function App({
   runSubagentTurn,
 }: AppProps) {
   const { exit } = useApp();
+  const { stdout } = useStdout();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [usage, setUsage] = useState<UsageAggregate | null>(null);
   const [input, setInput] = useState<InputState>(emptyInput());
@@ -60,12 +83,28 @@ export function App({
   const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [streaming, setStreaming] = useState(false);
+  const [frame, setFrame] = useState(0);
   const [permission, setPermission] = useState<PendingPermission | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const theme = getTheme(themeName);
   const palette = paletteOpen(input.text) ? filterCommands(input.text) : [];
   const selected = Math.min(paletteIndex, Math.max(0, palette.length - 1));
+  const home = messages.length === 0;
+  const agentLabel = agent === 'plan' ? 'Plan' : 'Build';
+  const columns = stdout?.columns ?? 80;
+  const rows = stdout?.rows ?? 24;
+  const promptWidth = home ? Math.min(75, Math.max(20, columns - 4)) : columns;
+  const usageLabel =
+    usage && usage.totalTokens.total > 0
+      ? `${formatTokens(usage.totalTokens.total)} tok · ${formatCost(usage.totalCost.totalCost)}`
+      : undefined;
+
+  useEffect(() => {
+    if (!streaming) return;
+    const timer = setInterval(() => setFrame((current) => current + 1), 80);
+    return () => clearInterval(timer);
+  }, [streaming]);
 
   const addNote = (text: string): void => {
     setMessages((current) => [...current, { role: 'note', text }]);
@@ -227,93 +266,451 @@ export function App({
   });
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.border} paddingX={1}>
-      <Box flexDirection="column" flexGrow={1}>
-        {messages.map((message, index) => (
-          <MessageRow key={index} message={message} theme={theme} agent={agent} />
-        ))}
+    <Box flexDirection="column" width={columns} height={rows} overflow="hidden">
+      <Box flexDirection="column" flexGrow={1} overflow="hidden">
+        {home ? (
+          <Home theme={theme} rows={rows} columns={columns}>
+            <Prompt
+              width={promptWidth}
+              input={input}
+              theme={theme}
+              agent={agentLabel}
+              model={model}
+              streaming={streaming}
+              frame={frame}
+              session={false}
+              usage={undefined}
+            />
+          </Home>
+        ) : (
+          <Box flexDirection="column" flexGrow={1} overflow="hidden">
+            {visibleMessages(messages, rows - 8).map((message, index) => (
+              <MessageRow
+                key={index}
+                message={message}
+                theme={theme}
+                agent={agentLabel}
+                model={model}
+                width={columns}
+              />
+            ))}
+          </Box>
+        )}
       </Box>
 
       {palette.length > 0 && (
-        <Box flexDirection="column">
+        <Box flexDirection="column" paddingX={2}>
           {palette.map((command, index) => (
-            <Text key={command.name} color={index === selected ? theme.accent : theme.muted}>
-              {index === selected ? '❯ ' : '  '}
-              {command.name} <Text color={theme.muted}>{command.description}</Text>
+            <Text key={command.name}>
+              <Text color={index === selected ? theme.accent : theme.muted}>
+                {index === selected ? '❯ ' : '  '}
+              </Text>
+              <Text color={index === selected ? theme.text : theme.muted}>{command.name}</Text>
+              <Text color={theme.muted}> {command.description}</Text>
             </Text>
           ))}
         </Box>
       )}
 
-      {permission && (
-        <Box>
-          <Text color={theme.tool}>
-            permission: {permission.request.group} · {permission.request.tool} · y/n
-          </Text>
-        </Box>
+      {permission ? (
+        <PermissionPanel permission={permission.request} theme={theme} width={columns} />
+      ) : home ? null : (
+        <Prompt
+          width={promptWidth}
+          input={input}
+          theme={theme}
+          agent={agentLabel}
+          model={model}
+          streaming={streaming}
+          frame={frame}
+          session={true}
+          usage={usageLabel}
+        />
       )}
 
-      <Box>
-        <Text color={theme.prompt}>❯ </Text>
-        <Text>{input.text}</Text>
-      </Box>
+      {home && (
+        <Box
+          width={columns}
+          flexDirection="row"
+          justifyContent="space-between"
+          paddingX={2}
+          paddingY={rows >= 16 ? 1 : 0}
+        >
+          <Text color={theme.muted}>~</Text>
+          <Text color={theme.muted}>{version}</Text>
+        </Box>
+      )}
+    </Box>
+  );
+}
 
-      <Box>
-        <Text color={theme.muted}>
-          {agent} (Tab) · {model} · {themeName}
-          {streaming ? ' · streaming' : ''}
-          {!streaming && usage && usage.totalTokens.total > 0
-            ? ` · ${formatTokens(usage.totalTokens.total)} tok · ${formatCost(usage.totalCost.totalCost)}`
-            : ''}
+function Home({
+  theme,
+  rows,
+  columns,
+  children,
+}: {
+  theme: Theme;
+  rows: number;
+  columns: number;
+  children: ReactNode;
+}) {
+  return (
+    <Box flexGrow={1} flexDirection="column" alignItems="center" paddingX={2}>
+      <Box flexGrow={1} minHeight={0} />
+      <Box height={rows < 16 ? 1 : 3} flexShrink={0} />
+      {columns >= 44 && (
+        <Box flexDirection="column" flexShrink={0}>
+          {LOGO_LEFT.map((line, index) => (
+            <Box key={index} flexDirection="row" gap={1}>
+              <Text color={theme.muted}>{line}</Text>
+              <Text color={theme.text} bold>
+                {LOGO_RIGHT[index]}
+              </Text>
+            </Box>
+          ))}
+        </Box>
+      )}
+      <Box height={1} flexShrink={0} />
+      <Box width={Math.min(75, Math.max(20, columns - 4))} paddingTop={1} flexShrink={0}>
+        {children}
+      </Box>
+      <Box flexGrow={1} minHeight={0} />
+    </Box>
+  );
+}
+
+function Prompt({
+  width,
+  input,
+  theme,
+  agent,
+  model,
+  streaming,
+  frame,
+  session,
+  usage,
+}: {
+  width: number;
+  input: InputState;
+  theme: Theme;
+  agent: string;
+  model: string;
+  streaming: boolean;
+  frame: number;
+  session: boolean;
+  usage?: string;
+}) {
+  const empty = input.text.length === 0;
+  const placeholder = `Ask anything… "${PLACEHOLDERS[0]}"`;
+  const inner = Math.max(1, width - 5);
+  const textLines = empty
+    ? [{ content: <Text color={theme.muted}>{placeholder}</Text>, length: placeholder.length }]
+    : wrapLine(input.text, Math.max(1, inner - 1)).map((line, index, all) => ({
+        content: (
+          <Text color={theme.text}>
+            {line}
+            {index === all.length - 1 ? <Text color={theme.accent}>▌</Text> : null}
+          </Text>
+        ),
+        length: line.length + (index === all.length - 1 ? 1 : 0),
+      }));
+  const meta = `${agent} · ${model}`;
+  const lines = [
+    ...textLines,
+    { content: <Text> </Text>, length: 1 },
+    {
+      content: (
+        <Text>
+          <Text color={theme.accent}>{agent}</Text>
+          <Text color={theme.muted}> · </Text>
+          <Text color={theme.text}>{model}</Text>
         </Text>
+      ),
+      length: meta.length,
+    },
+  ];
+  return (
+    <Box flexDirection="column" width={width} flexShrink={0}>
+      <Panel
+        width={width}
+        background={theme.promptBg}
+        borderColor={theme.accent}
+        paddingTop={1}
+        lines={lines}
+      />
+      <Box flexDirection="row">
+        <Text color={theme.accent}>╹</Text>
+        <Text backgroundColor={theme.promptBg} color={theme.promptBg}>
+          {'▀'.repeat(Math.max(0, width - 1))}
+        </Text>
+      </Box>
+      <Box
+        width={width}
+        flexDirection="row"
+        justifyContent="space-between"
+        gap={2}
+        paddingX={2}
+        height={1}
+      >
+        {streaming ? (
+          <Text>
+            <Text color={theme.accent}>{SPINNER[frame % SPINNER.length]}</Text>
+            <Text color={theme.text}>{' esc'}</Text>
+            <Text color={theme.muted}>{' interrupt'}</Text>
+          </Text>
+        ) : (
+          <Text color={theme.muted}>{homeLabel()}</Text>
+        )}
+        <Box flexDirection="row" gap={2}>
+          {usage ? <Text color={theme.muted}>{usage}</Text> : null}
+          {!session || !usage ? (
+            <Text>
+              <Text color={theme.text} bold>
+                tab
+              </Text>
+              <Text color={theme.muted}>{' agents'}</Text>
+            </Text>
+          ) : null}
+          <Text>
+            <Text color={theme.text} bold>
+              ctrl+p
+            </Text>
+            <Text color={theme.muted}>{' commands'}</Text>
+          </Text>
+        </Box>
       </Box>
     </Box>
   );
 }
 
-function paletteOpen(text: string): boolean {
-  return text.startsWith('/') && !/\s/.test(text);
+function PermissionPanel({
+  permission,
+  theme,
+  width,
+}: {
+  permission: PermissionPrompt;
+  theme: Theme;
+  width: number;
+}) {
+  const title = `permission: ${permission.group} · ${permission.tool} · y/n`;
+  const detail = permission.detail?.slice(0, Math.max(1, width - 8));
+  return (
+    <Panel
+      width={width}
+      background={theme.panel}
+      borderColor={theme.warning}
+      paddingTop={1}
+      paddingBottom={1}
+      marginBottom={1}
+      lines={[
+        { content: <Text color={theme.warning}>{title}</Text>, length: title.length },
+        ...(detail
+          ? [{ content: <Text color={theme.muted}>{detail}</Text>, length: detail.length }]
+          : []),
+        {
+          content: (
+            <Text>
+              <Text color={theme.text} bold>
+                y
+              </Text>
+              <Text color={theme.muted}>{' allow  '}</Text>
+              <Text color={theme.text} bold>
+                n
+              </Text>
+              <Text color={theme.muted}>{' deny'}</Text>
+            </Text>
+          ),
+          length: 15,
+        },
+      ]}
+    />
+  );
 }
 
 function MessageRow({
   message,
   theme,
   agent,
+  model,
+  width,
 }: {
   message: ChatMessage;
   theme: Theme;
-  agent: 'plan' | 'build';
+  agent: string;
+  model: string;
+  width: number;
 }) {
   if (message.role === 'user') {
     return (
-      <Text color={theme.user}>
-        {'> '}
-        {message.text}
-      </Text>
+      <Panel
+        width={width}
+        background={theme.panel}
+        borderColor={theme.accent}
+        paddingTop={1}
+        paddingBottom={1}
+        marginBottom={1}
+        lines={wrapLine(message.text, Math.max(1, width - 5)).map((line) => ({
+          content: <Text color={theme.text}>{line}</Text>,
+          length: line.length,
+        }))}
+      />
     );
   }
   if (message.role === 'tool') {
     return (
-      <Text color={theme.tool}>
-        {'⎿ '}
-        {message.text}
-      </Text>
+      <Panel
+        width={width}
+        background={theme.panel}
+        borderColor={theme.border}
+        paddingTop={1}
+        paddingBottom={1}
+        marginBottom={1}
+        lines={wrapLine(message.text, Math.max(1, width - 5)).map((line) => ({
+          content: <Text color={theme.muted}>{line}</Text>,
+          length: line.length,
+        }))}
+      />
     );
   }
   if (message.role === 'note') {
     return (
-      <Text color={theme.note}>
-        {'» '}
-        {message.text}
-      </Text>
+      <Box paddingLeft={3} marginBottom={1}>
+        <Text color={theme.muted}>
+          <Text color={theme.border}>» </Text>
+          {message.text}
+        </Text>
+      </Box>
     );
   }
   return (
-    <Box flexDirection="column">
-      <Text color={theme.agent}>
-        {'● '}lare · {agent}
-      </Text>
-      <Text>{message.text}</Text>
+    <Box flexDirection="column" marginBottom={1}>
+      <Box paddingLeft={3} flexDirection="column">
+        {message.text.split('\n').map((line, index) => (
+          <Text key={index} color={isToolLine(line) ? theme.muted : theme.text} wrap="wrap">
+            {line.length > 0 ? line : ' '}
+          </Text>
+        ))}
+      </Box>
+      <Box paddingLeft={3} paddingTop={1} flexDirection="row" gap={1}>
+        <Text color={theme.accent}>▣</Text>
+        <Text color={theme.text}>{agent}</Text>
+        <Text color={theme.muted}>·</Text>
+        <Text color={theme.muted}>{model}</Text>
+      </Box>
     </Box>
   );
+}
+
+function isToolLine(line: string): boolean {
+  return line.startsWith('⎿') || line.startsWith('✓') || line.startsWith('✗');
+}
+
+function homeLabel(): string {
+  return shortenHome(process.cwd());
+}
+
+function shortenHome(directory: string): string {
+  const home = process.env.HOME;
+  if (home && directory === home) return '~';
+  if (home && directory.startsWith(`${home}/`)) return `~${directory.slice(home.length)}`;
+  return directory;
+}
+
+function Panel({
+  width,
+  background,
+  borderColor,
+  paddingTop = 0,
+  paddingBottom = 0,
+  marginBottom = 0,
+  lines,
+}: {
+  width: number;
+  background: string;
+  borderColor: string;
+  paddingTop?: number;
+  paddingBottom?: number;
+  marginBottom?: number;
+  lines: { content: ReactNode; length: number }[];
+}) {
+  const inner = Math.max(1, width - 5);
+  const rows = [
+    ...Array.from({ length: paddingTop }, () => ({ content: ' ', length: 1 })),
+    ...lines,
+    ...Array.from({ length: paddingBottom }, () => ({ content: ' ', length: 1 })),
+  ];
+  return (
+    <Box flexDirection="column" width={width} marginBottom={marginBottom} flexShrink={0}>
+      {rows.map((line, index) => (
+        <Box key={index} flexDirection="row" flexShrink={0}>
+          <Text backgroundColor={background} color={borderColor}>
+            ┃
+          </Text>
+          <Text backgroundColor={background}>
+            {'  '}
+            {line.content}
+            {' '.repeat(Math.max(0, inner - line.length))}
+            {'  '}
+          </Text>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function wrapLine(text: string, width: number): string[] {
+  const limit = Math.max(1, width);
+  const lines: string[] = [];
+  for (const raw of text.split('\n')) {
+    if (raw.length === 0) {
+      lines.push(' ');
+      continue;
+    }
+    let rest = raw;
+    while (rest.length > limit) {
+      let cut = rest.lastIndexOf(' ', limit);
+      if (cut <= 0) cut = limit;
+      lines.push(rest.slice(0, cut));
+      rest = rest.slice(cut).replace(/^ +/, '');
+    }
+    lines.push(rest);
+  }
+  return lines;
+}
+
+function paletteOpen(text: string): boolean {
+  return text.startsWith('/') && !/\s/.test(text);
+}
+
+function messageWeight(message: ChatMessage): number {
+  const lines = Math.max(1, message.text.split('\n').length);
+  if (message.role === 'user' || message.role === 'tool') return lines + 3;
+  if (message.role === 'note') return 2;
+  return lines + 2;
+}
+
+function visibleMessages(messages: ChatMessage[], budget: number): ChatMessage[] {
+  const limit = Math.max(4, budget);
+  const visible: ChatMessage[] = [];
+  let used = 0;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (!message) continue;
+    const weight = messageWeight(message);
+    if (visible.length > 0 && used + weight > limit) break;
+    used += weight;
+    visible.unshift(message);
+  }
+  const first = visible[0];
+  if (first && messageWeight(first) > limit) {
+    visible[0] = {
+      ...first,
+      text: first.text
+        .split('\n')
+        .slice(-Math.max(1, limit - 3))
+        .join('\n'),
+    };
+  }
+  return visible;
 }

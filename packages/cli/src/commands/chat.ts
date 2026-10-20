@@ -17,6 +17,18 @@ export interface ChatCommandOptions {
   model?: string;
 }
 
+function toolDetail(args: unknown): string {
+  if (!args || typeof args !== 'object') return '';
+  const record = args as Record<string, unknown>;
+  for (const key of ['command', 'path', 'file_path', 'filePath', 'pattern', 'query', 'url']) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim().replace(/\s+/g, ' ').slice(0, 80);
+    }
+  }
+  return '';
+}
+
 export async function chatCommand(options: ChatCommandOptions = {}): Promise<number> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     process.stderr.write(
@@ -47,9 +59,11 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
 
   const runTurn: AppProps['runTurn'] = async (prompt, onChunk, signal, agent, confirm) => {
     const confirmPermission: ChatPermissionConfirm | undefined = confirm
-      ? (request) => confirm({ tool: request.tool, group: request.group })
+      ? (request) =>
+          confirm({ tool: request.tool, group: request.group, detail: toolDetail(request.args) })
       : undefined;
 
+    let detail = '';
     for await (const event of session.run(prompt, {
       signal,
       agent,
@@ -58,12 +72,11 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
       if (event.type === 'text') {
         onChunk(event.text);
       } else if (event.type === 'tool_start') {
-        onChunk(`\n⎿ ${event.name}\n`);
+        detail = toolDetail(event.args);
+        onChunk(`\n⎿ ${event.name}${detail ? ` · ${detail}` : ''}\n`);
       } else {
-        const summary = event.output.split('\n')[0]?.trim() ?? '';
-        onChunk(
-          `${event.ok ? '✓' : '✗'} ${event.name}${summary ? ` · ${summary.slice(0, 120)}` : ''}\n`
-        );
+        onChunk(`${event.ok ? '✓' : '✗'} ${event.name}${detail ? ` · ${detail}` : ''}\n`);
+        detail = '';
       }
     }
   };
