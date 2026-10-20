@@ -169,8 +169,16 @@ describe('App', () => {
   });
 
   it('matches the main screen snapshot', () => {
-    const { lastFrame } = render(<App model="gpt-4o" />);
-    expect(lastFrame()).toMatchSnapshot();
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue('/home/user/app');
+    const home = process.env.HOME;
+    process.env.HOME = '/home/user';
+    try {
+      const { lastFrame } = render(<App model="gpt-4o" />);
+      expect(lastFrame()).toMatchSnapshot();
+    } finally {
+      cwd.mockRestore();
+      process.env.HOME = home;
+    }
   });
 
   it('shows per-conversation tokens and cost in the footer after a turn', async () => {
