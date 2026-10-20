@@ -1,7 +1,14 @@
 import { loadEffectiveConfig } from '../config/config.js';
+import type { Permissions } from '../permission/permission.js';
 import type { UsageAggregate } from '../usage/usage.js';
 import type { HaltReason } from '../agent/loop.js';
-import { CRON_OUTPUT_MAX_CHARS, type CronJob, type CronResult, type Jobs } from './job.js';
+import {
+  CRON_OUTPUT_MAX_CHARS,
+  cronPermissions,
+  type CronJob,
+  type CronResult,
+  type Jobs,
+} from './job.js';
 
 export interface CronLoop {
   run(prompt: string): AsyncGenerator<string>;
@@ -13,6 +20,9 @@ export interface CronRunDeps {
   createLoop?: (options: {
     provider: string;
     model: string;
+    workingDir?: string;
+    permissions?: Permissions;
+    unattended?: boolean;
     abortSignal?: AbortSignal;
   }) => CronLoop;
   loadConfig?: (cwd?: string) => { defaultProvider: string; defaultModel: string };
@@ -33,6 +43,9 @@ export async function runCronJob(job: CronJob, deps: CronRunDeps = {}): Promise<
   const loop = createLoop({
     provider: config.defaultProvider,
     model: config.defaultModel,
+    workingDir: deps.cwd,
+    permissions: cronPermissions(job),
+    unattended: true,
     abortSignal: deps.signal,
   });
 

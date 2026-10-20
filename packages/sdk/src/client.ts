@@ -1,9 +1,9 @@
 import {
-  AgentLoop,
+  AgentRuntimeLoop,
   LareError,
   Sessions,
   loadEffectiveConfig,
-  type AgentLoopOptions,
+  type AgentRuntimeLoopOptions,
   type HaltReason,
   type Session,
   type UsageAggregate,
@@ -20,7 +20,7 @@ export interface LareClientOptions {
   provider?: string;
   model?: string;
   sessions?: Sessions;
-  loopFactory?: (options: AgentLoopOptions) => LoopLike;
+  loopFactory?: (options: AgentRuntimeLoopOptions) => LoopLike;
 }
 
 export interface RunOptions {
@@ -53,9 +53,11 @@ export class LareClient {
 
   private loop(signal: AbortSignal): LoopLike {
     const config = loadEffectiveConfig(this.options.workingDir);
-    const loopOptions: AgentLoopOptions = {
+    const loopOptions: AgentRuntimeLoopOptions = {
       provider: this.options.provider ?? config.defaultProvider,
       model: this.options.model ?? config.defaultModel,
+      workingDir: this.options.workingDir,
+      agent: 'build',
       maxIterations: DEFAULT_MAX_ITERATIONS,
       maxToolCalls: DEFAULT_MAX_TOOL_CALLS,
       tokenBudget: DEFAULT_TOKEN_BUDGET,
@@ -64,7 +66,7 @@ export class LareClient {
     };
     return this.options.loopFactory
       ? this.options.loopFactory(loopOptions)
-      : new AgentLoop(loopOptions);
+      : new AgentRuntimeLoop(loopOptions);
   }
 
   session(sessionId: string): Session {

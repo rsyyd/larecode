@@ -1,5 +1,5 @@
 import {
-  AgentLoop,
+  AgentRuntimeLoop,
   Jobs,
   loadEffectiveConfig,
   runCronJob,
@@ -8,6 +8,7 @@ import {
   type CronLoop,
   type CronResult,
   type PermissionGroup,
+  type Permissions,
   type SchedulerDeps,
 } from '@larecode/core';
 
@@ -23,6 +24,9 @@ export interface CronDeps {
   createLoop?: (options: {
     provider: string;
     model: string;
+    workingDir?: string;
+    permissions?: Permissions;
+    unattended?: boolean;
     abortSignal?: AbortSignal;
   }) => CronLoop;
   loadConfig?: (cwd?: string) => { defaultProvider: string; defaultModel: string };
@@ -41,11 +45,18 @@ const stamp = (date: Date) => date.toISOString().replace('T', ' ').slice(0, 16);
 function defaultLoop(options: {
   provider: string;
   model: string;
+  workingDir?: string;
+  permissions?: Permissions;
+  unattended?: boolean;
   abortSignal?: AbortSignal;
 }): CronLoop {
-  return new AgentLoop({
+  return new AgentRuntimeLoop({
     provider: options.provider,
     model: options.model,
+    workingDir: options.workingDir,
+    permissions: options.permissions,
+    unattended: options.unattended,
+    agent: 'build',
     maxIterations: 40,
     maxToolCalls: 200,
     tokenBudget: 200_000,

@@ -12,6 +12,8 @@ export type {
   ChatSessionOptions,
 } from './agent/chat.js';
 export { DefaultAgentRuntime, isAgentRuntimeStopEvent } from './agent/runtime.js';
+export { AgentRuntimeLoop } from './agent/runtime-loop.js';
+export type { AgentRuntimeLoopOptions } from './agent/runtime-loop.js';
 export type {
   AgentRuntime,
   AgentRuntimeAgentName,

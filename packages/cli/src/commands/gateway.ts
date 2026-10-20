@@ -1,8 +1,9 @@
 import {
-  AgentLoop,
+  AgentRuntimeLoop,
   assertPreAuthorizable,
   loadEffectiveConfig,
   type PermissionGroup,
+  type Permissions,
 } from '@larecode/core';
 import { TelegramGateway, type TelegramGatewayOptions } from '@larecode/gateway';
 
@@ -26,11 +27,16 @@ const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
 function defaultLoop(options: {
   provider: string;
   model: string;
+  permissions?: Permissions;
+  unattended?: boolean;
   abortSignal?: AbortSignal;
-}): AgentLoop {
-  return new AgentLoop({
+}): AgentRuntimeLoop {
+  return new AgentRuntimeLoop({
     provider: options.provider,
     model: options.model,
+    permissions: options.permissions,
+    unattended: options.unattended,
+    agent: 'build',
     maxIterations: 40,
     maxToolCalls: 200,
     tokenBudget: 200_000,

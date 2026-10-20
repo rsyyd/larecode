@@ -1,5 +1,5 @@
 import {
-  AgentLoop,
+  AgentRuntimeLoop,
   loadEffectiveConfig,
   type HaltReason,
   type UsageAggregate,
@@ -28,7 +28,7 @@ export interface LoopLike {
 
 export interface RunTaskDeps {
   cwd?: string;
-  createLoop?: (options: { provider: string; model: string }) => LoopLike;
+  createLoop?: (options: { provider: string; model: string; workingDir: string }) => LoopLike;
   runTests?: (command: string) => TestRun;
   detectTests?: (cwd: string) => string | null;
   write?: (text: string) => void;
@@ -43,10 +43,12 @@ const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
 const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
 const ok = (text: string) => `\x1b[32m${text}\x1b[0m`;
 
-function defaultLoop(options: { provider: string; model: string }): LoopLike {
-  return new AgentLoop({
+function defaultLoop(options: { provider: string; model: string; workingDir: string }): LoopLike {
+  return new AgentRuntimeLoop({
     provider: options.provider,
     model: options.model,
+    workingDir: options.workingDir,
+    agent: 'build',
     maxIterations: 40,
     maxToolCalls: 200,
     tokenBudget: 200_000,
@@ -78,7 +80,7 @@ export async function runTask(
   }
 
   const createLoop = deps.createLoop ?? defaultLoop;
-  const loop = createLoop({ provider, model });
+  const loop = createLoop({ provider, model, workingDir: cwd });
 
   try {
     for await (const chunk of loop.run(options.task)) write(chunk);

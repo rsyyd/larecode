@@ -1,6 +1,7 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import {
+  Permissions,
   Sessions,
   assertPreAuthorizable,
   larecodeHome,
@@ -99,6 +100,8 @@ export interface TelegramGatewayOptions {
   createLoop?: (options: {
     provider: string;
     model: string;
+    permissions?: Permissions;
+    unattended?: boolean;
     abortSignal?: AbortSignal;
   }) => GatewayLoop;
   loadConfig?: (cwd?: string) => { defaultProvider: string; defaultModel: string };
@@ -122,6 +125,7 @@ export class TelegramGateway {
   private readonly allowedChatId?: string;
   private readonly sessions: Sessions;
   private readonly chatSessions: ChatSessionsStore;
+  private readonly permissions: Permissions;
   private readonly createLoop: NonNullable<TelegramGatewayOptions['createLoop']>;
   private readonly loadConfig: NonNullable<TelegramGatewayOptions['loadConfig']>;
   private readonly fetchImpl: typeof fetch;
@@ -135,6 +139,11 @@ export class TelegramGateway {
     this.token = options.token;
     this.allowedChatId = options.allowedChatId;
     this.policy = assertPreAuthorizable(options.policy ?? []);
+    this.permissions = new Permissions({
+      mode: 'ask',
+      allowedGroups: [],
+      preAuthorized: { gateway: this.policy },
+    });
     this.sessions = options.sessions ?? new Sessions();
     this.chatSessions = options.chatSessions ?? new ChatSessions(gatewayPath(), this.sessions);
     this.createLoop =
@@ -221,6 +230,8 @@ export class TelegramGateway {
     const loop = this.createLoop({
       provider: config.defaultProvider,
       model: config.defaultModel,
+      permissions: this.permissions,
+      unattended: true,
     });
     let output = '';
     try {

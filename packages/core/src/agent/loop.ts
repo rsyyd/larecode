@@ -11,7 +11,7 @@ import {
   type UsageRecorder,
 } from '../usage/usage.js';
 
-export type HaltReason = 'iterations' | 'budget' | 'duration';
+export type HaltReason = 'iterations' | 'tool_calls' | 'budget' | 'duration';
 
 export interface AgentLoopOptions {
   provider: string;

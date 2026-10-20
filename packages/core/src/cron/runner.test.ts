@@ -45,7 +45,12 @@ describe('runCronJob', () => {
     const chunks: string[] = [];
     const result = await runCronJob(job, {
       loadConfig: () => ({ defaultProvider: 'openai', defaultModel: 'gpt-4o-mini' }),
-      createLoop: () => fakeLoop(['he', 'llo']),
+      createLoop: (options) => {
+        expect(options.unattended).toBe(true);
+        expect(options.permissions?.check('read', { unattended: true }).allowed).toBe(true);
+        expect(options.permissions?.check('shell', { unattended: true }).allowed).toBe(false);
+        return fakeLoop(['he', 'llo']);
+      },
       onChunk: (text) => chunks.push(text),
     });
     expect(result.status).toBe('ok');

@@ -4,7 +4,13 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from 'node:http';
-import { AgentLoop, Sessions, VERSION, loadEffectiveConfig, type HaltReason } from '@larecode/core';
+import {
+  AgentRuntimeLoop,
+  Sessions,
+  VERSION,
+  loadEffectiveConfig,
+  type HaltReason,
+} from '@larecode/core';
 import { Shares, renderSharePage } from './share.js';
 
 export const DEFAULT_SERVER_PORT = 4096;
@@ -52,9 +58,11 @@ export interface ServerOptions {
 function defaultTurnHandler(options: ServerOptions): TurnHandler {
   return async function* (prompt, context) {
     const config = loadEffectiveConfig(options.workingDir);
-    const loop = new AgentLoop({
+    const loop = new AgentRuntimeLoop({
       provider: options.provider ?? config.defaultProvider,
       model: options.model ?? config.defaultModel,
+      workingDir: options.workingDir,
+      agent: 'build',
       maxIterations: 40,
       maxToolCalls: 200,
       tokenBudget: 200_000,

@@ -122,6 +122,27 @@ describe('handleUpdate', () => {
     expect(sessions.get(meta.id)?.messages).toHaveLength(4);
   });
 
+  it('runs turns unattended with its pre-authorized policy', async () => {
+    let unattended = false;
+    let readAllowed = false;
+    let shellAllowed = false;
+    const { instance } = gateway({
+      policy: ['read'],
+      createLoop: (options) => {
+        unattended = options.unattended === true;
+        readAllowed = options.permissions?.check('read', { unattended: true }).allowed === true;
+        shellAllowed = options.permissions?.check('shell', { unattended: true }).allowed === true;
+        return fakeLoop(['ok']);
+      },
+    });
+
+    await instance.handleUpdate(update(1, ALLOWED, 'go'));
+
+    expect(unattended).toBe(true);
+    expect(readAllowed).toBe(true);
+    expect(shellAllowed).toBe(false);
+  });
+
   it('starts a fresh session on /new', async () => {
     const { instance } = gateway();
     await instance.handleUpdate(update(1, ALLOWED, 'first'));

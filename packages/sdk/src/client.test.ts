@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  AgentLoop,
+  AgentRuntimeLoop,
   Providers,
   Sessions,
   LareError,
@@ -56,7 +56,7 @@ function client(chunks: string[], overrides: { sessions?: Sessions } = {}): Lare
     provider: 'fake',
     model: 'test-model',
     sessions: overrides.sessions ?? new Sessions(join(dir, 'sessions')),
-    loopFactory: (options) => new AgentLoop({ ...options, providers }),
+    loopFactory: (options) => new AgentRuntimeLoop({ ...options, providers }),
   });
 }
 

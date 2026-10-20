@@ -67,6 +67,7 @@ export interface AgentRuntimeOptions {
   providers?: Providers;
   tools?: Tools;
   permissions?: Permissions;
+  unattended?: boolean;
   agent?: AgentRuntimeAgentName;
   sessionId?: string;
   maxIterations?: number;
@@ -134,6 +135,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly providers: Providers;
   private readonly tools: Tools;
   private readonly permissions: Permissions;
+  private readonly unattended: boolean;
   private readonly usage: UsageRecorder;
   private readonly maxIterations: number;
   private readonly maxToolCalls: number;
@@ -152,6 +154,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.workingDir = cwd;
     this.sessionId = options.sessionId ?? randomUUID();
     this.permissions = options.permissions ?? new Permissions(config.permissions);
+    this.unattended = options.unattended ?? false;
     this.maxIterations = options.maxIterations ?? 40;
     this.maxToolCalls = options.maxToolCalls ?? 200;
     this.tokenBudget = options.tokenBudget ?? 200_000;
@@ -415,7 +418,10 @@ export class DefaultAgentRuntime implements AgentRuntime {
     }
 
     const group = toolPermissionGroup(call.name);
-    let decision = this.permissions.check(group, { source: 'chat' });
+    let decision = this.permissions.check(group, {
+      source: 'chat',
+      unattended: this.unattended,
+    });
 
     const askBeforeBash = BUILTIN_AGENTS[this.agent].askBeforeBash && call.name === 'bash';
     if (askBeforeBash && decision.allowed && confirm) {
