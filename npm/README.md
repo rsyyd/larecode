@@ -1,7 +1,11 @@
-# larecode
+<p align="center">
+  <img src="https://raw.githubusercontent.com/rsyyd/larecode/main/docs/assets/banner.svg" alt="Lare Code" width="730">
+</p>
 
-[![npm](https://img.shields.io/npm/v/larecode)](https://www.npmjs.com/package/larecode)
-[![License: MIT](https://img.shields.io/github/license/rsyyd/larecode)](https://github.com/rsyyd/larecode/blob/main/LICENSE)
+<p align="center">
+  [![npm](https://img.shields.io/npm/v/larecode)](https://www.npmjs.com/package/larecode)
+  [![License: MIT](https://img.shields.io/github/license/rsyyd/larecode)](https://github.com/rsyyd/larecode/blob/main/LICENSE)
+</p>
 
 Open-source AI coding agent for the terminal. It runs on your machine, works with any OpenAI-compatible provider, and checks every tool call against a permission policy before it runs.
 

@@ -1,0 +1,249 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="150 106 560 560"
+     role="img"
+     aria-label="Lare Code logo">
+
+  <defs>
+    <radialGradient id="studio-bg" cx="46%" cy="48%" r="65%" fx="38%" fy="44%">
+      <stop offset="0%" stop-color="#202227" />
+      <stop offset="45%" stop-color="#17181c" />
+      <stop offset="85%" stop-color="#121316" />
+      <stop offset="100%" stop-color="#0e0f12" />
+    </radialGradient>
+    <radialGradient id="robot-ambient-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.045" />
+      <stop offset="60%" stop-color="#b8c4d8" stop-opacity="0.015" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="floor-shadow-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.90" />
+      <stop offset="38%" stop-color="#030405" stop-opacity="0.65" />
+      <stop offset="72%" stop-color="#08090b" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="body-main-3d" cx="38%" cy="22%" r="68%" fx="34%" fy="16%">
+      <stop offset="0%" stop-color="#4e5563" />
+      <stop offset="16%" stop-color="#353b47" />
+      <stop offset="42%" stop-color="#20252f" />
+      <stop offset="72%" stop-color="#13161d" />
+      <stop offset="92%" stop-color="#0b0d12" />
+      <stop offset="100%" stop-color="#1c2029" />
+    </radialGradient>
+    <radialGradient id="body-bounce-light" cx="72%" cy="68%" r="48%">
+      <stop offset="0%" stop-color="#3a4252" stop-opacity="0.45" />
+      <stop offset="55%" stop-color="#232834" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#0b0d12" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="body-bottom-occlusion" x1="50%" y1="55%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#08090c" stop-opacity="0" />
+      <stop offset="65%" stop-color="#06070a" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#040507" stop-opacity="0.92" />
+    </linearGradient>
+    <radialGradient id="crown-highlight" cx="45%" cy="12%" r="42%">
+      <stop offset="0%" stop-color="#9aa3b2" stop-opacity="0.55" />
+      <stop offset="45%" stop-color="#636b7a" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#2b303c" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="left-rim-light" x1="0%" y1="20%" x2="30%" y2="55%">
+      <stop offset="0%" stop-color="#b4bcc8" stop-opacity="0.5" />
+      <stop offset="35%" stop-color="#697282" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#1e222b" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="visor-groove" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#08090c" />
+      <stop offset="50%" stop-color="#14171f" />
+      <stop offset="100%" stop-color="#2c323e" />
+    </linearGradient>
+    <linearGradient id="visor-silver-ring" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#e3e7ee" />
+      <stop offset="70%" stop-color="#b8bfc9" />
+      <stop offset="100%" stop-color="#f0f3f7" />
+    </linearGradient>
+    <radialGradient id="visor-glass-base" cx="52%" cy="52%" r="62%" fx="60%" fy="60%">
+      <stop offset="0%" stop-color="#1b1e24" />
+      <stop offset="45%" stop-color="#0d0f13" />
+      <stop offset="80%" stop-color="#060709" />
+      <stop offset="100%" stop-color="#030405" />
+    </radialGradient>
+    <linearGradient id="visor-glass-reflection-main" x1="25%" y1="0%" x2="78%" y2="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30" />
+      <stop offset="45%" stop-color="#dce2ec" stop-opacity="0.16" />
+      <stop offset="85%" stop-color="#8b95a5" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="visor-corner-hotspot" cx="68%" cy="22%" r="36%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.34" />
+      <stop offset="55%" stop-color="#cfd6e2" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="visor-bottom-glow" cx="62%" cy="76%" r="32%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="60%" stop-color="#9aa2b1" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="visor-screen-clip">
+      <path d="M 355 186
+               C 405 181, 465 181, 515 186
+               C 572 192, 602 225, 608 285
+               C 613 332, 610 382, 598 418
+               C 584 456, 550 474, 495 478
+               C 452 481, 418 481, 375 478
+               C 320 474, 286 456, 272 418
+               C 260 382, 257 332, 262 285
+               C 268 225, 298 192, 355 186 Z" />
+    </clipPath>
+    <linearGradient id="ear-white-metal" x1="15%" y1="8%" x2="80%" y2="92%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="28%" stop-color="#f1f4f8" />
+      <stop offset="62%" stop-color="#cdd3dc" />
+      <stop offset="85%" stop-color="#9aa2af" />
+      <stop offset="100%" stop-color="#7c8492" />
+    </linearGradient>
+    <linearGradient id="fin-white-grad" x1="0%" y1="0%" x2="100%" y2="90%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="45%" stop-color="#eef1f6" />
+      <stop offset="80%" stop-color="#c3c9d4" />
+      <stop offset="100%" stop-color="#8d95a3" />
+    </linearGradient>
+    <linearGradient id="fin-inner-bevel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e4e8ef" />
+      <stop offset="60%" stop-color="#9ea6b3" />
+      <stop offset="100%" stop-color="#69707d" />
+    </linearGradient>
+    <linearGradient id="ear-dark-cap" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#4e5562" />
+      <stop offset="40%" stop-color="#282c35" />
+      <stop offset="85%" stop-color="#14171c" />
+      <stop offset="100%" stop-color="#0d0f13" />
+    </linearGradient>
+    <radialGradient id="left-arm-grad" cx="32%" cy="28%" r="70%">
+      <stop offset="0%" stop-color="#555d6d" />
+      <stop offset="28%" stop-color="#2b303b" />
+      <stop offset="68%" stop-color="#12151b" />
+      <stop offset="100%" stop-color="#080a0d" />
+    </radialGradient>
+    <radialGradient id="right-arm-grad" cx="62%" cy="28%" r="70%">
+      <stop offset="0%" stop-color="#48505e" />
+      <stop offset="32%" stop-color="#252933" />
+      <stop offset="70%" stop-color="#101318" />
+      <stop offset="100%" stop-color="#07090c" />
+    </radialGradient>
+    <radialGradient id="left-leg-grad" cx="36%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#3c4351" />
+      <stop offset="38%" stop-color="#1d2129" />
+      <stop offset="78%" stop-color="#0c0e12" />
+      <stop offset="100%" stop-color="#060709" />
+    </radialGradient>
+    <radialGradient id="right-leg-grad" cx="55%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#373e4c" />
+      <stop offset="38%" stop-color="#1b1f27" />
+      <stop offset="78%" stop-color="#0b0d11" />
+      <stop offset="100%" stop-color="#050608" />
+    </radialGradient>
+    <linearGradient id="joint-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f4f6fa" />
+      <stop offset="50%" stop-color="#b8c0cc" />
+      <stop offset="100%" stop-color="#6e7684" />
+    </linearGradient>
+    <filter id="led-pixel-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="blur1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="ear-soft-shadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.55" />
+    </filter>
+    <filter id="text-studio-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000000" flood-opacity="0.48" />
+    </filter>
+    <g id="px"><rect width="7.2" height="7.2" rx="1.1" fill="#ffffff" /></g>
+    <g id="px-sm"><rect width="5.2" height="5.2" rx="0.9" fill="#ffffff" /></g>
+  </defs>
+
+  <rect id="bg-rect" width="1920" height="820" fill="url(#studio-bg)" />
+  <ellipse cx="430" cy="365" rx="340" ry="290" fill="url(#robot-ambient-glow)" />
+
+  <g id="robot-assembly">
+
+    <path d="M 326 565 C 344 584, 376 598, 405 604 L 401 613 C 370 606, 338 591, 320 572 Z" fill="url(#joint-ring-grad)" />
+    <path d="M 327 574 C 318 608, 336 646, 366 650 C 392 653, 408 632, 404 606 C 376 600, 345 586, 327 574 Z" fill="url(#left-leg-grad)" />
+    <ellipse cx="356" cy="614" rx="14" ry="18" transform="rotate(-18 356 614)" fill="#ffffff" opacity="0.08" />
+    <path d="M 538 565 C 520 584, 488 598, 459 604 L 463 613 C 494 606, 526 591, 544 572 Z" fill="url(#joint-ring-grad)" />
+    <path d="M 537 574 C 546 608, 528 646, 498 650 C 472 653, 456 632, 460 606 C 488 600, 519 586, 537 574 Z" fill="url(#right-leg-grad)" />
+    <ellipse cx="496" cy="616" rx="14" ry="18" transform="rotate(15 496 616)" fill="#ffffff" opacity="0.07" />
+
+    <path d="M 244 434 C 254 446, 263 478, 260 503 L 269 504 C 272 476, 263 442, 251 428 Z" fill="url(#joint-ring-grad)" />
+    <path d="M 247 436 C 226 446, 198 492, 200 532 C 201 555, 217 562, 232 548 C 248 534, 261 508, 262 496 C 264 472, 256 448, 247 436 Z" fill="url(#left-arm-grad)" />
+    <path d="M 241 446 C 224 462, 207 498, 207 528 C 207 538, 212 542, 216 538 C 214 510, 228 472, 244 452 Z" fill="#b8c2d2" opacity="0.25" />
+    <path d="M 618 434 C 608 446, 599 478, 602 503 L 593 504 C 590 476, 599 442, 611 428 Z" fill="url(#joint-ring-grad)" />
+    <path d="M 615 436 C 636 446, 664 492, 662 532 C 661 555, 645 562, 630 548 C 614 534, 601 508, 600 496 C 598 472, 606 448, 615 436 Z" fill="url(#right-arm-grad)" />
+    <path d="M 622 450 C 638 468, 653 502, 653 528 C 653 536, 648 540, 644 535 C 646 508, 633 474, 619 455 Z" fill="#9aa4b4" opacity="0.22" />
+
+    <path id="robot-torso-base" d="M 432 122 C 554 122, 622 204, 622 356 C 622 504, 554 598, 432 598 C 310 598, 242 504, 242 356 C 242 204, 310 122, 432 122 Z" fill="url(#body-main-3d)" />
+    <path d="M 432 122 C 554 122, 622 204, 622 356 C 622 504, 554 598, 432 598 C 310 598, 242 504, 242 356 C 242 204, 310 122, 432 122 Z" fill="url(#body-bounce-light)" />
+    <path d="M 432 122 C 554 122, 622 204, 622 356 C 622 504, 554 598, 432 598 C 310 598, 242 504, 242 356 C 242 204, 310 122, 432 122 Z" fill="url(#body-bottom-occlusion)" />
+    <path d="M 432 122 C 554 122, 622 204, 622 356 C 622 504, 554 598, 432 598 C 310 598, 242 504, 242 356 C 242 204, 310 122, 432 122 Z" fill="url(#crown-highlight)" />
+    <path d="M 432 122 C 554 122, 622 204, 622 356 C 622 504, 554 598, 432 598 C 310 598, 242 504, 242 356 C 242 204, 310 122, 432 122 Z" fill="url(#left-rim-light)" />
+    <path d="M 326 164 C 368 136, 468 132, 526 158 C 472 142, 376 145, 326 164 Z" fill="#ffffff" opacity="0.22" />
+
+    <g id="left-ear-assembly" filter="url(#ear-soft-shadow)">
+      <path d="M 248 258 C 234 262, 226 300, 226 336 C 226 372, 234 404, 250 408 C 246 364, 245 304, 248 258 Z" fill="#12151b" />
+      <path d="M 255 248 C 232 246, 214 276, 212 326 C 210 374, 226 408, 248 408 C 264 408, 272 382, 270 334 C 268 286, 266 250, 255 248 Z" fill="url(#ear-white-metal)" />
+      <path d="M 248 266 C 242 222, 230 166, 220 144 C 215 134, 207 136, 206 148 C 203 185, 208 238, 220 286 C 228 316, 244 338, 256 336 C 262 334, 253 298, 248 266 Z" fill="url(#fin-white-grad)" />
+      <path d="M 214 144 C 223 170, 235 224, 242 274 C 246 302, 249 324, 245 332 C 252 330, 255 310, 248 266 C 242 222, 230 166, 220 144 Z" fill="url(#fin-inner-bevel)" opacity="0.75" />
+      <ellipse cx="215" cy="332" rx="15" ry="44" transform="rotate(-4 215 332)" fill="url(#ear-dark-cap)" />
+      <path d="M 214 289 C 205 294, 200 315, 202 340 C 203 360, 210 374, 217 375 C 210 368, 206 350, 205 332 C 204 312, 208 296, 214 289 Z" fill="#8e97a8" opacity="0.45" />
+    </g>
+
+    <g id="right-ear-assembly" filter="url(#ear-soft-shadow)">
+      <path d="M 616 258 C 630 262, 638 300, 638 336 C 638 372, 630 404, 614 408 C 618 364, 619 304, 616 258 Z" fill="#101318" />
+      <path d="M 609 248 C 632 246, 650 276, 652 326 C 654 374, 638 408, 616 408 C 600 408, 592 382, 594 334 C 596 286, 598 250, 609 248 Z" fill="url(#ear-white-metal)" />
+      <path d="M 616 266 C 622 222, 634 166, 644 144 C 649 134, 657 136, 658 148 C 661 185, 656 238, 644 286 C 636 316, 620 338, 608 336 C 602 334, 611 298, 616 266 Z" fill="url(#fin-white-grad)" />
+      <path d="M 650 144 C 641 170, 629 224, 622 274 C 618 302, 615 324, 619 332 C 612 330, 609 310, 616 266 C 622 222, 634 166, 644 144 Z" fill="url(#fin-inner-bevel)" opacity="0.7" />
+      <ellipse cx="649" cy="332" rx="15" ry="44" transform="rotate(4 649 332)" fill="url(#ear-dark-cap)" />
+      <path d="M 650 289 C 659 294, 664 315, 662 340 C 661 360, 654 374, 647 375 C 654 368, 658 350, 659 332 C 660 312, 656 296, 650 289 Z" fill="#8e97a8" opacity="0.4" />
+    </g>
+
+    <path d="M 350 174 C 404 168, 466 168, 520 174 C 583 181, 616 218, 622 283 C 627 334, 624 388, 610 427 C 595 469, 558 489, 499 493 C 453 496, 417 496, 371 493 C 312 489, 275 469, 260 427 C 246 388, 243 334, 248 283 C 254 218, 287 181, 350 174 Z" fill="url(#visor-groove)" />
+    <path d="M 268 434 C 286 472, 322 488, 374 492 C 418 495, 452 495, 496 492 C 548 488, 584 472, 602 434" fill="none" stroke="#5b6475" stroke-width="2" opacity="0.55" />
+    <path d="M 353 181 C 405 176, 465 176, 517 181 C 577 187, 608 222, 614 284 C 619 333, 616 385, 603 422 C 589 462, 554 481, 497 485 C 453 488, 417 488, 373 485 C 316 481, 281 462, 267 422 C 254 385, 251 333, 256 284 C 262 222, 293 187, 353 181 Z" fill="url(#visor-silver-ring)" />
+    <path d="M 355 186 C 405 181, 465 181, 515 186 C 572 192, 602 225, 608 285 C 613 332, 610 382, 598 418 C 584 456, 550 474, 495 478 C 452 481, 418 481, 375 478 C 320 474, 286 456, 272 418 C 260 382, 257 332, 262 285 C 268 225, 298 192, 355 186 Z" fill="url(#visor-glass-base)" />
+
+    <g clip-path="url(#visor-screen-clip)">
+      <path d="M 290 198 C 365 182, 465 182, 535 194 C 590 205, 615 255, 606 365 C 598 430, 560 468, 490 472 C 488 380, 462 308, 410 264 C 366 226, 326 212, 290 198 Z" fill="url(#visor-glass-reflection-main)" />
+      <ellipse cx="525" cy="236" rx="85" ry="52" transform="rotate(24 525 236)" fill="url(#visor-corner-hotspot)" />
+      <ellipse cx="515" cy="405" rx="95" ry="68" fill="url(#visor-bottom-glow)" />
+      <path d="M 358 190 C 406 185, 464 185, 512 190 C 567 196, 596 228, 602 286" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.28" />
+    </g>
+
+    <g id="visor-pixel-face" filter="url(#led-pixel-glow)">
+      <g id="pixel-chevron" transform="translate(335, 268)">
+        <use href="#px" x="0" y="0" /><use href="#px" x="8" y="0" />
+        <use href="#px" x="8" y="8" /><use href="#px" x="16" y="8" />
+        <use href="#px" x="16" y="16" /><use href="#px" x="24" y="16" />
+        <use href="#px" x="24" y="24" /><use href="#px" x="32" y="24" />
+        <use href="#px" x="32" y="32" /><use href="#px" x="40" y="32" />
+        <use href="#px" x="24" y="40" /><use href="#px" x="32" y="40" />
+        <use href="#px" x="16" y="48" /><use href="#px" x="24" y="48" />
+        <use href="#px" x="8" y="56" /><use href="#px" x="16" y="56" />
+        <use href="#px" x="0" y="64" /><use href="#px" x="8" y="64" />
+      </g>
+      <g id="pixel-underscore" transform="translate(462, 330)">
+        <use href="#px-sm" x="0" y="0" /><use href="#px-sm" x="6" y="0" /><use href="#px-sm" x="12" y="0" /><use href="#px-sm" x="18" y="0" /><use href="#px-sm" x="24" y="0" /><use href="#px-sm" x="30" y="0" /><use href="#px-sm" x="36" y="0" /><use href="#px-sm" x="42" y="0" />
+        <use href="#px-sm" x="0" y="6" /><use href="#px-sm" x="6" y="6" /><use href="#px-sm" x="12" y="6" /><use href="#px-sm" x="18" y="6" /><use href="#px-sm" x="24" y="6" /><use href="#px-sm" x="30" y="6" /><use href="#px-sm" x="36" y="6" /><use href="#px-sm" x="42" y="6" />
+      </g>
+      <g id="pixel-smile" transform="translate(401, 369)">
+        <use href="#px-sm" x="0" y="0" /><use href="#px-sm" x="5.5" y="5.5" />
+        <use href="#px-sm" x="11" y="11" /><use href="#px-sm" x="16.5" y="11" /><use href="#px-sm" x="22" y="11" /><use href="#px-sm" x="27.5" y="11" /><use href="#px-sm" x="33" y="11" />
+        <use href="#px-sm" x="38.5" y="5.5" /><use href="#px-sm" x="44" y="0" />
+      </g>
+    </g>
+
+  </g>
+
+</svg>

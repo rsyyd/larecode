@@ -1,8 +1,12 @@
-[![CI](https://github.com/rsyyd/larecode/actions/workflows/ci.yml/badge.svg)](https://github.com/rsyyd/larecode/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/larecode)](https://www.npmjs.com/package/larecode)
-[![License: MIT](https://img.shields.io/github/license/rsyyd/larecode)](LICENSE)
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Lare Code" width="896">
+</p>
 
-# Lare Code
+<p align="center">
+  [![CI](https://github.com/rsyyd/larecode/actions/workflows/ci.yml/badge.svg)](https://github.com/rsyyd/larecode/actions/workflows/ci.yml)
+  [![npm](https://img.shields.io/npm/v/larecode)](https://www.npmjs.com/package/larecode)
+  [![License: MIT](https://img.shields.io/github/license/rsyyd/larecode)](LICENSE)
+</p>
 
 Lare Code is an open-source AI coding agent for the terminal. It runs on your machine, works with any OpenAI-compatible provider (plus Anthropic, Ollama, OpenRouter, and custom endpoints), and checks every tool call against a permission policy before it runs.
 

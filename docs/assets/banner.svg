@@ -1,0 +1,751 @@
+<svg id="larecode-banner-svg"
+     xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1920 820"
+     class="w-full h-auto block"
+     role="img"
+     aria-label="larecode CLI AI Agent Mascot Banner">
+
+  <defs>
+    <!-- ==================== 1. STUDIO BACKGROUND GRADIENTS ==================== -->
+    <radialGradient id="studio-bg" cx="46%" cy="48%" r="65%" fx="38%" fy="44%">
+      <stop offset="0%" stop-color="#202227" />
+      <stop offset="45%" stop-color="#17181c" />
+      <stop offset="85%" stop-color="#121316" />
+      <stop offset="100%" stop-color="#0e0f12" />
+    </radialGradient>
+
+    <!-- Subtle ambient light behind the robot head -->
+    <radialGradient id="robot-ambient-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.045" />
+      <stop offset="60%" stop-color="#b8c4d8" stop-opacity="0.015" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Floor drop shadow gradient -->
+    <radialGradient id="floor-shadow-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.90" />
+      <stop offset="38%" stop-color="#030405" stop-opacity="0.65" />
+      <stop offset="72%" stop-color="#08090b" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- ==================== 2. ROBOT 3D BODY SHADERS ==================== -->
+    <!-- Main matte dark charcoal/obsidian body lighting -->
+    <radialGradient id="body-main-3d" cx="38%" cy="22%" r="68%" fx="34%" fy="16%">
+      <stop offset="0%" stop-color="#4e5563" />
+      <stop offset="16%" stop-color="#353b47" />
+      <stop offset="42%" stop-color="#20252f" />
+      <stop offset="72%" stop-color="#13161d" />
+      <stop offset="92%" stop-color="#0b0d12" />
+      <stop offset="100%" stop-color="#1c2029" />
+    </radialGradient>
+
+    <!-- Secondary lower-right subtle bounce light on torso -->
+    <radialGradient id="body-bounce-light" cx="72%" cy="68%" r="48%">
+      <stop offset="0%" stop-color="#3a4252" stop-opacity="0.45" />
+      <stop offset="55%" stop-color="#232834" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#0b0d12" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Bottom core shadow for spherical 3D weight -->
+    <linearGradient id="body-bottom-occlusion" x1="50%" y1="55%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#08090c" stop-opacity="0" />
+      <stop offset="65%" stop-color="#06070a" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#040507" stop-opacity="0.92" />
+    </linearGradient>
+
+    <!-- Top crown studio soft specular highlight -->
+    <radialGradient id="crown-highlight" cx="45%" cy="12%" r="42%">
+      <stop offset="0%" stop-color="#9aa3b2" stop-opacity="0.55" />
+      <stop offset="45%" stop-color="#636b7a" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#2b303c" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Left edge studio rim light -->
+    <linearGradient id="left-rim-light" x1="0%" y1="20%" x2="30%" y2="55%">
+      <stop offset="0%" stop-color="#b4bcc8" stop-opacity="0.5" />
+      <stop offset="35%" stop-color="#697282" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#1e222b" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- ==================== 3. VISOR & BEZEL SHADERS ==================== -->
+    <!-- Outer recessed groove around the visor -->
+    <linearGradient id="visor-groove" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#08090c" />
+      <stop offset="50%" stop-color="#14171f" />
+      <stop offset="100%" stop-color="#2c323e" />
+    </linearGradient>
+
+    <!-- Crisp metallic white/silver inner bezel ring -->
+    <linearGradient id="visor-silver-ring" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#e3e7ee" />
+      <stop offset="70%" stop-color="#b8bfc9" />
+      <stop offset="100%" stop-color="#f0f3f7" />
+    </linearGradient>
+
+    <!-- Deep glossy black glass screen base -->
+    <radialGradient id="visor-glass-base" cx="52%" cy="52%" r="62%" fx="60%" fy="60%">
+      <stop offset="0%" stop-color="#1b1e24" />
+      <stop offset="45%" stop-color="#0d0f13" />
+      <stop offset="80%" stop-color="#060709" />
+      <stop offset="100%" stop-color="#030405" />
+    </radialGradient>
+
+    <!-- Upper-right curved studio softbox reflection on visor glass -->
+    <linearGradient id="visor-glass-reflection-main" x1="25%" y1="0%" x2="78%" y2="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30" />
+      <stop offset="45%" stop-color="#dce2ec" stop-opacity="0.16" />
+      <stop offset="85%" stop-color="#8b95a5" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Secondary diagonal glass sheen -->
+    <radialGradient id="visor-corner-hotspot" cx="68%" cy="22%" r="36%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.34" />
+      <stop offset="55%" stop-color="#cfd6e2" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Subtle bottom-right inner glass reflection -->
+    <radialGradient id="visor-bottom-glow" cx="62%" cy="76%" r="32%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="60%" stop-color="#9aa2b1" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Clip path for internal visor reflections -->
+    <clipPath id="visor-screen-clip">
+      <path d="M 355 186
+               C 405 181, 465 181, 515 186
+               C 572 192, 602 225, 608 285
+               C 613 332, 610 382, 598 418
+               C 584 456, 550 474, 495 478
+               C 452 481, 418 481, 375 478
+               C 320 474, 286 456, 272 418
+               C 260 382, 257 332, 262 285
+               C 268 225, 298 192, 355 186 Z" />
+    </clipPath>
+
+    <!-- ==================== 4. HEADPHONES & EARS SHADERS ==================== -->
+    <!-- White metallic headphone shell gradient -->
+    <linearGradient id="ear-white-metal" x1="15%" y1="8%" x2="80%" y2="92%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="28%" stop-color="#f1f4f8" />
+      <stop offset="62%" stop-color="#cdd3dc" />
+      <stop offset="85%" stop-color="#9aa2af" />
+      <stop offset="100%" stop-color="#7c8492" />
+    </linearGradient>
+
+    <!-- Wing/Fin white 3D gradient -->
+    <linearGradient id="fin-white-grad" x1="0%" y1="0%" x2="100%" y2="90%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="45%" stop-color="#eef1f6" />
+      <stop offset="80%" stop-color="#c3c9d4" />
+      <stop offset="100%" stop-color="#8d95a3" />
+    </linearGradient>
+
+    <!-- Inner shadow side of the fin -->
+    <linearGradient id="fin-inner-bevel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e4e8ef" />
+      <stop offset="60%" stop-color="#9ea6b3" />
+      <stop offset="100%" stop-color="#69707d" />
+    </linearGradient>
+
+    <!-- Dark charcoal outer cap on earpieces -->
+    <linearGradient id="ear-dark-cap" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#4e5562" />
+      <stop offset="40%" stop-color="#282c35" />
+      <stop offset="85%" stop-color="#14171c" />
+      <stop offset="100%" stop-color="#0d0f13" />
+    </linearGradient>
+
+    <!-- ==================== 5. ARMS & LEGS 3D SHADERS ==================== -->
+    <!-- Left Arm 3D Gradient -->
+    <radialGradient id="left-arm-grad" cx="32%" cy="28%" r="70%">
+      <stop offset="0%" stop-color="#555d6d" />
+      <stop offset="28%" stop-color="#2b303b" />
+      <stop offset="68%" stop-color="#12151b" />
+      <stop offset="100%" stop-color="#080a0d" />
+    </radialGradient>
+
+    <!-- Right Arm 3D Gradient -->
+    <radialGradient id="right-arm-grad" cx="62%" cy="28%" r="70%">
+      <stop offset="0%" stop-color="#48505e" />
+      <stop offset="32%" stop-color="#252933" />
+      <stop offset="70%" stop-color="#101318" />
+      <stop offset="100%" stop-color="#07090c" />
+    </radialGradient>
+
+    <!-- Left Leg 3D Gradient -->
+    <radialGradient id="left-leg-grad" cx="36%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#3c4351" />
+      <stop offset="38%" stop-color="#1d2129" />
+      <stop offset="78%" stop-color="#0c0e12" />
+      <stop offset="100%" stop-color="#060709" />
+    </radialGradient>
+
+    <!-- Right Leg 3D Gradient -->
+    <radialGradient id="right-leg-grad" cx="55%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#373e4c" /
+      <stop offset="38%" stop-color="#1b1f27" />
+      <stop offset="78%" stop-color="#0b0d11" />
+      <stop offset="100%" stop-color="#050608" />
+    </radialGradient>
+
+    <!-- White Joint Collar Gradient -->
+    <linearGradient id="joint-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f4f6fa" />
+      <stop offset="50%" stop-color="#b8c0cc" />
+      <stop offset="100%" stop-color="#6e7684" />
+    </linearGradient>
+
+    <!-- ==================== 6. GLOW & SHADOW FILTERS ==================== -->
+    <!-- Soft white LED bloom for the pixel matrix face -->
+    <filter id="led-pixel-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="blur1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Subtle ambient halo behind the white ear fins -->
+    <filter id="ear-soft-shadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.55" />
+    </filter>
+
+    <!-- Crisp 3D studio drop shadow for the "larecode" typography -->
+    <filter id="text-studio-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000000" flood-opacity="0.48" />
+    </filter>
+
+    <!-- Reusable single crisp LED square pixel with slight inner bevel -->
+    <g id="px">
+      <rect width="7.2" height="7.2" rx="1.1" fill="#ffffff" />
+    </g>
+    <g id="px-sm">
+      <rect width="5.2" height="5.2" rx="0.9" fill="#ffffff" />
+    </g>
+  </defs>
+
+  <!-- ========================================================================= -->
+  <!-- 1. BACKGROUND LAYER                                                       -->
+  <!-- ========================================================================= -->
+  <rect id="bg-rect" width="1920" height="820" fill="url(#studio-bg)" />
+
+  <!-- Very subtle studio ambient light behind the mascot -->
+  <ellipse cx="430" cy="365" rx="340" ry="290" fill="url(#robot-ambient-glow)" />
+
+  <!-- ========================================================================= -->
+  <!-- 2. FLOOR FLOATING DROP SHADOW                                             -->
+  <!-- ========================================================================= -->
+  <g id="floor-shadow">
+    <ellipse cx="430" cy="675" rx="168" ry="22" fill="url(#floor-shadow-grad)" />
+    <ellipse cx="430" cy="675" rx="95" ry="11" fill="#000000" opacity="0.65" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 3. 3D MONOCHROME ROBOT MASCOT ASSEMBLY                                    -->
+  <!-- ========================================================================= -->
+  <g id="robot-assembly">
+
+    <!-- ==================== A. LOWER LEGS & HIP RINGS ==================== -->
+    <!-- Left Hip White Metallic Ring -->
+    <path d="M 326 565 C 344 584, 376 598, 405 604 L 401 613 C 370 606, 338 591, 320 572 Z"
+          fill="url(#joint-ring-grad)" />
+
+    <!-- Left Stubby Foot -->
+    <path d="M 327 574
+             C 318 608, 336 646, 366 650
+             C 392 653, 408 632, 404 606
+             C 376 600, 345 586, 327 574 Z"
+          fill="url(#left-leg-grad)" />
+    <!-- Left Foot Subtle Specular Highlight -->
+    <ellipse cx="356" cy="614" rx="14" ry="18" transform="rotate(-18 356 614)"
+             fill="#ffffff" opacity="0.08" />
+
+    <!-- Right Hip White Metallic Ring -->
+    <path d="M 538 565 C 520 584, 488 598, 459 604 L 463 613 C 494 606, 526 591, 544 572 Z"
+          fill="url(#joint-ring-grad)" />
+
+    <!-- Right Stubby Foot -->
+    <path d="M 537 574
+             C 546 608, 528 646, 498 650
+             C 472 653, 456 632, 460 606
+             C 488 600, 519 586, 537 574 Z"
+          fill="url(#right-leg-grad)" />
+    <!-- Right Foot Subtle Specular Highlight -->
+    <ellipse cx="496" cy="616" rx="14" ry="18" transform="rotate(15 496 616)"
+             fill="#ffffff" opacity="0.07" />
+
+
+    <!-- ==================== B. SIDE ARMS & SHOULDER RINGS ==================== -->
+    <!-- Left Arm White Metallic Shoulder Ring -->
+    <path d="M 244 434 C 254 446, 263 478, 260 503 L 269 504 C 272 476, 263 442, 251 428 Z"
+          fill="url(#joint-ring-grad)" />
+
+    <!-- Left Stubby Arm -->
+    <path d="M 247 436
+             C 226 446, 198 492, 200 532
+             C 201 555, 217 562, 232 548
+             C 248 534, 261 508, 262 496
+             C 264 472, 256 448, 247 436 Z"
+          fill="url(#left-arm-grad)" />
+    <!-- Left Arm Studio Rim Highlight -->
+    <path d="M 241 446 C 224 462, 207 498, 207 528 C 207 538, 212 542, 216 538 C 214 510, 228 472, 244 452 Z"
+          fill="#b8c2d2" opacity="0.25" />
+
+    <!-- Right Arm White Metallic Shoulder Ring -->
+    <path d="M 618 434 C 608 446, 599 478, 602 503 L 593 504 C 590 476, 599 442, 611 428 Z"
+          fill="url(#joint-ring-grad)" />
+
+    <!-- Right Stubby Arm -->
+    <path d="M 615 436
+             C 636 446, 664 492, 662 532
+             C 661 555, 645 562, 630 548
+             C 614 534, 601 508, 600 496
+             C 598 472, 606 448, 615 436 Z"
+          fill="url(#right-arm-grad)" />
+    <!-- Right Arm Subtle Highlight -->
+    <path d="M 622 450 C 638 468, 653 502, 653 528 C 653 536, 648 540, 644 535 C 646 508, 633 474, 619 455 Z"
+          fill="#9aa4b4" opacity="0.22" />
+
+
+    <!-- ==================== C. MAIN PLUMP CAPSULE BODY ==================== -->
+    <!-- Base 3D Egg/Capsule Torso & Head -->
+    <path id="robot-torso-base"
+          d="M 432 122
+             C 554 122, 622 204, 622 356
+             C 622 504, 554 598, 432 598
+             C 310 598, 242 504, 242 356
+             C 242 204, 310 122, 432 122 Z"
+          fill="url(#body-main-3d)" />
+
+    <!-- Secondary bounce light layer -->
+    <path d="M 432 122
+             C 554 122, 622 204, 622 356
+             C 622 504, 554 598, 432 598
+             C 310 598, 242 504, 242 356
+             C 242 204, 310 122, 432 122 Z"
+          fill="url(#body-bounce-light)" />
+
+    <!-- Bottom core shadow occlusion -->
+    <path d="M 432 122
+             C 554 122, 622 204, 622 356
+             C 622 504, 554 598, 432 598
+             C 310 598, 242 504, 242 356
+             C 242 204, 310 122, 432 122 Z"
+          fill="url(#body-bottom-occlusion)" />
+
+    <!-- Top crown studio specular highlight -->
+    <path d="M 432 122
+             C 554 122, 622 204, 622 356
+             C 622 504, 554 598, 432 598
+             C 310 598, 242 504, 242 356
+             C 242 204, 310 122, 432 122 Z"
+          fill="url(#crown-highlight)" />
+
+    <!-- Left contour soft rim light -->
+    <path d="M 432 122
+             C 554 122, 622 204, 622 356
+             C 622 504, 554 598, 432 598
+             C 310 598, 242 504, 242 356
+             C 242 204, 310 122, 432 122 Z"
+          fill="url(#left-rim-light)" />
+
+    <!-- Subtle top forehead specular sheen arc -->
+    <path d="M 326 164 C 368 136, 468 132, 526 158 C 472 142, 376 145, 326 164 Z"
+          fill="#ffffff" opacity="0.22" />
+
+
+    <!-- ==================== D. HEADPHONES & UPWARD WING FINS ==================== -->
+    <!-- LEFT HEADPHONE ASSEMBLY -->
+    <g id="left-ear-assembly" filter="url(#ear-soft-shadow)">
+      <!-- Dark spacer ring connecting ear cup to head -->
+      <path d="M 248 258 C 234 262, 226 300, 226 336 C 226 372, 234 404, 250 408 C 246 364, 245 304, 248 258 Z"
+            fill="#12151b" />
+
+      <!-- Left White Metallic Ear Cup Base -->
+      <path d="M 255 248
+               C 232 246, 214 276, 212 326
+               C 210 374, 226 408, 248 408
+               C 264 408, 272 382, 270 334
+               C 268 286, 266 250, 255 248 Z"
+            fill="url(#ear-white-metal)" />
+
+      <!-- Left Upward Sweeping White Antenna Fin -->
+      <path d="M 248 266
+               C 242 222, 230 166, 220 144
+               C 215 134, 207 136, 206 148
+               C 203 185, 208 238, 220 286
+               C 228 316, 244 338, 256 336
+               C 262 334, 253 298, 248 266 Z"
+            fill="url(#fin-white-grad)" />
+
+      <!-- Subtle inner bevel line on Left Fin -->
+      <path d="M 214 144 C 223 170, 235 224, 242 274 C 246 302, 249 324, 245 332 C 252 330, 255 310, 248 266 C 242 222, 230 166, 220 144 Z"
+            fill="url(#fin-inner-bevel)" opacity="0.75" />
+
+      <!-- Left Dark Grey Outer Circular Cap -->
+      <ellipse cx="215" cy="332" rx="15" ry="44" transform="rotate(-4 215 332)"
+               fill="url(#ear-dark-cap)" />
+      <!-- Rim highlight on dark cap -->
+      <path d="M 214 289 C 205 294, 200 315, 202 340 C 203 360, 210 374, 217 375 C 210 368, 206 350, 205 332 C 204 312, 208 296, 214 289 Z"
+            fill="#8e97a8" opacity="0.45" />
+    </g>
+
+    <!-- RIGHT HEADPHONE ASSEMBLY -->
+    <g id="right-ear-assembly" filter="url(#ear-soft-shadow)">
+      <!-- Dark spacer ring connecting ear cup to head -->
+      <path d="M 616 258 C 630 262, 638 300, 638 336 C 638 372, 630 404, 614 408 C 618 364, 619 304, 616 258 Z"
+            fill="#101318" />
+
+      <!-- Right White Metallic Ear Cup Base -->
+      <path d="M 609 248
+               C 632 246, 650 276, 652 326
+               C 654 374, 638 408, 616 408
+               C 600 408, 592 382, 594 334
+               C 596 286, 598 250, 609 248 Z"
+            fill="url(#ear-white-metal)" />
+
+      <!-- Right Upward Sweeping White Antenna Fin -->
+      <path d="M 616 266
+               C 622 222, 634 166, 644 144
+               C 649 134, 657 136, 658 148
+               C 661 185, 656 238, 644 286
+               C 636 316, 620 338, 608 336
+               C 602 334, 611 298, 616 266 Z"
+            fill="url(#fin-white-grad)" />
+
+      <!-- Subtle inner bevel line on Right Fin -->
+      <path d="M 650 144 C 641 170, 629 224, 622 274 C 618 302, 615 324, 619 332 C 612 330, 609 310, 616 266 C 622 222, 634 166, 644 144 Z"
+            fill="url(#fin-inner-bevel)" opacity="0.7" />
+
+      <!-- Right Dark Grey Outer Circular Cap -->
+      <ellipse cx="649" cy="332" rx="15" ry="44" transform="rotate(4 649 332)"
+               fill="url(#ear-dark-cap)" />
+      <!-- Rim highlight on dark cap -->
+      <path d="M 650 289 C 659 294, 664 315, 662 340 C 661 360, 654 374, 647 375 C 654 368, 658 350, 659 332 C 660 312, 656 296, 650 289 Z"
+            fill="#8e97a8" opacity="0.4" />
+    </g>
+
+
+    <!-- ==================== E. RECESSED GLOSSY VISOR & SILVER BEZEL ==================== -->
+    <!-- Outer Dark Recessed Bezel Housing -->
+    <path d="M 350 174
+             C 404 168, 466 168, 520 174
+             C 583 181, 616 218, 622 283
+             C 627 334, 624 388, 610 427
+             C 595 469, 558 489, 499 493
+             C 453 496, 417 496, 371 493
+             C 312 489, 275 469, 260 427
+             C 246 388, 243 334, 248 283
+             C 254 218, 287 181, 350 174 Z"
+          fill="url(#visor-groove)" />
+
+    <!-- Outer Bezel Bottom Catchlight -->
+    <path d="M 268 434 C 286 472, 322 488, 374 492 C 418 495, 452 495, 496 492 C 548 488, 584 472, 602 434"
+          fill="none" stroke="#5b6475" stroke-width="2" opacity="0.55" />
+
+    <!-- Crisp Metallic White/Silver Inner Bezel Frame -->
+    <path d="M 353 181
+             C 405 176, 465 176, 517 181
+             C 577 187, 608 222, 614 284
+             C 619 333, 616 385, 603 422
+             C 589 462, 554 481, 497 485
+             C 453 488, 417 488, 373 485
+             C 316 481, 281 462, 267 422
+             C 254 385, 251 333, 256 284
+             C 262 222, 293 187, 353 181 Z"
+          fill="url(#visor-silver-ring)" />
+
+    <!-- Inner Dark Lip Inside Silver Ring -->
+    <path d="M 355 186
+             C 405 181, 465 181, 515 186
+             C 572 192, 602 225, 608 285
+             C 613 332, 610 382, 598 418
+             C 584 456, 550 474, 495 478
+             C 452 481, 418 481, 375 478
+             C 320 474, 286 456, 272 418
+             C 260 382, 257 332, 262 285
+             C 268 225, 298 192, 355 186 Z"
+          fill="url(#visor-glass-base)" />
+
+    <!-- Glass Reflections Clipped to Visor Screen -->
+    <g clip-path="url(#visor-screen-clip)">
+      <!-- Diagonal Curved Softbox Studio Reflection Across Top-Right of Glass -->
+      <path d="M 290 198
+               C 365 182, 465 182, 535 194
+               C 590 205, 615 255, 606 365
+               C 598 430, 560 468, 490 472
+               C 488 380, 462 308, 410 264
+               C 366 226, 326 212, 290 198 Z"
+            fill="url(#visor-glass-reflection-main)" />
+
+      <!-- Brighter Studio Window Hotspot on Upper Right Curve -->
+      <ellipse cx="525" cy="236" rx="85" ry="52" transform="rotate(24 525 236)"
+               fill="url(#visor-corner-hotspot)" />
+
+      <!-- Soft Secondary Lower-Right Screen Glow -->
+      <ellipse cx="515" cy="405" rx="95" ry="68"
+               fill="url(#visor-bottom-glow)" />
+
+      <!-- Crisp Inner Glass Edge Highlight -->
+      <path d="M 358 190
+               C 406 185, 464 185, 512 190
+               C 567 196, 596 228, 602 286"
+            fill="none" stroke="#ffffff" stroke-width="2" opacity="0.28" />
+    </g>
+
+
+    <!-- ==================== F. PIXEL MATRIX LED FACE (>_ and smile) ==================== -->
+    <g id="visor-pixel-face" filter="url(#led-pixel-glow)">
+      <!--
+        LEFT EYE: ">" Chevron made of a crisp dual-column stepped pixel matrix
+        matching the exact LED grid look in the reference banner
+      -->
+      <g id="pixel-chevron" transform="translate(335, 268)">
+        <!-- Row 1 (Top left tip) -->
+        <use href="#px" x="0"  y="0" />
+        <use href="#px" x="8"  y="0" />
+        <!-- Row 2 -->
+        <use href="#px" x="8"  y="8" />
+        <use href="#px" x="16" y="8" />
+        <!-- Row 3 -->
+        <use href="#px" x="16" y="16" />
+        <use href="#px" x="24" y="16" />
+        <!-- Row 4 -->
+        <use href="#px" x="24" y="24" />
+        <use href="#px" x="32" y="24" />
+        <!-- Row 5 (Center vertex) -->
+        <use href="#px" x="32" y="32" />
+        <use href="#px" x="40" y="32" />
+        <!-- Row 6 -->
+        <use href="#px" x="24" y="40" />
+        <use href="#px" x="32" y="40" />
+        <!-- Row 7 -->
+        <use href="#px" x="16" y="48" />
+        <use href="#px" x="24" y="48" />
+        <!-- Row 8 -->
+        <use href="#px" x="8"  y="56" />
+        <use href="#px" x="16" y="56" />
+        <!-- Row 9 (Bottom left tip) -->
+        <use href="#px" x="0"  y="64" />
+        <use href="#px" x="8"  y="64" />
+      </g>
+
+      <!--
+        RIGHT EYE: "_" Horizontal Pixel Bar (2 rows × 7 columns of crisp micro-LEDs)
+      -->
+      <g id="pixel-underscore" transform="translate(462, 330)">
+        <!-- Top sub-row of bar -->
+        <use href="#px-sm" x="0"    y="0" />
+        <use href="#px-sm" x="6"    y="0" />
+        <use href="#px-sm" x="12"   y="0" />
+        <use href="#px-sm" x="18"   y="0" />
+        <use href="#px-sm" x="24"   y="0" />
+        <use href="#px-sm" x="30"   y="0" />
+        <use href="#px-sm" x="36"   y="0" />
+        <use href="#px-sm" x="42"   y="0" />
+        <!-- Bottom sub-row of bar -->
+        <use href="#px-sm" x="0"    y="6" />
+        <use href="#px-sm" x="6"    y="6" />
+        <use href="#px-sm" x="12"   y="6" />
+        <use href="#px-sm" x="18"   y="6" />
+        <use href="#px-sm" x="24"   y="6" />
+        <use href="#px-sm" x="30"   y="6" />
+        <use href="#px-sm" x="36"   y="6" />
+        <use href="#px-sm" x="42"   y="6" />
+      </g>
+
+      <!--
+        MOUTH: Cute stepped pixel smile centered slightly below the eyes
+      -->
+      <g id="pixel-smile" transform="translate(401, 369)">
+        <!-- Left corner up -->
+        <use href="#px-sm" x="0"  y="0" />
+        <use href="#px-sm" x="5.5" y="5.5" />
+        <!-- Bottom flat curve (5 micro-pixels wide) -->
+        <use href="#px-sm" x="11" y="11" />
+        <use href="#px-sm" x="16.5" y="11" />
+        <use href="#px-sm" x="22" y="11" />
+        <use href="#px-sm" x="27.5" y="11" />
+        <use href="#px-sm" x="33" y="11" />
+        <!-- Right corner up -->
+        <use href="#px-sm" x="38.5" y="5.5" />
+        <use href="#px-sm" x="44" y="0" />
+      </g>
+    </g>
+
+  </g> <!-- End #robot-assembly -->
+
+
+  <!-- ========================================================================= -->
+  <!-- 4. RIGHT SIDE — "larecode" DEVELOPER MONOSPACE TYPOGRAPHY                 -->
+  <!-- ========================================================================= -->
+  <!--
+    Constructed with custom precision geometric vector paths so it never depends
+    on external font installation when exported to PNG/SVG and matches 100%
+    the slab-topped 'l', geometric 'a', 'r', 'e', 'c', 'o', 'd', 'e' in the banner.
+  -->
+  <g id="larecode-wordmark" filter="url(#text-studio-shadow)" fill="#f3f5f8">
+
+    <!-- 'l' : Top horizontal slab + vertical stem + curved bottom foot -->
+    <path d="M 744 338
+             H 792
+             C 796 338, 798 340, 798 344
+             V 450
+             C 798 463, 804 469, 817 469
+             H 827
+             C 831 469, 833 471, 833 475
+             V 488
+             C 833 492, 831 494, 826 494
+             H 811
+             C 783 494, 770 480, 770 452
+             V 363
+             H 744
+             C 740 363, 738 361, 738 357
+             V 344
+             C 738 340, 740 338, 744 338 Z" />
+
+    <!-- 'a' : Double-story developer monospace 'a' -->
+    <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M 908 374
+             C 939 374, 956 390, 956 420
+             V 488
+             C 956 492, 954 494, 950 494
+             H 936
+             C 932 494, 930 492, 930 488
+             V 478
+             C 921 490, 907 496, 890 496
+             C 866 496, 850 481, 850 460
+             C 850 436, 869 423, 904 423
+             H 929
+             V 418
+             C 929 403, 920 396, 903 396
+             C 889 396, 879 400, 869 406
+             C 866 408, 863 407, 861 403
+             L 856 392
+             C 854 389, 855 386, 859 384
+             C 873 377, 889 374, 908 374 Z
+             M 895 475
+             C 913 475, 929 464, 929 449
+             V 442
+             H 906
+             C 886 442, 877 448, 877 459
+             C 877 469, 884 475, 895 475 Z" />
+
+    <!-- 'r' : Crisp vertical stem with wide curved top shoulder -->
+    <path d="M 994 382
+             C 994 378, 996 376, 1000 376
+             H 1014
+             C 1018 376, 1020 378, 1020 382
+             V 399
+             C 1029 383, 1044 374, 1063 374
+             C 1072 374, 1079 376, 1083 378
+             C 1086 380, 1087 383, 1086 387
+             L 1081 401
+             C 1079 405, 1076 406, 1072 404
+             C 1068 402, 1062 401, 1056 401
+             C 1036 401, 1022 414, 1022 438
+             V 488
+             C 1022 492, 1020 494, 1016 494
+             H 1000
+             C 996 494, 994 492, 994 488
+             V 382 Z" />
+
+    <!-- 'e' (first) : Balanced rounded monospace 'e' -->
+    <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M 1156 374
+             C 1191 374, 1211 397, 1211 432
+             C 1211 438, 1210 442, 1205 442
+             H 1126
+             C 1128 463, 1141 474, 1162 474
+             C 1176 474, 1187 470, 1196 464
+             C 1199 462, 1202 463, 1204 466
+             L 1209 477
+             C 1211 480, 1210 483, 1206 486
+             C 1194 493, 1179 496, 1160 496
+             C 1121 496, 1098 471, 1098 435
+             C 1098 398, 1122 374, 1156 374 Z
+             M 1127 422
+             H 1184
+             C 1183 404, 1173 395, 1156 395
+             C 1140 395, 1129 405, 1127 422 Z" />
+
+    <!-- 'c' : Open geometric curve -->
+    <path d="M 1296 374
+             C 1314 374, 1329 379, 1339 387
+             C 1342 390, 1343 393, 1340 397
+             L 1332 407
+             C 1329 410, 1326 410, 1323 408
+             C 1315 401, 1307 398, 1297 398
+             C 1275 398, 1262 412, 1262 435
+             C 1262 458, 1275 472, 1297 472
+             C 1308 472, 1317 469, 1325 462
+             C 1328 460, 1331 460, 1334 463
+             L 1342 474
+             C 1344 477, 1343 480, 1340 483
+             C 1329 492, 1314 496, 1295 496
+             C 1257 496, 1234 472, 1234 435
+             C 1234 398, 1258 374, 1296 374 Z" />
+
+    <!-- 'o' : Symmetric rounded oval counter -->
+    <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M 1421 374
+             C 1458 374, 1481 398, 1481 435
+             C 1481 472, 1458 496, 1421 496
+             C 1384 496, 1361 472, 1361 435
+             C 1361 398, 1384 374, 1421 374 Z
+             M 1421 473
+             C 1442 473, 1453 458, 1453 435
+             C 1453 412, 1442 397, 1421 397
+             C 1400 397, 1389 412, 1389 435
+             C 1389 458, 1400 473, 1421 473 Z" />
+
+    <!-- 'd' : Tall right ascender with rounded bowl -->
+    <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M 1592 338
+             H 1608
+             C 1612 338, 1614 340, 1614 344
+             V 488
+             C 1614 492, 1612 494, 1608 494
+             H 1593
+             C 1589 494, 1587 492, 1587 488
+             V 477
+             C 1578 490, 1564 496, 1546 496
+             C 1515 496, 1495 472, 1495 435
+             C 1495 398, 1515 374, 1546 374
+             C 1564 374, 1577 380, 1586 392
+             V 344
+             C 1586 340, 1588 338, 1592 338 Z
+             M 1554 473
+             C 1574 473, 1586 458, 1586 435
+             C 1586 412, 1574 397, 1554 397
+             C 1534 397, 1523 412, 1523 435
+             C 1523 458, 1534 473, 1554 473 Z" />
+
+    <!-- 'e' (second) : Balanced rounded monospace 'e' -->
+    <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M 1696 374
+             C 1731 374, 1751 397, 1751 432
+             C 1751 438, 1750 442, 1745 442
+             H 1666
+             C 1668 463, 1681 474, 1702 474
+             C 1716 474, 1727 470, 1736 464
+             C 1739 462, 1742 463, 1744 466
+             L 1749 477
+             C 1751 480, 1750 483, 1746 486
+             C 1734 493, 1719 496, 1700 496
+             C 1661 496, 1638 471, 1638 435
+             C 1638 398, 1662 374, 1696 374 Z
+             M 1667 422
+             H 1724
+             C 1723 404, 1713 395, 1696 395
+             C 1680 395, 1669 405, 1667 422 Z" />
+  </g>
+
+</svg>

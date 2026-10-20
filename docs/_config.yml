@@ -6,6 +6,7 @@ plugins:
   - jekyll-seo-tag
 search_enabled: true
 heading_anchors: true
+logo: '/assets/logo.svg'
 aux_links:
   GitHub: https://github.com/rsyyd/larecode
 aux_links_new_tab: true
