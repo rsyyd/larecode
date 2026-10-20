@@ -1,7 +1,7 @@
 <svg id="larecode-banner-svg"
      xmlns="http://www.w3.org/2000/svg"
+     width="1920" height="820"
      viewBox="0 0 1920 820"
-     class="w-full h-auto block"
      role="img"
      aria-label="larecode CLI AI Agent Mascot Banner">
 
@@ -187,7 +187,7 @@
 
     <!-- Right Leg 3D Gradient -->
     <radialGradient id="right-leg-grad" cx="55%" cy="32%" r="65%">
-      <stop offset="0%" stop-color="#373e4c" /
+      <stop offset="0%" stop-color="#373e4c" />
       <stop offset="38%" stop-color="#1b1f27" />
       <stop offset="78%" stop-color="#0b0d11" />
       <stop offset="100%" stop-color="#050608" />

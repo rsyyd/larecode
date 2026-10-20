@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/rsyyd/larecode/main/docs/assets/banner.svg" alt="Lare Code" width="730">
+  <img src="https://raw.githubusercontent.com/rsyyd/larecode/main/docs/assets/banner.png" alt="Lare Code" width="730">
 </p>
 
 <p align="center">
