@@ -136,9 +136,13 @@ export class OllamaAdapter implements ProviderAdapter {
 
   private httpError(status: number): LareError {
     return new LareError(
-      status === 401 || status === 403 ? 'PROVIDER_AUTH_FAILED' : 'PROVIDER_UNAVAILABLE',
+      status === 401 || status === 403
+        ? 'PROVIDER_AUTH_FAILED'
+        : status === 429
+          ? 'RATE_LIMITED'
+          : 'PROVIDER_UNAVAILABLE',
       `${this.name} returned ${status}`,
-      { context: { provider: this.name, status }, retryable: status >= 500 }
+      { context: { provider: this.name, status }, retryable: status === 429 || status >= 500 }
     );
   }
 

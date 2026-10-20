@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `AgentRuntime` accepts prior session history; server, gateway, and SDK/ACP replay it so multi-turn context survives turns.
 - Empty provider responses now surface as an explicit `EMPTY_RESPONSE` error instead of a silent completed turn.
 - Tool calls are validated against required arguments and declared types before permission checks or execution.
+- Provider failures that are retryable (429, 5xx, network) are retried with exponential backoff and jitter before any text is streamed; 429 responses now report `RATE_LIMITED`.
 
 ### Removed
 

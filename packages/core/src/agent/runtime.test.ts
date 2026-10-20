@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { LareError } from '../error/error.js';
 import { Permissions } from '../permission/permission.js';
 import {
   Providers,
@@ -57,6 +58,28 @@ class TextAdapter implements ProviderAdapter {
 
 class EmptyAdapter extends TextAdapter {
   override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {}
+}
+
+class FlakyAdapter extends TextAdapter {
+  attempts = 0;
+
+  override async *streamChat(messages: ProviderMessage[]): AsyncGenerator<ProviderStreamEvent> {
+    this.attempts += 1;
+    if (this.attempts < 3) {
+      throw new LareError('RATE_LIMITED', 'slow down', { retryable: true });
+    }
+    yield { type: 'text', text: 'ok' };
+  }
+}
+
+class PartialAdapter extends TextAdapter {
+  attempts = 0;
+
+  override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+    this.attempts += 1;
+    yield { type: 'text', text: 'partial' };
+    throw new LareError('RATE_LIMITED', 'lost the stream', { retryable: true });
+  }
 }
 
 function runtime(events: AgentRuntimeEvent[], seen: AgentRuntimeTurnInput[] = []): AgentRuntime {
@@ -177,6 +200,66 @@ describe('AgentRuntime contract', () => {
       { role: 'assistant', content: 'earlier answer' },
       { role: 'user', content: 'follow up' },
     ]);
+  });
+
+  it('retries retryable stream failures before any text', async () => {
+    const adapter = new FlakyAdapter();
+    const providers = new Providers();
+    providers.register(adapter);
+    const instance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools: new Tools(),
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      maxRetries: 2,
+      retryDelayMs: 0,
+    });
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of instance.run({
+      prompt: 'hello',
+      signal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(adapter.attempts).toBe(3);
+    expect(
+      events
+        .filter((event) => event.type === 'text')
+        .map((event) => (event.type === 'text' ? event.text : ''))
+    ).toEqual(['ok']);
+    expect(events.at(-1)).toMatchObject({ type: 'halt', reason: 'completed' });
+  });
+
+  it('does not retry once text has been emitted', async () => {
+    const adapter = new PartialAdapter();
+    const providers = new Providers();
+    providers.register(adapter);
+    const instance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools: new Tools(),
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      maxRetries: 2,
+      retryDelayMs: 0,
+    });
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of instance.run({
+      prompt: 'hello',
+      signal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(adapter.attempts).toBe(1);
+    expect(events.at(-1)).toMatchObject({
+      type: 'error',
+      error: { code: 'RATE_LIMITED' },
+    });
   });
 
   it('halts with cancelled when the turn signal is aborted', async () => {

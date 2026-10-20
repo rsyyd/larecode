@@ -92,6 +92,21 @@ export class OpenAIAdapter implements ProviderAdapter {
     );
   }
 
+  private httpError(status: number): LareError {
+    return new LareError(
+      status === 401 || status === 403
+        ? 'PROVIDER_AUTH_FAILED'
+        : status === 429
+          ? 'RATE_LIMITED'
+          : 'PROVIDER_UNAVAILABLE',
+      `${this.name} returned ${status}`,
+      {
+        context: { provider: this.name, status },
+        retryable: status === 429 || status >= 500,
+      }
+    );
+  }
+
   private headers(): Record<string, string> {
     const headers: Record<string, string> = {
       'content-type': 'application/json',
@@ -251,16 +266,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     }
 
     if (!response.ok) {
-      throw new LareError(
-        response.status === 401 || response.status === 403
-          ? 'PROVIDER_AUTH_FAILED'
-          : 'PROVIDER_UNAVAILABLE',
-        `${this.name} returned ${response.status}`,
-        {
-          context: { provider: this.name, status: response.status },
-          retryable: response.status >= 500,
-        }
-      );
+      throw this.httpError(response.status);
     }
 
     const data = (await response.json()) as OpenAIChatResponse;
@@ -325,14 +331,13 @@ export class OpenAIAdapter implements ProviderAdapter {
 
     if (!response.ok || !response.body) {
       const detail = response.ok ? 'empty response body' : await this.errorDetail(response);
+      const error = this.httpError(response.status);
       throw new LareError(
-        response.status === 401 || response.status === 403
-          ? 'PROVIDER_AUTH_FAILED'
-          : 'PROVIDER_UNAVAILABLE',
+        error.code,
         `${this.name} stream failed (${response.status})${detail ? `: ${detail}` : ''}`,
         {
           context: { provider: this.name, status: response.status },
-          retryable: response.status >= 500,
+          retryable: error.retryable,
         }
       );
     }

@@ -73,6 +73,8 @@ export interface AgentRuntimeOptions {
   history?: ProviderMessage[];
   maxIterations?: number;
   maxToolCalls?: number;
+  maxRetries?: number;
+  retryDelayMs?: number;
   tokenBudget?: number;
   durationBudget?: number;
   usageRecorder?: UsageRecorder;
@@ -102,6 +104,32 @@ function renderOutput(output: unknown): string {
   return text.length > TOOL_OUTPUT_LIMIT
     ? `${text.slice(0, TOOL_OUTPUT_LIMIT)}\n… truncated`
     : text;
+}
+
+function isRetryable(error: unknown): boolean {
+  return (
+    error instanceof LareError &&
+    (error.retryable || error.code === 'NETWORK_ERROR' || error.code === 'RATE_LIMITED')
+  );
+}
+
+function waitForRetry(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new LareError('CANCELLED', 'agent runtime cancelled'));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    const abort = () => {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', abort);
+      reject(new LareError('CANCELLED', 'agent runtime cancelled'));
+    };
+    signal.addEventListener('abort', abort, { once: true });
+  });
 }
 
 function renderTranscript(messages: ProviderMessage[]): string {
@@ -140,6 +168,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly usage: UsageRecorder;
   private readonly maxIterations: number;
   private readonly maxToolCalls: number;
+  private readonly maxRetries: number;
+  private readonly retryDelayMs: number;
   private readonly tokenBudget: number;
   private readonly durationBudget: number;
   private readonly startedAt = Date.now();
@@ -158,6 +188,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.unattended = options.unattended ?? false;
     this.maxIterations = options.maxIterations ?? 40;
     this.maxToolCalls = options.maxToolCalls ?? 200;
+    this.maxRetries = options.maxRetries ?? 2;
+    this.retryDelayMs = options.retryDelayMs ?? 250;
     this.tokenBudget = options.tokenBudget ?? 200_000;
     this.durationBudget = options.durationBudget ?? 600_000;
     this.usage = options.usageRecorder ?? createUsageRecorder(this.sessionId);
@@ -270,7 +302,10 @@ export class DefaultAgentRuntime implements AgentRuntime {
         let streamedTokens = 0;
 
         if (adapter.streamChat) {
-          for await (const event of adapter.streamChat(this.messages, completion)) {
+          for await (const event of this.streamWithRetry(
+            () => adapter.streamChat!(this.messages, completion),
+            input.signal
+          )) {
             if (input.signal.aborted) {
               yield { type: 'halt', reason: 'cancelled' };
               return;
@@ -290,11 +325,15 @@ export class DefaultAgentRuntime implements AgentRuntime {
           }
         } else {
           const transcript = renderTranscript(this.messages);
-          for await (const chunk of adapter.streamComplete(transcript, {
-            ...completion,
-            systemPrompt: this.messages[0]?.content,
-            tools: undefined,
-          })) {
+          for await (const chunk of this.streamWithRetry(
+            () =>
+              adapter.streamComplete(transcript, {
+                ...completion,
+                systemPrompt: this.messages[0]?.content,
+                tools: undefined,
+              }),
+            input.signal
+          )) {
             if (input.signal.aborted) {
               yield { type: 'halt', reason: 'cancelled' };
               return;
@@ -410,6 +449,28 @@ export class DefaultAgentRuntime implements AgentRuntime {
           ? error
           : LareError.wrap('UNKNOWN', error instanceof Error ? error : new Error(String(error)));
       yield { type: 'error', error: failure.toJSON() };
+    }
+  }
+
+  private async *streamWithRetry<T>(
+    open: () => AsyncIterable<T>,
+    signal: AbortSignal
+  ): AsyncGenerator<T> {
+    for (let attempt = 0; ; attempt += 1) {
+      let emitted = false;
+      try {
+        for await (const item of open()) {
+          emitted = true;
+          yield item;
+        }
+        return;
+      } catch (error) {
+        if (emitted || signal.aborted || attempt >= this.maxRetries || !isRetryable(error)) {
+          throw error;
+        }
+        const baseDelay = Math.min(30_000, this.retryDelayMs * 2 ** attempt);
+        await waitForRetry(Math.floor(baseDelay / 2 + (Math.random() * baseDelay) / 2), signal);
+      }
     }
   }
 

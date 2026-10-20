@@ -179,6 +179,16 @@ describe.each(SPECS)('provider contract: $label', (spec) => {
     });
   });
 
+  it('complete(): maps 429 to retryable RATE_LIMITED', async () => {
+    const { fetchImpl } = dispatchFetch({ completion: statusResponse(429) });
+    const adapter = spec.create(fetchImpl);
+
+    await expect(adapter.complete('hi', { model: 'm1' })).rejects.toMatchObject({
+      code: 'RATE_LIMITED',
+      retryable: true,
+    });
+  });
+
   it('complete(): maps network failure to NETWORK_ERROR', async () => {
     const failing = (async () => {
       throw new Error('ECONNREFUSED');

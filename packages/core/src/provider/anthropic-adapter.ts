@@ -86,6 +86,21 @@ export class AnthropicAdapter implements ProviderAdapter {
     return base.endsWith('/v1') ? `${base}${path}` : `${base}/v1${path}`;
   }
 
+  private httpError(status: number): LareError {
+    return new LareError(
+      status === 401 || status === 403
+        ? 'PROVIDER_AUTH_FAILED'
+        : status === 429
+          ? 'RATE_LIMITED'
+          : 'PROVIDER_UNAVAILABLE',
+      `${this.name} returned ${status}`,
+      {
+        context: { provider: this.name, status },
+        retryable: status === 429 || status >= 500,
+      }
+    );
+  }
+
   private headers(): Record<string, string> {
     return {
       'content-type': 'application/json',
@@ -157,16 +172,7 @@ export class AnthropicAdapter implements ProviderAdapter {
     }
 
     if (!response.ok) {
-      throw new LareError(
-        response.status === 401 || response.status === 403
-          ? 'PROVIDER_AUTH_FAILED'
-          : 'PROVIDER_UNAVAILABLE',
-        `${this.name} returned ${response.status}`,
-        {
-          context: { provider: this.name, status: response.status },
-          retryable: response.status >= 500,
-        }
-      );
+      throw this.httpError(response.status);
     }
 
     const data = (await response.json()) as AnthropicMessageResponse;
@@ -265,16 +271,7 @@ export class AnthropicAdapter implements ProviderAdapter {
     }
 
     if (!response.ok || !response.body) {
-      throw new LareError(
-        response.status === 401 || response.status === 403
-          ? 'PROVIDER_AUTH_FAILED'
-          : 'PROVIDER_UNAVAILABLE',
-        `${this.name} stream unavailable`,
-        {
-          context: { provider: this.name, status: response.status },
-          retryable: response.status >= 500,
-        }
-      );
+      throw this.httpError(response.status);
     }
 
     const calls = new Map<number, ProviderToolCall>();
