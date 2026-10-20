@@ -172,4 +172,52 @@ describe('OpenAIAdapter streamChat', () => {
       },
     ]);
   });
+
+  it('throws when the stream reports an error payload', async () => {
+    const body = [
+      'event: error',
+      'data: {"error":{"code":"model_unavailable","message":"upstream down"}}',
+      'data: [DONE]',
+      '',
+    ].join('\n');
+    const fetchImpl = (async () => rawStream(body)) as LareCodeFetch;
+    const adapter = new OpenAIAdapter({
+      name: 'mock',
+      baseUrl: 'http://mock/v1',
+      models: ['m'],
+      fetchImpl,
+    });
+
+    const consume = async (): Promise<void> => {
+      for await (const event of adapter.streamChat([{ role: 'user', content: 'go' }], {
+        model: 'm',
+      })) {
+        expect(event).toBeDefined();
+      }
+    };
+    await expect(consume()).rejects.toThrow('mock: upstream down');
+  });
+
+  it('includes response details when the stream request fails', async () => {
+    const fetchImpl = (async () => ({
+      ok: false,
+      status: 503,
+      text: async () => '{"error":{"message":"busy"}}',
+    })) as unknown as LareCodeFetch;
+    const adapter = new OpenAIAdapter({
+      name: 'mock',
+      baseUrl: 'http://mock/v1',
+      models: ['m'],
+      fetchImpl,
+    });
+
+    const consume = async (): Promise<void> => {
+      for await (const event of adapter.streamChat([{ role: 'user', content: 'go' }], {
+        model: 'm',
+      })) {
+        expect(event).toBeDefined();
+      }
+    };
+    await expect(consume()).rejects.toThrow('mock stream failed (503): busy');
+  });
 });

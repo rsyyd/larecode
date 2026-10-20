@@ -51,6 +51,7 @@ interface OpenAIStreamChunk {
     delta?: { content?: string | null; tool_calls?: OpenAIToolCallDelta[] };
   }[];
   usage?: OpenAIUsage | null;
+  error?: { message?: string; code?: string };
 }
 
 function mapUsage(usage: OpenAIUsage): ProviderUsage {
@@ -160,6 +161,21 @@ export class OpenAIAdapter implements ProviderAdapter {
     };
   }
 
+  private async errorDetail(response: Response): Promise<string> {
+    try {
+      const text = (await response.text()).trim();
+      try {
+        const parsed = JSON.parse(text) as { error?: { message?: string } };
+        if (parsed.error?.message) return parsed.error.message;
+      } catch {
+        return text.replace(/\s+/g, ' ').slice(0, 200);
+      }
+      return text.replace(/\s+/g, ' ').slice(0, 200);
+    } catch {
+      return '';
+    }
+  }
+
   private async *readStream(response: Response): AsyncGenerator<OpenAIStreamChunk> {
     if (!response.body) return;
     const reader = response.body.getReader();
@@ -177,8 +193,17 @@ export class OpenAIAdapter implements ProviderAdapter {
         const payload = line.slice(5).trimStart();
         if (payload === '[DONE]') return;
         try {
-          yield JSON.parse(payload) as OpenAIStreamChunk;
-        } catch {
+          const chunk = JSON.parse(payload) as OpenAIStreamChunk;
+          if (chunk.error) {
+            throw new LareError(
+              'PROVIDER_UNAVAILABLE',
+              `${this.name}: ${chunk.error.message ?? chunk.error.code ?? 'stream error'}`,
+              { context: { provider: this.name }, retryable: true }
+            );
+          }
+          yield chunk;
+        } catch (error) {
+          if (error instanceof LareError) throw error;
           defaultLogger.debug('unparseable stream chunk', { provider: this.name });
         }
       }
@@ -299,11 +324,12 @@ export class OpenAIAdapter implements ProviderAdapter {
     }
 
     if (!response.ok || !response.body) {
+      const detail = response.ok ? 'empty response body' : await this.errorDetail(response);
       throw new LareError(
         response.status === 401 || response.status === 403
           ? 'PROVIDER_AUTH_FAILED'
           : 'PROVIDER_UNAVAILABLE',
-        `${this.name} stream unavailable`,
+        `${this.name} stream failed (${response.status})${detail ? `: ${detail}` : ''}`,
         {
           context: { provider: this.name, status: response.status },
           retryable: response.status >= 500,
