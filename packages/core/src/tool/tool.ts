@@ -10,6 +10,33 @@ export type ToolSchema = {
   required: string[];
 };
 
+function matchesType(value: unknown, type: string): boolean {
+  if (type === 'string') return typeof value === 'string';
+  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
+  if (type === 'boolean') return typeof value === 'boolean';
+  if (type === 'array') return Array.isArray(value);
+  if (type === 'object')
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return true;
+}
+
+export function validateToolArguments(tool: Tool, args: unknown): string | null {
+  if (typeof args !== 'object' || args === null || Array.isArray(args)) {
+    return 'arguments must be an object';
+  }
+  const values = args as Record<string, unknown>;
+  for (const key of tool.schema.required) {
+    if (!(key in values) || values[key] === undefined) return `missing required argument "${key}"`;
+  }
+  for (const [key, property] of Object.entries(tool.schema.properties)) {
+    if (values[key] === undefined) continue;
+    if (!matchesType(values[key], property.type)) {
+      return `argument "${key}" must be a ${property.type}`;
+    }
+  }
+  return null;
+}
+
 export interface Tool {
   name: string;
   description: string;

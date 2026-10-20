@@ -13,7 +13,7 @@ import type {
   ToolSpec,
 } from '../provider/provider.js';
 import { coreTools } from '../tool/core.js';
-import { Tools, type Tool, type ToolCall } from '../tool/tool.js';
+import { Tools, validateToolArguments, type Tool, type ToolCall } from '../tool/tool.js';
 import {
   DEFAULT_MODEL_PRICING,
   createUsageRecorder,
@@ -429,6 +429,15 @@ export class DefaultAgentRuntime implements AgentRuntime {
         ok: false,
         content: `PERMISSION_DENIED: ${call.name} is not available to the ${this.agent} agent`,
       };
+    }
+
+    const tool = this.tools.get(call.name);
+    if (!tool) {
+      return { ok: false, content: `ERROR: Tool not found: ${call.name}` };
+    }
+    const invalid = validateToolArguments(tool, args);
+    if (invalid) {
+      return { ok: false, content: `ERROR: ${invalid}` };
     }
 
     const group = toolPermissionGroup(call.name);

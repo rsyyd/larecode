@@ -7,6 +7,7 @@ import type {
   ProviderAdapter,
   ProviderMessage,
   ProviderStreamEvent,
+  ProviderToolCall,
   ToolSpec,
 } from '../provider/provider.js';
 import { Tools, type Tool } from '../tool/tool.js';
@@ -54,6 +55,39 @@ class FailingAdapter extends ToolAdapter {
   override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
     yield { type: 'text', text: '' };
     throw new Error('boom');
+  }
+}
+
+class CallAdapter implements ProviderAdapter {
+  readonly name = 'fake';
+  readonly capabilities = {
+    tools: true,
+    vision: false,
+    reasoning: false,
+    streaming: true,
+    maxTokens: 4096,
+  };
+  private sent = false;
+
+  constructor(private readonly call: ProviderToolCall) {}
+
+  async models(): Promise<ModelInfo[]> {
+    return [];
+  }
+
+  async complete(): Promise<string> {
+    return 'done';
+  }
+
+  async *streamComplete(): AsyncGenerator<string> {}
+
+  async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+    if (!this.sent) {
+      this.sent = true;
+      yield { type: 'tool_calls', calls: [this.call] };
+      return;
+    }
+    yield { type: 'text', text: 'done' };
   }
 }
 
@@ -128,6 +162,29 @@ describe('AgentRuntimeLoop', () => {
     }
 
     expect(seen).toEqual([{ text: 'hi' }]);
+  });
+
+  it('rejects malformed tool calls before execution', async () => {
+    const cases: ProviderToolCall[] = [
+      { id: 'c1', name: 'echo', arguments: '{' },
+      { id: 'c2', name: 'echo', arguments: '{}' },
+      { id: 'c3', name: 'echo', arguments: '{"text":1}' },
+      { id: 'c4', name: 'missing', arguments: '{}' },
+    ];
+
+    for (const call of cases) {
+      const seen: unknown[] = [];
+      const tools = new Tools();
+      tools.register(echoTool(seen));
+      const chunks: string[] = [];
+
+      for await (const chunk of runtimeLoop(new CallAdapter(call), tools).run('go')) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks).toEqual(['done']);
+      expect(seen).toEqual([]);
+    }
   });
 
   it('reports iteration halts', async () => {
