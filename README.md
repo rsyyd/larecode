@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Lare Code" width="400">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rsyyd/larecode/main/docs/assets/banner-dark.svg">
+    <img src="https://raw.githubusercontent.com/rsyyd/larecode/main/docs/assets/banner-light.svg" alt="Lare Code" width="400">
+  </picture>
 </p>
 
 <p align="center">
