@@ -66,6 +66,7 @@ class TranscriptAdapter implements ProviderAdapter {
 
   async *streamComplete(prompt: string): AsyncGenerator<string> {
     this.prompts.push(prompt);
+    yield 'ok';
   }
 }
 

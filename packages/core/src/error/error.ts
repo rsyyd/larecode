@@ -4,6 +4,7 @@ export type ErrorCode =
   | 'CONFIG_NOT_FOUND'
   | 'PROVIDER_UNAVAILABLE'
   | 'PROVIDER_AUTH_FAILED'
+  | 'EMPTY_RESPONSE'
   | 'MODEL_NOT_FOUND'
   | 'TOOL_NOT_FOUND'
   | 'TOOL_EXECUTION_FAILED'
@@ -49,6 +50,7 @@ export const ERROR_CATEGORIES: Record<
   CONFIG_NOT_FOUND: 'system',
   PROVIDER_UNAVAILABLE: 'provider',
   PROVIDER_AUTH_FAILED: 'provider',
+  EMPTY_RESPONSE: 'provider',
   MODEL_NOT_FOUND: 'provider',
   TOOL_NOT_FOUND: 'tool',
   TOOL_EXECUTION_FAILED: 'tool',

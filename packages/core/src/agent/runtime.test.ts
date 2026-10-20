@@ -55,6 +55,10 @@ class TextAdapter implements ProviderAdapter {
   }
 }
 
+class EmptyAdapter extends TextAdapter {
+  override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {}
+}
+
 function runtime(events: AgentRuntimeEvent[], seen: AgentRuntimeTurnInput[] = []): AgentRuntime {
   return {
     sessionId: 's1',
@@ -117,6 +121,32 @@ describe('AgentRuntime contract', () => {
 
     expect(events.map((event) => event.type)).toEqual(['text', 'usage', 'halt']);
     expect(events.at(-1)).toMatchObject({ type: 'halt', reason: 'completed' });
+  });
+
+  it('reports an empty provider response instead of completing silently', async () => {
+    const providers = new Providers();
+    providers.register(new EmptyAdapter());
+    const instance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools: new Tools(),
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+    });
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of instance.run({
+      prompt: 'hello',
+      signal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(events.at(-1)).toMatchObject({
+      type: 'error',
+      error: { code: 'EMPTY_RESPONSE', retryable: true },
+    });
+    expect(instance.getHistory()).toHaveLength(2);
   });
 
   it('replays supplied history before the new prompt', async () => {

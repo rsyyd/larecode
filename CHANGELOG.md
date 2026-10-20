@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `DefaultAgentRuntime` now owns the chat loop; `ChatSession` is a thin adapter with unchanged behavior.
 - `run`, server, gateway, cron, and SDK/ACP now use `AgentRuntimeLoop` with the build agent; gateway and cron pass their pre-authorized policies through.
 - `AgentRuntime` accepts prior session history; server, gateway, and SDK/ACP replay it so multi-turn context survives turns.
+- Empty provider responses now surface as an explicit `EMPTY_RESPONSE` error instead of a silent completed turn.
 
 ## [0.1.1] - 2026-10-19
 

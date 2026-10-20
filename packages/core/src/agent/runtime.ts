@@ -309,6 +309,14 @@ export class DefaultAgentRuntime implements AgentRuntime {
         this.recordUsage(text, reported);
         yield { type: 'usage', usage: this.usage.getAggregate() };
 
+        if (text.trim() === '' && calls.length === 0) {
+          const failure = new LareError('EMPTY_RESPONSE', 'provider returned an empty response', {
+            retryable: true,
+          });
+          yield { type: 'error', error: failure.toJSON() };
+          return;
+        }
+
         const budgetHit = this.tokensUsed >= this.tokenBudget;
         this.messages.push({
           role: 'assistant',
