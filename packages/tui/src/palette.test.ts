@@ -21,11 +21,9 @@ describe('filterCommands', () => {
     expect(filterCommands('/').length).toBeLessThanOrEqual(6);
   });
 
-  it('includes the documented commands', () => {
+  it('only lists implemented commands', () => {
     const names = COMMANDS.map((command) => command.name);
-    for (const expected of ['/model', '/skill', '/session', '/share']) {
-      expect(names).toContain(expected);
-    }
+    expect(names).toEqual(['/help', '/clear', '/theme', '/model', '/exit']);
   });
 });
 

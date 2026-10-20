@@ -82,8 +82,14 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
   };
 
   await startTui({
+    provider,
     model,
     runTurn,
+    catalogs: Object.entries(config.providers).map(([name, entry]) => ({
+      provider: name,
+      models: entry.models,
+    })),
+    onSelectModel: (nextProvider, nextModel) => session.selectModel(nextProvider, nextModel),
     getUsage: () => session.getUsage(),
     onClear: () => session.reset(),
   });

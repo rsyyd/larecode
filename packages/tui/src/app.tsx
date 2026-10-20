@@ -14,8 +14,16 @@ export interface PermissionPrompt {
 
 export type PermissionConfirm = (request: PermissionPrompt) => Promise<boolean>;
 
+export interface ModelCatalog {
+  provider: string;
+  models: string[];
+}
+
 export interface AppProps {
+  provider?: string;
   model?: string;
+  catalogs?: ModelCatalog[];
+  onSelectModel?: (provider: string, model: string) => void;
   theme?: ThemeName;
   version?: string;
   initialMessages?: ChatMessage[];
@@ -67,7 +75,10 @@ interface PendingPermission {
 }
 
 export function App({
+  provider: initialProvider,
   model = 'no model',
+  catalogs = [],
+  onSelectModel,
   theme: initialTheme = 'dark',
   version = '0.1.1',
   initialMessages = [],
@@ -86,6 +97,8 @@ export function App({
   const [input, setInput] = useState<InputState>(emptyInput());
   const inputRef = useRef(input);
   const [agent, setAgent] = useState<'plan' | 'build'>('plan');
+  const [currentProvider, setCurrentProvider] = useState(initialProvider);
+  const [currentModel, setCurrentModel] = useState(model);
   const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [streaming, setStreaming] = useState(false);
@@ -132,7 +145,7 @@ export function App({
   };
 
   const runCommand = (raw: string): void => {
-    const name = raw.trim().split(/\s+/)[0];
+    const [name, ...args] = raw.trim().split(/\s+/);
     switch (name) {
       case '/help':
         addNote(HELP_TEXT);
@@ -144,11 +157,44 @@ export function App({
       case '/theme':
         setThemeName((current) => (current === 'dark' ? 'light' : 'dark'));
         break;
+      case '/model': {
+        if (args.length === 0) {
+          addNote(`model · ${currentProvider ? `${currentProvider}/` : ''}${currentModel}`);
+          for (const catalog of catalogs) {
+            const shown = catalog.models.slice(0, 12);
+            const more = catalog.models.length - shown.length;
+            addNote(
+              `${catalog.provider}: ${shown.join(', ') || '(none)'}${more > 0 ? ` +${more} more` : ''}`
+            );
+          }
+          addNote('switch · /model <provider> <model>');
+          break;
+        }
+        const nextProvider = args.length > 1 ? args[0] : currentProvider;
+        const nextModel = args.length > 1 ? args.slice(1).join(' ') : args[0];
+        if (!nextProvider) {
+          addNote('usage: /model <provider> <model>');
+          break;
+        }
+        if (!onSelectModel) {
+          addNote('no model switcher connected');
+          break;
+        }
+        try {
+          onSelectModel(nextProvider, nextModel);
+          setCurrentProvider(nextProvider);
+          setCurrentModel(nextModel);
+          addNote(`model → ${nextProvider}/${nextModel}`);
+        } catch (error) {
+          addNote(`error: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        break;
+      }
       case '/exit':
         exit();
         break;
       default:
-        addNote(`${name} arrives in a later milestone`);
+        addNote(`unknown command: ${name}`);
     }
   };
 
@@ -321,7 +367,7 @@ export function App({
               input={input}
               theme={theme}
               agent={agentLabel}
-              model={model}
+              model={currentModel}
               streaming={streaming}
               frame={frame}
               session={false}
@@ -336,7 +382,7 @@ export function App({
                 message={message}
                 theme={theme}
                 agent={agentLabel}
-                model={model}
+                model={currentModel}
                 width={columns}
               />
             ))}
@@ -356,7 +402,7 @@ export function App({
           input={input}
           theme={theme}
           agent={agentLabel}
-          model={model}
+          model={currentModel}
           streaming={streaming}
           frame={frame}
           session={true}

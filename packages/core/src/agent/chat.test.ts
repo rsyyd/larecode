@@ -109,6 +109,16 @@ async function drain(instance: ChatSession, prompt: string): Promise<ChatEvent[]
 }
 
 describe('ChatSession', () => {
+  it('switches model on a known provider and rejects unknown providers', () => {
+    const instance = session(new ScriptedAdapter([]));
+    instance.selectModel('fake', 'next-model');
+    expect(instance.getProvider()).toBe('fake');
+    expect(instance.getModel()).toBe('next-model');
+    expect(() => instance.selectModel('missing', 'm')).toThrow(
+      'Provider "missing" is not available'
+    );
+  });
+
   it('streams text, runs tools, and keeps the tool result in history', async () => {
     const adapter = new ScriptedAdapter([
       [

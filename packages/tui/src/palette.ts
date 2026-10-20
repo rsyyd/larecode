@@ -7,10 +7,7 @@ export const COMMANDS: SlashCommand[] = [
   { name: '/help', description: 'show keys and commands' },
   { name: '/clear', description: 'clear the conversation' },
   { name: '/theme', description: 'toggle dark and light' },
-  { name: '/model', description: 'switch the active model' },
-  { name: '/skill', description: 'run a skill' },
-  { name: '/session', description: 'manage sessions' },
-  { name: '/share', description: 'share a session link' },
+  { name: '/model', description: 'list or switch provider and model' },
   { name: '/exit', description: 'quit larecode' },
 ];
 

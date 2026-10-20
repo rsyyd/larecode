@@ -278,6 +278,46 @@ describe('App', () => {
     expect(frame).toContain('1.2k tok');
     expect(frame).toContain('$0.0060');
   });
+  it('lists providers and switches provider and model on /model', async () => {
+    const onSelectModel = vi.fn();
+    const catalogs = [
+      { provider: '9router', models: ['Combo', 'Gpt'] },
+      { provider: 'ollama', models: ['qwen2.5-coder'] },
+    ];
+    const { stdin, lastFrame } = render(
+      <App provider="9router" model="Gacor" catalogs={catalogs} onSelectModel={onSelectModel} />
+    );
+    await flush();
+    stdin.write('/model');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame()).toContain('9router: Combo, Gpt');
+    expect(lastFrame()).toContain('ollama: qwen2.5-coder');
+
+    stdin.write('/model 9router Combo');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(onSelectModel).toHaveBeenCalledWith('9router', 'Combo');
+    expect(lastFrame()).toContain('model → 9router/Combo');
+    expect(lastFrame()).toContain('Plan · Combo');
+  });
+
+  it('reports an unknown provider when switching models', async () => {
+    const onSelectModel = vi.fn(() => {
+      throw new Error('Provider "nope" is not available');
+    });
+    const { stdin, lastFrame } = render(
+      <App provider="9router" model="Combo" onSelectModel={onSelectModel} />
+    );
+    await flush();
+    stdin.write('/model nope Gpt');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame()).toContain('Provider "nope" is not available');
+  });
 });
 
 describe('App permissions', () => {

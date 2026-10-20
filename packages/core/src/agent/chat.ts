@@ -99,8 +99,8 @@ function parseArguments(raw: string): { args: unknown; error?: string } {
 }
 
 export class ChatSession {
-  private readonly provider: string;
-  private readonly model: string;
+  private provider: string;
+  private model: string;
   private readonly workingDir: string;
   private readonly providers: Providers;
   private readonly tools: Tools;
@@ -154,6 +154,14 @@ export class ChatSession {
 
   getModel(): string {
     return this.model;
+  }
+
+  selectModel(provider: string, model: string): void {
+    if (!this.providers.get(provider)) {
+      throw new LareError('PROVIDER_UNAVAILABLE', `Provider "${provider}" is not available`);
+    }
+    this.provider = provider;
+    this.model = model;
   }
 
   getUsage(): UsageAggregate {
