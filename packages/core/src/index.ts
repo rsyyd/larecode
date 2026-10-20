@@ -11,6 +11,18 @@ export type {
   ChatRunOptions,
   ChatSessionOptions,
 } from './agent/chat.js';
+export { DefaultAgentRuntime, isAgentRuntimeStopEvent } from './agent/runtime.js';
+export type {
+  AgentRuntime,
+  AgentRuntimeAgentName,
+  AgentRuntimeEvent,
+  AgentRuntimeHaltReason,
+  AgentRuntimeOptions,
+  AgentRuntimePermissionConfirm,
+  AgentRuntimePermissionRequest,
+  AgentRuntimeStopEvent,
+  AgentRuntimeTurnInput,
+} from './agent/runtime.js';
 export { BUILTIN_AGENTS, toolsForAgent } from './agent/agents.js';
 export type { AgentDefinition, AgentName } from './agent/agents.js';
 export { Subagents, compressResult, SUBAGENT_DEFAULTS } from './agent/subagent.js';

@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Product requirements document covering 16 sub-PRDs, 280 tasks, release gates, and the 0.2.0-1.0 version plan.
+- `AgentRuntime` contract types and ADR-0002, the first step toward one runtime for every surface.
+- `DefaultAgentRuntime` now owns the chat loop; `ChatSession` is a thin adapter with unchanged behavior.
 
 ## [0.1.1] - 2026-10-19
 

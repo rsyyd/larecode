@@ -1,0 +1,162 @@
+import { describe, expect, it } from 'vitest';
+import { Permissions } from '../permission/permission.js';
+import {
+  Providers,
+  type ModelInfo,
+  type ProviderAdapter,
+  type ProviderStreamEvent,
+} from '../provider/provider.js';
+import { Tools } from '../tool/tool.js';
+import type { UsageAggregate } from '../usage/usage.js';
+import {
+  DefaultAgentRuntime,
+  isAgentRuntimeStopEvent,
+  type AgentRuntime,
+  type AgentRuntimeEvent,
+  type AgentRuntimeTurnInput,
+} from './runtime.js';
+
+function usage(): UsageAggregate {
+  return {
+    totalTokens: { input: 1, output: 1, total: 2 },
+    totalCost: { inputCost: 0, outputCost: 0, totalCost: 0 },
+    byModel: {},
+    conversationId: 's1',
+    startedAt: 0,
+    updatedAt: 0,
+  };
+}
+
+class TextAdapter implements ProviderAdapter {
+  readonly name = 'fake';
+  readonly capabilities = {
+    tools: true,
+    vision: false,
+    reasoning: false,
+    streaming: true,
+    maxTokens: 4096,
+  };
+
+  async models(): Promise<ModelInfo[]> {
+    return [];
+  }
+
+  async complete(): Promise<string> {
+    return 'hi';
+  }
+
+  async *streamComplete(): AsyncGenerator<string> {}
+
+  async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+    yield { type: 'text', text: 'hi' };
+  }
+}
+
+function runtime(events: AgentRuntimeEvent[], seen: AgentRuntimeTurnInput[] = []): AgentRuntime {
+  return {
+    sessionId: 's1',
+    getProvider: () => 'fake',
+    getModel: () => 'test-model',
+    getUsage: () => usage(),
+    getHistory: () => [],
+    setAgent: () => {},
+    selectModel: () => {},
+    reset: () => {},
+    async *run(input) {
+      seen.push(input);
+      for (const event of events) yield event;
+    },
+  };
+}
+
+describe('AgentRuntime contract', () => {
+  it('streams events and forwards the turn signal', async () => {
+    const controller = new AbortController();
+    const seen: AgentRuntimeTurnInput[] = [];
+    const events: AgentRuntimeEvent[] = [
+      { type: 'text', text: 'hi' },
+      { type: 'tool_start', callId: 'c1', name: 'read', args: { path: 'a' } },
+      { type: 'tool_end', callId: 'c1', name: 'read', ok: true, output: 'a' },
+      { type: 'usage', usage: usage() },
+      { type: 'halt', reason: 'completed' },
+    ];
+    const collected: AgentRuntimeEvent[] = [];
+
+    for await (const event of runtime(events, seen).run({
+      prompt: 'hello',
+      signal: controller.signal,
+    })) {
+      collected.push(event);
+    }
+
+    expect(collected).toEqual(events);
+    expect(seen[0]?.signal).toBe(controller.signal);
+  });
+
+  it('runs a turn through the default runtime', async () => {
+    const providers = new Providers();
+    providers.register(new TextAdapter());
+    const instance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools: new Tools(),
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+    });
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of instance.run({
+      prompt: 'hello',
+      signal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(events.map((event) => event.type)).toEqual(['text', 'usage', 'halt']);
+    expect(events.at(-1)).toMatchObject({ type: 'halt', reason: 'completed' });
+  });
+
+  it('halts with cancelled when the turn signal is aborted', async () => {
+    const providers = new Providers();
+    providers.register(new TextAdapter());
+    const instance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools: new Tools(),
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+    });
+    const controller = new AbortController();
+    controller.abort();
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of instance.run({ prompt: 'hello', signal: controller.signal })) {
+      events.push(event);
+    }
+
+    expect(events).toEqual([{ type: 'halt', reason: 'cancelled' }]);
+  });
+
+  it('treats halt and error as terminal events', () => {
+    const events: AgentRuntimeEvent[] = [
+      { type: 'text', text: 'x' },
+      { type: 'tool_start', callId: 'c1', name: 'read', args: {} },
+      { type: 'tool_end', callId: 'c1', name: 'read', ok: true, output: '' },
+      { type: 'usage', usage: usage() },
+      { type: 'halt', reason: 'budget' },
+      {
+        type: 'error',
+        error: {
+          name: 'LareError',
+          code: 'NETWORK_ERROR',
+          category: 'network',
+          message: 'down',
+          retryable: true,
+          context: {},
+        },
+      },
+    ];
+
+    expect(events.map(isAgentRuntimeStopEvent)).toEqual([false, false, false, false, true, true]);
+  });
+});
