@@ -16,8 +16,12 @@ const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
 const warn = (text: string) => `\x1b[33m${text}\x1b[0m`;
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
 
-async function reachable(url: string, timeoutMs = 2000): Promise<boolean> {
+async function reachable(baseUrl: string, timeoutMs = 2000): Promise<boolean> {
   try {
+    const url = new URL(baseUrl);
+    url.pathname = '/';
+    url.search = '';
+    url.hash = '';
     await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
     return true;
   } catch {
