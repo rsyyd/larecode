@@ -6,6 +6,9 @@ import type {
   ModelInfo,
   ProviderAdapter,
   ProviderCapabilities,
+  ProviderMessage,
+  ProviderStreamEvent,
+  ProviderToolCall,
   ProviderUsage,
   ToolSpec,
 } from './provider.js';
@@ -32,7 +35,10 @@ interface OllamaTagsResponse {
 }
 
 interface OllamaStreamLine {
-  message?: { content?: string };
+  message?: {
+    content?: string;
+    tool_calls?: { function?: { name?: string; arguments?: unknown } }[];
+  };
   done?: boolean;
   error?: string;
   prompt_eval_count?: number;
@@ -69,11 +75,52 @@ export class OllamaAdapter implements ProviderAdapter {
   }
 
   private requestBody(prompt: string, options: CompletionOptions, stream: boolean) {
-    const messages = [
-      ...(options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
+    const messages: ProviderMessage[] = [
+      ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
       { role: 'user', content: prompt },
     ];
-    const body: Record<string, unknown> = { model: options.model, messages, stream };
+    return this.chatRequestBody(messages, options, stream);
+  }
+
+  private chatMessages(messages: ProviderMessage[]): Record<string, unknown>[] {
+    const names = new Map<string, string>();
+    for (const message of messages) {
+      for (const call of message.toolCalls ?? []) names.set(call.id, call.name);
+    }
+    return messages.map((message) => {
+      if (message.role === 'tool') {
+        const name = message.toolCallId ? names.get(message.toolCallId) : undefined;
+        return { role: 'tool', content: message.content, ...(name ? { tool_name: name } : {}) };
+      }
+      if (message.role !== 'assistant' || !message.toolCalls?.length) {
+        return { role: message.role, content: message.content };
+      }
+      return {
+        role: 'assistant',
+        content: message.content,
+        tool_calls: message.toolCalls.map((call) => {
+          let args: unknown = {};
+          try {
+            args = call.arguments ? JSON.parse(call.arguments) : {};
+          } catch {
+            args = {};
+          }
+          return { function: { name: call.name, arguments: args } };
+        }),
+      };
+    });
+  }
+
+  private chatRequestBody(
+    messages: ProviderMessage[],
+    options: CompletionOptions,
+    stream: boolean
+  ) {
+    const body: Record<string, unknown> = {
+      model: options.model,
+      messages: this.chatMessages(messages),
+      stream,
+    };
     const opts: Record<string, unknown> = {};
     if (options.temperature !== undefined) opts.temperature = options.temperature;
     if (options.maxTokens !== undefined) opts.num_predict = options.maxTokens;
@@ -158,6 +205,81 @@ export class OllamaAdapter implements ProviderAdapter {
       });
     }
     return text;
+  }
+
+  async *streamChat(
+    messages: ProviderMessage[],
+    options: CompletionOptions
+  ): AsyncGenerator<ProviderStreamEvent> {
+    let response: Response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify(this.chatRequestBody(messages, options, true)),
+        signal: options.abortSignal,
+      });
+    } catch (error) {
+      throw this.networkError(error);
+    }
+
+    if (!response.ok || !response.body) {
+      throw new LareError(
+        response.status === 401 || response.status === 403
+          ? 'PROVIDER_AUTH_FAILED'
+          : 'PROVIDER_UNAVAILABLE',
+        `${this.name} stream unavailable`,
+        {
+          context: { provider: this.name, status: response.status },
+          retryable: response.status >= 500,
+        }
+      );
+    }
+
+    const calls: ProviderToolCall[] = [];
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let chunk: OllamaStreamLine;
+        try {
+          chunk = JSON.parse(line) as OllamaStreamLine;
+        } catch {
+          defaultLogger.debug('unparseable stream line', { provider: this.name });
+          continue;
+        }
+        if (chunk.error) {
+          throw LareError.from('PROVIDER_UNAVAILABLE', chunk.error, { provider: this.name });
+        }
+        if (chunk.message?.content) yield { type: 'text', text: chunk.message.content };
+        for (const part of chunk.message?.tool_calls ?? []) {
+          const name = part.function?.name;
+          if (!name) continue;
+          const raw = part.function?.arguments;
+          calls.push({
+            id: `call_${calls.length}`,
+            name,
+            arguments: typeof raw === 'string' ? raw : JSON.stringify(raw ?? {}),
+          });
+        }
+        if (chunk.done) {
+          if (chunk.prompt_eval_count !== undefined || chunk.eval_count !== undefined) {
+            const usage = ollamaUsage(chunk);
+            options.onUsage?.(usage);
+            yield { type: 'usage', usage };
+          }
+          if (calls.length > 0) yield { type: 'tool_calls', calls };
+          return;
+        }
+      }
+    }
   }
 
   async *streamComplete(prompt: string, options: CompletionOptions): AsyncGenerator<string> {
