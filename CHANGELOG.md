@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Empty provider responses now surface as an explicit `EMPTY_RESPONSE` error instead of a silent completed turn.
 - Tool calls are validated against required arguments and declared types before permission checks or execution.
 
+### Removed
+
+- `AgentLoop` is no longer exported from the public core API; the tool-less completion path is no longer a supported surface.
+
 ## [0.1.1] - 2026-10-19
 
 ### Fixed

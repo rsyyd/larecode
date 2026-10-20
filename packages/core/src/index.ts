@@ -1,7 +1,6 @@
 export { VERSION } from './version.js';
 
-export { AgentLoop } from './agent/loop.js';
-export type { AgentLoopOptions, AgentLoopCallbacks, HaltReason } from './agent/loop.js';
+export type { HaltReason } from './agent/loop.js';
 export { ChatSession } from './agent/chat.js';
 export type {
   ChatAgentName,
