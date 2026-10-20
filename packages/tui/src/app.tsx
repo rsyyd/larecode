@@ -3,7 +3,7 @@ import { Box, Text, useApp, useInput, useStdin, useStdout, type Key } from 'ink'
 import { formatCost, formatTokens, type UsageAggregate } from '@larecode/core';
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
-import { filterCommands, type SlashCommand } from './palette.js';
+import { COMMANDS, filterCommands } from './palette.js';
 import { appendChunk, type ChatMessage } from './messages.js';
 
 export interface PermissionPrompt {
@@ -74,6 +74,11 @@ interface PendingPermission {
   resolve: (approved: boolean) => void;
 }
 
+type PopupState =
+  { kind: 'model'; index: number } | { kind: 'theme'; index: number } | { kind: 'help' };
+
+const THEME_CHOICES: ThemeName[] = ['dark', 'light'];
+
 export function App({
   provider: initialProvider,
   model = 'no model',
@@ -100,6 +105,7 @@ export function App({
   const [currentProvider, setCurrentProvider] = useState(initialProvider);
   const [currentModel, setCurrentModel] = useState(model);
   const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
+  const [popup, setPopup] = useState<PopupState | null>(null);
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [streaming, setStreaming] = useState(false);
   const [frame, setFrame] = useState(0);
@@ -122,13 +128,18 @@ export function App({
   }, [internal_eventEmitter]);
 
   const theme = getTheme(themeName);
-  const palette = paletteOpen(input.text) ? filterCommands(input.text) : [];
-  const selected = Math.min(paletteIndex, Math.max(0, palette.length - 1));
   const home = messages.length === 0;
   const agentLabel = agent === 'plan' ? 'Plan' : 'Build';
   const columns = stdout?.columns ?? 80;
   const rows = stdout?.rows ?? 24;
   const promptWidth = home ? Math.min(75, Math.max(20, columns - 4)) : columns;
+  const popupWidth = Math.min(60, Math.max(24, columns - 8));
+  const popupLimit = Math.max(4, Math.min(10, rows - 12));
+  const palette = !popup && paletteOpen(input.text) ? filterCommands(input.text) : [];
+  const selected = Math.min(paletteIndex, Math.max(0, palette.length - 1));
+  const modelChoices = catalogs.flatMap((catalog) =>
+    catalog.models.map((entry) => ({ provider: catalog.provider, model: entry }))
+  );
   const usageLabel =
     usage && usage.totalTokens.total > 0
       ? `${formatTokens(usage.totalTokens.total)} tok · ${formatCost(usage.totalCost.totalCost)}`
@@ -148,26 +159,31 @@ export function App({
     const [name, ...args] = raw.trim().split(/\s+/);
     switch (name) {
       case '/help':
-        addNote(HELP_TEXT);
+        setPopup({ kind: 'help' });
         break;
       case '/clear':
         setMessages([]);
         onClear?.();
         break;
-      case '/theme':
-        setThemeName((current) => (current === 'dark' ? 'light' : 'dark'));
+      case '/theme': {
+        const next = args[0]?.toLowerCase();
+        if (next === 'dark' || next === 'light') {
+          setThemeName(next);
+          break;
+        }
+        setPopup({ kind: 'theme', index: THEME_CHOICES.indexOf(themeName) });
         break;
+      }
       case '/model': {
         if (args.length === 0) {
-          addNote(`model · ${currentProvider ? `${currentProvider}/` : ''}${currentModel}`);
-          for (const catalog of catalogs) {
-            const shown = catalog.models.slice(0, 12);
-            const more = catalog.models.length - shown.length;
-            addNote(
-              `${catalog.provider}: ${shown.join(', ') || '(none)'}${more > 0 ? ` +${more} more` : ''}`
-            );
+          if (modelChoices.length === 0) {
+            addNote('no models configured');
+            break;
           }
-          addNote('switch · /model <provider> <model>');
+          const index = modelChoices.findIndex(
+            (choice) => choice.provider === currentProvider && choice.model === currentModel
+          );
+          setPopup({ kind: 'model', index: Math.max(0, index) });
           break;
         }
         const nextProvider = args.length > 1 ? args[0] : currentProvider;
@@ -293,6 +309,55 @@ export function App({
       return;
     }
 
+    if (popup) {
+      if (key.ctrl && raw === 'c') {
+        exit();
+        return;
+      }
+      if (key.escape) {
+        setPopup(null);
+        return;
+      }
+      if (popup.kind === 'help') {
+        if (key.return) setPopup(null);
+        return;
+      }
+      const count = popup.kind === 'model' ? modelChoices.length : THEME_CHOICES.length;
+      if (key.upArrow) {
+        setPopup({ ...popup, index: Math.max(0, popup.index - 1) });
+        return;
+      }
+      if (key.downArrow) {
+        setPopup({ ...popup, index: Math.min(count - 1, popup.index + 1) });
+        return;
+      }
+      if (key.return) {
+        if (popup.kind === 'model') {
+          const choice = modelChoices[popup.index];
+          if (choice) {
+            try {
+              onSelectModel?.(choice.provider, choice.model);
+              setCurrentProvider(choice.provider);
+              setCurrentModel(choice.model);
+            } catch (error) {
+              addNote(`error: ${error instanceof Error ? error.message : String(error)}`);
+            }
+          }
+        } else {
+          setThemeName(THEME_CHOICES[popup.index] ?? themeName);
+        }
+        setPopup(null);
+        return;
+      }
+      return;
+    }
+
+    if (key.escape && palette.length > 0) {
+      updateInput(emptyInput());
+      setPaletteIndex(0);
+      return;
+    }
+
     if (key.escape || (key.ctrl && raw === 'c')) {
       if (streaming) {
         abortRef.current?.abort();
@@ -356,12 +421,6 @@ export function App({
       <Box flexDirection="column" flexGrow={1} overflow="hidden">
         {home ? (
           <Home theme={theme} rows={rows} columns={columns}>
-            <SlashPalette
-              commands={palette}
-              selected={selected}
-              theme={theme}
-              width={promptWidth}
-            />
             <Prompt
               width={promptWidth}
               input={input}
@@ -389,10 +448,6 @@ export function App({
           </Box>
         )}
       </Box>
-
-      {!home && (
-        <SlashPalette commands={palette} selected={selected} theme={theme} width={promptWidth} />
-      )}
 
       {permission ? (
         <PermissionPanel permission={permission.request} theme={theme} width={columns} />
@@ -422,6 +477,56 @@ export function App({
           <Text color={theme.muted}>{version}</Text>
         </Box>
       )}
+
+      {popup || palette.length > 0 ? (
+        <Box
+          position="absolute"
+          width={columns}
+          height={rows}
+          justifyContent="center"
+          alignItems="center"
+        >
+          {popup?.kind === 'model' ? (
+            <ListPopup
+              title={`models · ${popup.index + 1}/${modelChoices.length}`}
+              items={modelChoices.map((choice) => `${choice.provider}/${choice.model}`)}
+              selected={popup.index}
+              footer="↑↓ move · enter select · esc close"
+              theme={theme}
+              width={popupWidth}
+              limit={popupLimit}
+            />
+          ) : popup?.kind === 'theme' ? (
+            <ListPopup
+              title={`theme · ${THEME_CHOICES[popup.index]}`}
+              items={THEME_CHOICES}
+              selected={popup.index}
+              footer="↑↓ move · enter select · esc close"
+              theme={theme}
+              width={popupWidth}
+              limit={popupLimit}
+            />
+          ) : popup?.kind === 'help' ? (
+            <Popup
+              title="help"
+              body={[HELP_TEXT, COMMANDS.map((command) => command.name).join('  ')]}
+              footer="esc close"
+              theme={theme}
+              width={popupWidth}
+            />
+          ) : (
+            <ListPopup
+              title={`commands · ${selected + 1}/${palette.length}`}
+              items={palette.map((command) => `${command.name} ${command.description}`)}
+              selected={selected}
+              footer="tab complete · ↑↓ move · enter run · esc close"
+              theme={theme}
+              width={popupWidth}
+              limit={popupLimit}
+            />
+          )}
+        </Box>
+      ) : null}
     </Box>
   );
 }
@@ -571,30 +676,91 @@ function Prompt({
   );
 }
 
-function SlashPalette({
-  commands,
-  selected,
+function windowItems<T>(
+  items: T[],
+  selected: number,
+  limit: number
+): { items: T[]; start: number } {
+  const start = Math.max(0, Math.min(selected - Math.floor(limit / 2), items.length - limit));
+  return { items: items.slice(start, start + limit), start };
+}
+
+function Popup({
+  title,
+  lines = [],
+  body,
+  active,
+  footer,
   theme,
   width,
 }: {
-  commands: SlashCommand[];
-  selected: number;
+  title: string;
+  lines?: string[];
+  body?: string[];
+  active?: number;
+  footer: string;
   theme: Theme;
   width: number;
 }) {
-  if (commands.length === 0) return null;
+  const inner = Math.max(1, width - 2);
+  const row = (text: string, color: string, key: string | number) => (
+    <Text key={key} backgroundColor={theme.panel} color={color}>
+      {` ${text.slice(0, inner - 2).padEnd(inner - 2)} `}
+    </Text>
+  );
+  const content = body
+    ? body
+        .flatMap((text) => wrapLine(text, inner))
+        .map((line, index) => row(line, theme.text, index))
+    : lines.map((line, index) =>
+        row(
+          `${index === active ? '❯ ' : '  '}${line}`,
+          index === active ? theme.text : theme.muted,
+          index
+        )
+      );
   return (
-    <Box flexDirection="column" paddingX={2} width={width} alignSelf="center">
-      {commands.map((command, index) => (
-        <Text key={command.name}>
-          <Text color={index === selected ? theme.accent : theme.muted}>
-            {index === selected ? '❯ ' : '  '}
-          </Text>
-          <Text color={index === selected ? theme.text : theme.muted}>{command.name}</Text>
-          <Text color={theme.muted}> {command.description}</Text>
-        </Text>
-      ))}
+    <Box
+      flexDirection="column"
+      width={width}
+      borderStyle="round"
+      borderColor={theme.border}
+      flexShrink={0}
+    >
+      {row(title, theme.accent, 'title')}
+      {content}
+      {row(footer, theme.muted, 'footer')}
     </Box>
+  );
+}
+
+function ListPopup({
+  title,
+  items,
+  selected,
+  footer,
+  theme,
+  width,
+  limit,
+}: {
+  title: string;
+  items: string[];
+  selected: number;
+  footer: string;
+  theme: Theme;
+  width: number;
+  limit: number;
+}) {
+  const visible = windowItems(items, selected, limit);
+  return (
+    <Popup
+      title={title}
+      lines={visible.items}
+      active={selected - visible.start}
+      footer={footer}
+      theme={theme}
+      width={width}
+    />
   );
 }
 

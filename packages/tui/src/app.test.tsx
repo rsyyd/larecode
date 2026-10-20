@@ -39,7 +39,7 @@ describe('App', () => {
     expect(frame).toContain('Hello world');
   });
 
-  it('shows the slash palette, completes on tab, and runs notes', async () => {
+  it('shows the slash palette, completes on tab, and opens help', async () => {
     const { stdin, lastFrame } = render(<App />);
     await flush();
     stdin.write('/he');
@@ -52,7 +52,12 @@ describe('App', () => {
 
     stdin.write('\r');
     await flush();
-    expect(lastFrame()).toContain('» enter send · ctrl+j newline');
+    expect(lastFrame()).toContain('esc close');
+    expect(lastFrame()).toContain('ctrl+j');
+
+    stdin.write('\x1b');
+    await flush();
+    expect(lastFrame()).not.toContain('esc close');
   });
 
   it('toggles the agent on tab and clears on /clear', async () => {
@@ -229,9 +234,8 @@ describe('App', () => {
     await flush();
     const lines = (lastFrame() ?? '').split('\n');
     const help = lines.findIndex((line) => line.includes('/help'));
-    const prompt = lines.findIndex((line) => line.includes('Plan ·'));
     expect(help).toBeGreaterThanOrEqual(0);
-    expect(help).toBeLessThan(prompt);
+    expect(lines[help - 1]).toContain('commands');
     const line = lines[help] ?? '';
     expect(line.length - line.trimStart().length).toBeGreaterThan(10);
   });
@@ -292,8 +296,16 @@ describe('App', () => {
     await flush();
     stdin.write('\r');
     await flush();
-    expect(lastFrame()).toContain('9router: Combo, Gpt');
-    expect(lastFrame()).toContain('ollama: qwen2.5-coder');
+    expect(lastFrame()).toContain('models · 1/3');
+    expect(lastFrame()).toContain('9router/Combo');
+    expect(lastFrame()).toContain('ollama/qwen2.5-coder');
+
+    stdin.write('\x1b[B');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(onSelectModel).toHaveBeenCalledWith('9router', 'Gpt');
+    expect(lastFrame()).toContain('Plan · Gpt');
 
     stdin.write('/model 9router Combo');
     await flush();
