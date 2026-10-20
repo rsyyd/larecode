@@ -39,10 +39,11 @@ Windows: `scoop bucket add larecode https://github.com/rsyyd/larecode-scoop && s
 ```bash
 larecode setup
 larecode doctor
+larecode                        # interactive chat
 larecode run "explain this repository"
 ```
 
-`setup` writes `~/.larecode/config.json`, `doctor` verifies your configuration and provider, and `run` streams the result with token and cost totals:
+`setup` writes `~/.larecode/config.json`, `doctor` verifies your configuration and provider, bare `larecode` opens the interactive terminal UI, and `run` streams one task with token and cost totals:
 
 ```console
 $ larecode run "find the slowest test and explain why it is slow"

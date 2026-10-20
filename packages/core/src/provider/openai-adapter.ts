@@ -6,6 +6,9 @@ import type {
   ModelInfo,
   ProviderAdapter,
   ProviderCapabilities,
+  ProviderMessage,
+  ProviderStreamEvent,
+  ProviderToolCall,
   ProviderUsage,
   ToolSpec,
 } from './provider.js';
@@ -37,8 +40,16 @@ interface OpenAIModelsResponse {
   data?: { id: string }[];
 }
 
+interface OpenAIToolCallDelta {
+  index?: number;
+  id?: string;
+  function?: { name?: string; arguments?: string };
+}
+
 interface OpenAIStreamChunk {
-  choices?: { delta?: { content?: string | null } }[];
+  choices?: {
+    delta?: { content?: string | null; tool_calls?: OpenAIToolCallDelta[] };
+  }[];
   usage?: OpenAIUsage | null;
 }
 
@@ -111,6 +122,67 @@ export class OpenAIAdapter implements ProviderAdapter {
       ...(this.toolPayload(options.tools) ? { tools: this.toolPayload(options.tools) } : {}),
       ...(stream && options.onUsage ? { stream_options: { include_usage: true } } : {}),
     };
+  }
+
+  private chatMessages(messages: ProviderMessage[]): unknown[] {
+    return messages.map((message) => {
+      if (message.role === 'assistant' && message.toolCalls?.length) {
+        return {
+          role: 'assistant',
+          content: message.content || null,
+          tool_calls: message.toolCalls.map((call) => ({
+            id: call.id,
+            type: 'function',
+            function: { name: call.name, arguments: call.arguments },
+          })),
+        };
+      }
+      if (message.role === 'tool') {
+        return {
+          role: 'tool',
+          tool_call_id: message.toolCallId ?? '',
+          content: message.content,
+        };
+      }
+      return { role: message.role, content: message.content };
+    });
+  }
+
+  private chatRequestBody(messages: ProviderMessage[], options: CompletionOptions) {
+    return {
+      model: options.model,
+      messages: this.chatMessages(messages),
+      stream: true,
+      ...(options.temperature === undefined ? {} : { temperature: options.temperature }),
+      ...(options.maxTokens === undefined ? {} : { max_tokens: options.maxTokens }),
+      ...(this.toolPayload(options.tools) ? { tools: this.toolPayload(options.tools) } : {}),
+      stream_options: { include_usage: true },
+    };
+  }
+
+  private async *readStream(response: Response): AsyncGenerator<OpenAIStreamChunk> {
+    if (!response.body) return;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const raw of lines) {
+        const line = raw.endsWith('\r') ? raw.slice(0, -1) : raw;
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trimStart();
+        if (payload === '[DONE]') return;
+        try {
+          yield JSON.parse(payload) as OpenAIStreamChunk;
+        } catch {
+          defaultLogger.debug('unparseable stream chunk', { provider: this.name });
+        }
+      }
+    }
   }
 
   async models(): Promise<ModelInfo[]> {
@@ -199,29 +271,70 @@ export class OpenAIAdapter implements ProviderAdapter {
       });
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const payload = line.slice(6);
-        if (payload === '[DONE]') return;
-        try {
-          const chunk = JSON.parse(payload) as OpenAIStreamChunk;
-          if (chunk.usage && options.onUsage) options.onUsage(mapUsage(chunk.usage));
-          const text = chunk.choices?.[0]?.delta?.content;
-          if (text) yield text;
-        } catch {
-          defaultLogger.debug('unparseable stream chunk', { provider: this.name });
+    for await (const chunk of this.readStream(response)) {
+      if (chunk.usage && options.onUsage) options.onUsage(mapUsage(chunk.usage));
+      const text = chunk.choices?.[0]?.delta?.content;
+      if (text) yield text;
+    }
+  }
+
+  async *streamChat(
+    messages: ProviderMessage[],
+    options: CompletionOptions
+  ): AsyncGenerator<ProviderStreamEvent> {
+    let response: Response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify(this.chatRequestBody(messages, options)),
+        signal: options.abortSignal,
+      });
+    } catch (error) {
+      throw LareError.wrap(
+        'NETWORK_ERROR',
+        error instanceof Error ? error : new Error(String(error)),
+        { provider: this.name }
+      );
+    }
+
+    if (!response.ok || !response.body) {
+      throw new LareError(
+        response.status === 401 || response.status === 403
+          ? 'PROVIDER_AUTH_FAILED'
+          : 'PROVIDER_UNAVAILABLE',
+        `${this.name} stream unavailable`,
+        {
+          context: { provider: this.name, status: response.status },
+          retryable: response.status >= 500,
         }
+      );
+    }
+
+    const calls = new Map<number, ProviderToolCall>();
+    for await (const chunk of this.readStream(response)) {
+      if (chunk.usage) {
+        const usage = mapUsage(chunk.usage);
+        options.onUsage?.(usage);
+        yield { type: 'usage', usage };
+      }
+      const delta = chunk.choices?.[0]?.delta;
+      if (delta?.content) yield { type: 'text', text: delta.content };
+      for (const part of delta?.tool_calls ?? []) {
+        const index = part.index ?? 0;
+        const call = calls.get(index) ?? { id: '', name: '', arguments: '' };
+        if (part.id) call.id = part.id;
+        if (part.function?.name) call.name = part.function.name;
+        if (part.function?.arguments) call.arguments += part.function.arguments;
+        calls.set(index, call);
       }
     }
+
+    const completed = [...calls.entries()]
+      .sort(([left], [right]) => left - right)
+      .map(([index, call]) => ({ ...call, id: call.id || `call_${index}` }))
+      .filter((call) => call.name.length > 0);
+    if (completed.length > 0) yield { type: 'tool_calls', calls: completed };
   }
 }
 

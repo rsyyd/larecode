@@ -11,6 +11,7 @@
     "@larecode/gateway": "*",
     "@larecode/sdk": "*",
     "@larecode/server": "*",
+    "@larecode/tui": "*",
     "commander": "^15.0.0"
   }
 }

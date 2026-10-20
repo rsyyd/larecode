@@ -1,5 +1,6 @@
 export { App, HELP_TEXT } from './app.js';
-export type { AppProps } from './app.js';
+export type { AppProps, PermissionConfirm, PermissionPrompt } from './app.js';
+export { startTui } from './start.js';
 export { getTheme, themes } from './theme.js';
 export type { Theme, ThemeName } from './theme.js';
 export { emptyInput, handleInput } from './input.js';

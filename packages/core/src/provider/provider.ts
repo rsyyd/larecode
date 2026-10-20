@@ -40,12 +40,36 @@ export interface CompletionOptions {
   onUsage?: (usage: ProviderUsage) => void;
 }
 
+export interface ProviderToolCall {
+  id: string;
+  name: string;
+  arguments: string;
+}
+
+export type ProviderMessageRole = 'system' | 'user' | 'assistant' | 'tool';
+
+export interface ProviderMessage {
+  role: ProviderMessageRole;
+  content: string;
+  toolCalls?: ProviderToolCall[];
+  toolCallId?: string;
+}
+
+export type ProviderStreamEvent =
+  | { type: 'text'; text: string }
+  | { type: 'usage'; usage: ProviderUsage }
+  | { type: 'tool_calls'; calls: ProviderToolCall[] };
+
 export interface ProviderAdapter {
   name: string;
   capabilities: ProviderCapabilities;
   models(): Promise<ModelInfo[]>;
   complete(prompt: string, options: CompletionOptions): Promise<string>;
   streamComplete(prompt: string, options: CompletionOptions): AsyncGenerator<string>;
+  streamChat?(
+    messages: ProviderMessage[],
+    options: CompletionOptions
+  ): AsyncGenerator<ProviderStreamEvent>;
 }
 
 export class Providers {

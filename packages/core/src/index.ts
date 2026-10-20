@@ -2,6 +2,15 @@ export { VERSION } from './version.js';
 
 export { AgentLoop } from './agent/loop.js';
 export type { AgentLoopOptions, AgentLoopCallbacks, HaltReason } from './agent/loop.js';
+export { ChatSession } from './agent/chat.js';
+export type {
+  ChatAgentName,
+  ChatEvent,
+  ChatPermissionConfirm,
+  ChatPermissionRequest,
+  ChatRunOptions,
+  ChatSessionOptions,
+} from './agent/chat.js';
 export { BUILTIN_AGENTS, toolsForAgent } from './agent/agents.js';
 export type { AgentDefinition, AgentName } from './agent/agents.js';
 export { Subagents, compressResult, SUBAGENT_DEFAULTS } from './agent/subagent.js';
@@ -18,6 +27,10 @@ export type {
   ProviderCapabilities,
   ModelInfo,
   CompletionOptions,
+  ProviderMessage,
+  ProviderMessageRole,
+  ProviderStreamEvent,
+  ProviderToolCall,
   ProviderUsage,
   ToolSpec,
 } from './provider/provider.js';

@@ -8,6 +8,19 @@ description: Every larecode command and option
 
 Global options: `-V, --version` prints the version, `-h, --help` prints help for any command.
 
+## larecode chat
+
+Open the interactive terminal UI. This is also what bare `larecode` starts.
+
+```text
+larecode chat [options]
+
+--provider <name>  provider to use
+--model <name>     model to use
+```
+
+Inside the UI, Enter sends, Ctrl+J adds a newline, Esc stops a reply, Tab switches between plan and build, `/clear` resets the conversation, and Ctrl+C exits. Tools that need approval show a `y/n` prompt.
+
 ## larecode setup
 
 Write an initial config for your provider.

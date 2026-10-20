@@ -6,16 +6,25 @@ import { emptyInput, handleInput, type InputState, type KeyEvent } from './input
 import { filterCommands } from './palette.js';
 import { appendChunk, type ChatMessage } from './messages.js';
 
+export interface PermissionPrompt {
+  tool: string;
+  group: string;
+}
+
+export type PermissionConfirm = (request: PermissionPrompt) => Promise<boolean>;
+
 export interface AppProps {
   model?: string;
   theme?: ThemeName;
   initialMessages?: ChatMessage[];
   getUsage?: () => UsageAggregate;
+  onClear?: () => void;
   runTurn?: (
     prompt: string,
     onChunk: (chunk: string) => void,
     signal: AbortSignal,
-    agent: 'plan' | 'build'
+    agent: 'plan' | 'build',
+    confirm?: PermissionConfirm
   ) => Promise<void>;
   runSubagentTurn?: (
     prompt: string,
@@ -29,11 +38,17 @@ export const HELP_TEXT =
 
 const GENERAL_PREFIX = /^@general\b\s*([\s\S]*)$/;
 
+interface PendingPermission {
+  request: PermissionPrompt;
+  resolve: (approved: boolean) => void;
+}
+
 export function App({
   model = 'no model',
   theme: initialTheme = 'dark',
   initialMessages = [],
   getUsage,
+  onClear,
   runTurn,
   runSubagentTurn,
 }: AppProps) {
@@ -45,6 +60,7 @@ export function App({
   const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [streaming, setStreaming] = useState(false);
+  const [permission, setPermission] = useState<PendingPermission | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const theme = getTheme(themeName);
@@ -63,6 +79,7 @@ export function App({
         break;
       case '/clear':
         setMessages([]);
+        onClear?.();
         break;
       case '/theme':
         setThemeName((current) => (current === 'dark' ? 'light' : 'dark'));
@@ -74,6 +91,9 @@ export function App({
         addNote(`${name} arrives in a later milestone`);
     }
   };
+
+  const confirmPermission = (request: PermissionPrompt): Promise<boolean> =>
+    new Promise((resolve) => setPermission({ request, resolve }));
 
   const streamTurn = async (
     invoke: (
@@ -137,11 +157,26 @@ export function App({
       addNote('no agent connected');
       return;
     }
-    await streamTurn((next, onChunk, signal) => runTurn(next, onChunk, signal, agent), trimmed);
+    await streamTurn(
+      (next, onChunk, signal) => runTurn(next, onChunk, signal, agent, confirmPermission),
+      trimmed
+    );
   };
 
   useInput((raw, key) => {
     const event: KeyEvent = { input: raw, key };
+
+    if (permission) {
+      const answer = raw.toLowerCase();
+      if (answer === 'y') {
+        permission.resolve(true);
+        setPermission(null);
+      } else if (answer === 'n' || key.escape || (key.ctrl && raw === 'c')) {
+        permission.resolve(false);
+        setPermission(null);
+      }
+      return;
+    }
 
     if (key.escape || (key.ctrl && raw === 'c')) {
       if (streaming) {
@@ -207,6 +242,14 @@ export function App({
               {command.name} <Text color={theme.muted}>{command.description}</Text>
             </Text>
           ))}
+        </Box>
+      )}
+
+      {permission && (
+        <Box>
+          <Text color={theme.tool}>
+            permission: {permission.request.group} · {permission.request.tool} · y/n
+          </Text>
         </Box>
       )}
 

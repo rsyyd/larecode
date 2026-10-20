@@ -1,5 +1,5 @@
 import { render } from 'ink-testing-library';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { UsageAggregate } from '@larecode/core';
 import { App } from './app.js';
 
@@ -201,5 +201,43 @@ describe('App', () => {
     const frame = lastFrame() ?? '';
     expect(frame).toContain('1.2k tok');
     expect(frame).toContain('$0.0060');
+  });
+});
+
+describe('App permissions', () => {
+  it('shows a permission prompt and resumes when approved', async () => {
+    const runTurn = async (
+      _prompt: string,
+      onChunk: (chunk: string) => void,
+      _signal: AbortSignal,
+      _agent: 'plan' | 'build',
+      confirm?: (request: { tool: string; group: string }) => Promise<boolean>
+    ): Promise<void> => {
+      const allowed = (await confirm?.({ tool: 'bash', group: 'shell' })) ?? false;
+      onChunk(allowed ? 'approved' : 'denied');
+    };
+
+    const { stdin, lastFrame } = render(<App runTurn={runTurn} />);
+    await flush();
+    stdin.write('hi');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame()).toContain('permission: shell · bash · y/n');
+
+    stdin.write('y');
+    await flush();
+    expect(lastFrame()).toContain('approved');
+  });
+
+  it('clears the host session on /clear', async () => {
+    const onClear = vi.fn();
+    const { stdin } = render(<App onClear={onClear} />);
+    await flush();
+    stdin.write('/clear');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(onClear).toHaveBeenCalledTimes(1);
   });
 });

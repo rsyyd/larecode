@@ -11,6 +11,7 @@ import { gatewayCommand } from './commands/gateway.js';
 import { updateCommand } from './commands/update.js';
 import { setupCommand } from './commands/setup.js';
 import { acpCommand } from './commands/acp.js';
+import { chatCommand } from './commands/chat.js';
 
 const program = new Command();
 
@@ -66,6 +67,15 @@ program
   .option('--allow <groups>', 'comma-separated permission groups pre-authorized for gateway tasks')
   .action(async (options: Parameters<typeof gatewayCommand>[0]) => {
     process.exitCode = await gatewayCommand(options);
+  });
+
+program
+  .command('chat')
+  .description('Start the interactive terminal UI')
+  .option('--provider <name>', 'provider to use')
+  .option('--model <name>', 'model to use')
+  .action(async (options: { provider?: string; model?: string }) => {
+    process.exitCode = await chatCommand(options);
   });
 
 program
@@ -184,5 +194,9 @@ cron
   .action(async () => {
     process.exitCode = await cronStart();
   });
+
+program.action(async () => {
+  process.exitCode = await chatCommand();
+});
 
 program.parseAsync(process.argv);

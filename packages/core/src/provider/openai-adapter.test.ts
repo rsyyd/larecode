@@ -10,6 +10,17 @@ function okJson(data: unknown): Response {
   return { ok: true, json: async () => data } as unknown as Response;
 }
 
+function rawStream(body: string): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(body));
+      controller.close();
+    },
+  });
+  return { ok: true, body: stream } as unknown as Response;
+}
+
 describe('OpenAIAdapter specifics', () => {
   it('sends bearer auth and openrouter attribution headers per config type', async () => {
     const calls: { url: string; init?: RequestInit }[] = [];
@@ -118,5 +129,47 @@ describe('Providers registry', () => {
     expect(providers.get('local')).toBe(adapter);
     expect(providers.list()).toHaveLength(1);
     expect(providers.get('missing')).toBeUndefined();
+  });
+});
+
+describe('OpenAIAdapter streamChat', () => {
+  it('streams text and assembles fragmented tool calls', async () => {
+    const body =
+      [
+        'data: {"choices":[{"delta":{"content":"checking "}}]}',
+        'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"read","arguments":"{\\"pa"}}]}}]}',
+        'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"th\\":\\"a.txt\\"}"}}]}}]}',
+        'data: {"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":5}}',
+        'data: [DONE]',
+        '',
+      ].join('\n\n') + '\n\n';
+
+    const fetchImpl = (async () => rawStream(body)) as LareCodeFetch;
+    const adapter = new OpenAIAdapter({
+      name: 'mock',
+      baseUrl: 'http://mock/v1',
+      models: ['m'],
+      fetchImpl,
+    });
+
+    const events = [];
+    for await (const event of adapter.streamChat(
+      [
+        { role: 'system', content: 'sys' },
+        { role: 'user', content: 'go' },
+      ],
+      { model: 'm' }
+    )) {
+      events.push(event);
+    }
+
+    expect(events).toEqual([
+      { type: 'text', text: 'checking ' },
+      { type: 'usage', usage: { input: 10, output: 5 } },
+      {
+        type: 'tool_calls',
+        calls: [{ id: 'call_1', name: 'read', arguments: '{"path":"a.txt"}' }],
+      },
+    ]);
   });
 });
