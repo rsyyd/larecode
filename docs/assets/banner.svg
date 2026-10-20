@@ -232,23 +232,7 @@
   </defs>
 
   <!-- ========================================================================= -->
-  <!-- 1. BACKGROUND LAYER                                                       -->
-  <!-- ========================================================================= -->
-  <rect id="bg-rect" width="1920" height="820" fill="url(#studio-bg)" />
-
-  <!-- Very subtle studio ambient light behind the mascot -->
-  <ellipse cx="430" cy="365" rx="340" ry="290" fill="url(#robot-ambient-glow)" />
-
-  <!-- ========================================================================= -->
-  <!-- 2. FLOOR FLOATING DROP SHADOW                                             -->
-  <!-- ========================================================================= -->
-  <g id="floor-shadow">
-    <ellipse cx="430" cy="675" rx="168" ry="22" fill="url(#floor-shadow-grad)" />
-    <ellipse cx="430" cy="675" rx="95" ry="11" fill="#000000" opacity="0.65" />
-  </g>
-
-  <!-- ========================================================================= -->
-  <!-- 3. 3D MONOCHROME ROBOT MASCOT ASSEMBLY                                    -->
+  <!-- 1. 3D MONOCHROME ROBOT MASCOT ASSEMBLY                                    -->
   <!-- ========================================================================= -->
   <g id="robot-assembly">
 
@@ -591,7 +575,7 @@
     on external font installation when exported to PNG/SVG and matches 100%
     the slab-topped 'l', geometric 'a', 'r', 'e', 'c', 'o', 'd', 'e' in the banner.
   -->
-  <g id="larecode-wordmark" filter="url(#text-studio-shadow)" fill="#f3f5f8">
+  <g id="larecode-wordmark" fill="#0d0f12">
 
     <!-- 'l' : Top horizontal slab + vertical stem + curved bottom foot -->
     <path d="M 744 338
@@ -676,6 +660,8 @@
              C 1183 404, 1173 395, 1156 395
              C 1140 395, 1129 405, 1127 422 Z" />
 
+    <g fill="#6e7684">
+
     <!-- 'c' : Open geometric curve -->
     <path d="M 1296 374
              C 1314 374, 1329 379, 1339 387
@@ -746,6 +732,7 @@
              H 1724
              C 1723 404, 1713 395, 1696 395
              C 1680 395, 1669 405, 1667 422 Z" />
+    </g>
   </g>
 
 </svg>

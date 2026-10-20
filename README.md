@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Lare Code" width="640">
+  <img src="docs/assets/banner.svg" alt="Lare Code" width="400">
 </p>
 
 <p align="center">
