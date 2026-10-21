@@ -20,6 +20,8 @@ export interface CronResult {
   tokens: number;
   cost: number;
   halt: string | null;
+  attempts?: number;
+  durationMs?: number;
 }
 
 export interface CronJob {
@@ -30,6 +32,8 @@ export interface CronJob {
   policy: PermissionGroup[];
   enabled: boolean;
   createdAt: Date;
+  retries?: number;
+  timeoutMs?: number;
   nextRun?: Date;
   lastRun?: Date;
   lastResult?: CronResult;
@@ -40,6 +44,8 @@ export interface CronJobInput {
   prompt: string;
   name?: string;
   policy?: PermissionGroup[];
+  retries?: number;
+  timeoutMs?: number;
 }
 
 interface StoredJob {
@@ -50,6 +56,8 @@ interface StoredJob {
   policy: string[];
   enabled: boolean;
   createdAt: string;
+  retries?: number;
+  timeoutMs?: number;
   nextRun?: string;
   lastRun?: string;
   lastResult?: {
@@ -60,6 +68,8 @@ interface StoredJob {
     tokens: number;
     cost: number;
     halt?: string | null;
+    attempts?: number;
+    durationMs?: number;
   };
 }
 
@@ -104,6 +114,8 @@ export class Jobs {
     if (!prompt) throw new LareError('CONFIG_INVALID', 'cron job needs a prompt');
     const policy = assertPreAuthorizable(input.policy ?? []);
     const id = randomBytes(4).toString('hex');
+    const retries = Math.max(0, Math.min(5, Math.floor(input.retries ?? 0)));
+    const timeoutMs = Math.max(1000, Math.min(600_000, Math.floor(input.timeoutMs ?? 600_000)));
     const job: CronJob = {
       id,
       name: input.name?.trim() || `job-${id}`,
@@ -112,6 +124,8 @@ export class Jobs {
       policy,
       enabled: true,
       createdAt: new Date(),
+      retries,
+      timeoutMs,
       nextRun: nextRun(parsed, new Date()),
     };
     this.write([...this.read(), job]);
@@ -174,6 +188,8 @@ function toJob(entry: StoredJob): CronJob | undefined {
       policy: (entry.policy ?? []) as PermissionGroup[],
       enabled: entry.enabled ?? true,
       createdAt: new Date(entry.createdAt),
+      retries: Math.max(0, Math.min(5, Math.floor(entry.retries ?? 0))),
+      timeoutMs: Math.max(1000, Math.min(600_000, Math.floor(entry.timeoutMs ?? 600_000))),
     };
     if (entry.nextRun) job.nextRun = new Date(entry.nextRun);
     if (entry.lastRun) job.lastRun = new Date(entry.lastRun);
@@ -186,6 +202,8 @@ function toJob(entry: StoredJob): CronJob | undefined {
         tokens: entry.lastResult.tokens,
         cost: entry.lastResult.cost,
         halt: entry.lastResult.halt ?? null,
+        attempts: entry.lastResult.attempts,
+        durationMs: entry.lastResult.durationMs,
       };
     }
     if (!job.nextRun) job.nextRun = nextRun(parseSchedule(job.schedule), new Date());
@@ -204,6 +222,8 @@ function toStored(job: CronJob): StoredJob {
     policy: job.policy,
     enabled: job.enabled,
     createdAt: job.createdAt.toISOString(),
+    retries: job.retries,
+    timeoutMs: job.timeoutMs,
   };
   if (job.nextRun) stored.nextRun = job.nextRun.toISOString();
   if (job.lastRun) stored.lastRun = job.lastRun.toISOString();
@@ -216,6 +236,8 @@ function toStored(job: CronJob): StoredJob {
       tokens: job.lastResult.tokens,
       cost: job.lastResult.cost,
       halt: job.lastResult.halt,
+      attempts: job.lastResult.attempts,
+      durationMs: job.lastResult.durationMs,
     };
   }
   return stored;

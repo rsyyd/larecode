@@ -5,11 +5,16 @@ import {
   WEB_FETCH_MAX_CHARS,
   decodeEntities,
   htmlToText,
+  isPrivateAddress,
   parseDuckDuckGo,
   parseHttpUrl,
   webFetchTool,
   webSearchTool,
 } from './web.js';
+
+vi.mock('node:dns/promises', () => ({
+  lookup: vi.fn(async () => [{ address: '93.184.216.34', family: 4 }]),
+}));
 
 const ALLOW_NETWORK = { mode: 'allow' as const, allowedGroups: ['network' as const] };
 
@@ -59,6 +64,45 @@ describe('parseHttpUrl', () => {
     expect(() => parseHttpUrl('ftp://example.com')).toThrow(/unsupported protocol/);
     expect(() => parseHttpUrl('not a url')).toThrow(/invalid url/);
     expect(() => parseHttpUrl(undefined)).toThrow(/url is required/);
+  });
+});
+
+describe('SSRF guards', () => {
+  it('classifies private and public addresses', () => {
+    expect(isPrivateAddress('127.0.0.1')).toBe(true);
+    expect(isPrivateAddress('10.0.0.1')).toBe(true);
+    expect(isPrivateAddress('172.16.0.1')).toBe(true);
+    expect(isPrivateAddress('192.168.1.1')).toBe(true);
+    expect(isPrivateAddress('169.254.169.254')).toBe(true);
+    expect(isPrivateAddress('::1')).toBe(true);
+    expect(isPrivateAddress('fd00::1')).toBe(true);
+    expect(isPrivateAddress('93.184.216.34')).toBe(false);
+  });
+
+  it('blocks literal private targets before fetching', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch');
+    await expect(
+      webFetchTool().execute(
+        { url: 'http://169.254.169.254/latest/meta-data/' },
+        ctx(new Permissions(ALLOW_NETWORK))
+      )
+    ).rejects.toThrow(/private network/);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('blocks a redirect into a private target', async () => {
+    const spy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response(null, { status: 302, headers: { location: 'http://127.0.0.1/admin' } })
+      );
+    await expect(
+      webFetchTool().execute(
+        { url: 'https://example.com/redirect' },
+        ctx(new Permissions(ALLOW_NETWORK))
+      )
+    ).rejects.toThrow(/private network/);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -177,5 +221,37 @@ describe('web_search', () => {
     await expect(
       webSearchTool().execute({ query: '  ' }, ctx(new Permissions(ALLOW_NETWORK)))
     ).rejects.toThrow(/query is required/);
+  });
+
+  it('uses a configured custom search provider', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          results: [
+            { title: 'One', url: 'https://one.example/', snippet: 'first' },
+            { title: 'Two', url: 'https://two.example/', snippet: 'second' },
+          ],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )
+    );
+    const tool = webSearchTool({
+      provider: 'custom',
+      endpoint: 'https://search.example/api',
+      apiKey: 'secret',
+    });
+    const result = (await tool.execute(
+      { query: 'lare code', limit: 1 },
+      ctx(new Permissions(ALLOW_NETWORK))
+    )) as { results: unknown[] };
+    expect(result.results).toEqual([
+      { title: 'One', url: 'https://one.example/', snippet: 'first' },
+    ]);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'https://search.example/api?q=lare+code&limit=1',
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: 'Bearer secret' }),
+      })
+    );
   });
 });

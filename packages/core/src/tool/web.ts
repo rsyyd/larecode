@@ -1,3 +1,5 @@
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import { LareError } from '../error/error.js';
 import type { Tool, ToolContext } from './tool.js';
 
@@ -5,6 +7,7 @@ export const WEB_FETCH_TIMEOUT_MS = 15_000;
 export const WEB_FETCH_MAX_CHARS = 50_000;
 export const WEB_SEARCH_LIMIT = 5;
 export const WEB_SEARCH_MAX_LIMIT = 10;
+export const WEB_FETCH_MAX_REDIRECTS = 3;
 
 const USER_AGENT = 'Mozilla/5.0 (compatible; LareCode/0.0.0; +https://github.com/rsyyd/larecode)';
 
@@ -79,6 +82,76 @@ export function parseHttpUrl(input: unknown): URL {
   return parsed;
 }
 
+const BLOCKED_HOSTNAMES = new Set([
+  'localhost',
+  'localhost.localdomain',
+  'metadata.google.internal',
+  'metadata',
+  'instance-data',
+]);
+
+export function isPrivateAddress(address: string): boolean {
+  const value = address.toLowerCase().replace(/^\[|\]$/g, '').split('%')[0];
+  const family = isIP(value);
+  if (family === 4) {
+    const parts = value.split('.').map((part) => Number(part));
+    if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+      return true;
+    }
+    const [a, b] = parts;
+    return (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 198 && (b === 18 || b === 19)) ||
+      a >= 224
+    );
+  }
+  if (family === 6) {
+    if (value === '::' || value === '::1') return true;
+    if (value.startsWith('fe8') || value.startsWith('fe9') || value.startsWith('fea') || value.startsWith('feb')) {
+      return true;
+    }
+    if (value.startsWith('fc') || value.startsWith('fd') || value.startsWith('ff')) return true;
+    const mapped = value.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    if (mapped) return isPrivateAddress(mapped[1]);
+    return false;
+  }
+  return true;
+}
+
+export async function assertPublicHttpUrl(input: string | URL): Promise<URL> {
+  const parsed = input instanceof URL ? input : parseHttpUrl(input);
+  const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith('.local') || hostname.endsWith('.internal')) {
+    throw new LareError('TOOL_EXECUTION_FAILED', `blocked private network address: ${hostname}`);
+  }
+  if (isIP(hostname)) {
+    if (isPrivateAddress(hostname)) {
+      throw new LareError('TOOL_EXECUTION_FAILED', `blocked private network address: ${hostname}`);
+    }
+    return parsed;
+  }
+  let addresses: Array<{ address: string }>;
+  try {
+    addresses = await lookup(hostname, { all: true, verbatim: true });
+  } catch (error) {
+    throw new LareError(
+      'NETWORK_ERROR',
+      `dns lookup failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error instanceof Error ? error : undefined, context: { hostname } }
+    );
+  }
+  if (addresses.length === 0 || addresses.some((entry) => isPrivateAddress(entry.address))) {
+    throw new LareError('TOOL_EXECUTION_FAILED', `blocked private network address: ${hostname}`);
+  }
+  return parsed;
+}
+
 function requireNetwork(context: ToolContext, source: string): void {
   const decision = context.permissions.check('network', { source });
   if (!decision.allowed) {
@@ -98,32 +171,51 @@ function requestSignal(context: ToolContext): AbortSignal {
 async function request(
   url: string,
   context: ToolContext,
-  accept: string
+  accept: string,
+  extraHeaders: Record<string, string> = {}
 ): Promise<{ body: string; url: string; contentType: string }> {
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      redirect: 'follow',
-      signal: requestSignal(context),
-      headers: { 'user-agent': USER_AGENT, accept },
-    });
-  } catch (error) {
-    throw new LareError(
-      'NETWORK_ERROR',
-      `request failed: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error instanceof Error ? error : undefined, context: { url } }
-    );
+  let current = parseHttpUrl(url);
+  for (let redirects = 0; redirects <= WEB_FETCH_MAX_REDIRECTS; redirects += 1) {
+    await assertPublicHttpUrl(current);
+    let response: Response;
+    try {
+      response = await fetch(current.href, {
+        redirect: 'manual',
+        signal: requestSignal(context),
+        headers: { 'user-agent': USER_AGENT, accept, ...extraHeaders },
+      });
+    } catch (error) {
+      throw new LareError(
+        'NETWORK_ERROR',
+        `request failed: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          cause: error instanceof Error ? error : undefined,
+          context: { url: current.href },
+        }
+      );
+    }
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get('location');
+      if (!location) {
+        throw new LareError('NETWORK_ERROR', 'redirect without a location', {
+          context: { url: current.href, status: response.status },
+        });
+      }
+      current = parseHttpUrl(new URL(location, current).href);
+      continue;
+    }
+    if (!response.ok) {
+      throw new LareError('NETWORK_ERROR', `request failed: HTTP ${response.status}`, {
+        context: { url: current.href, status: response.status },
+      });
+    }
+    return {
+      body: await response.text(),
+      url: response.url || current.href,
+      contentType: response.headers.get('content-type') ?? '',
+    };
   }
-  if (!response.ok) {
-    throw new LareError('NETWORK_ERROR', `request failed: HTTP ${response.status}`, {
-      context: { url: response.url, status: response.status },
-    });
-  }
-  return {
-    body: await response.text(),
-    url: response.url,
-    contentType: response.headers.get('content-type') ?? '',
-  };
+  throw new LareError('NETWORK_ERROR', `too many redirects (max ${WEB_FETCH_MAX_REDIRECTS})`);
 }
 
 interface WebFetchArgs {
@@ -221,11 +313,61 @@ interface WebSearchArgs {
   limit?: number;
 }
 
-export function webSearchTool(): Tool {
+export interface WebSearchOptions {
+  provider?: 'duckduckgo' | 'custom';
+  endpoint?: string;
+  apiKey?: string;
+}
+
+function customSearchRequest(
+  endpoint: string,
+  query: string,
+  limit: number,
+  apiKey?: string
+): { url: string; headers: Record<string, string> } {
+  const parsed = parseHttpUrl(endpoint.replace('{query}', encodeURIComponent(query)));
+  parsed.searchParams.set('q', query);
+  parsed.searchParams.set('limit', String(limit));
+  return {
+    url: parsed.href,
+    headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {},
+  };
+}
+
+function parseCustomResults(body: string): SearchResult[] {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(body);
+  } catch {
+    throw new LareError('TOOL_EXECUTION_FAILED', 'search provider returned invalid JSON');
+  }
+  const list = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object' && Array.isArray((raw as { results?: unknown }).results)
+      ? (raw as { results: unknown[] }).results
+      : [];
+  return list.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') return [];
+    const record = entry as Record<string, unknown>;
+    if (typeof record.title !== 'string' || typeof record.url !== 'string') return [];
+    return [
+      {
+        title: record.title,
+        url: record.url,
+        snippet: typeof record.snippet === 'string' ? record.snippet : '',
+      },
+    ];
+  });
+}
+
+export function webSearchTool(options: WebSearchOptions = {}): Tool {
+  const provider = options.provider ?? 'duckduckgo';
   return {
     name: 'web_search',
     description:
-      'Search the web with DuckDuckGo and return result titles, URLs, and snippets. Requires the network permission group.',
+      provider === 'custom'
+        ? 'Search the configured web search provider and return result titles, URLs, and snippets. Requires the network permission group.'
+        : 'Search the web with DuckDuckGo and return result titles, URLs, and snippets. Requires the network permission group.',
     schema: {
       type: 'object',
       properties: {
@@ -246,6 +388,14 @@ export function webSearchTool(): Tool {
       const requested =
         typeof limit === 'number' && limit > 0 ? Math.floor(limit) : WEB_SEARCH_LIMIT;
       const capped = Math.min(requested, WEB_SEARCH_MAX_LIMIT);
+      if (provider === 'custom') {
+        if (!options.endpoint) {
+          throw new LareError('TOOL_EXECUTION_FAILED', 'web search endpoint is not configured');
+        }
+        const search = customSearchRequest(options.endpoint, query, capped, options.apiKey);
+        const response = await request(search.url, context, 'application/json', search.headers);
+        return { query, results: parseCustomResults(response.body).slice(0, capped) };
+      }
       const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
       // ponytail: scrapes the DuckDuckGo HTML endpoint (no API key); swap for a
       // search provider when one is configured.

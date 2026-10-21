@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   chmodSync,
   existsSync,
@@ -11,7 +12,7 @@ import {
 import { join } from 'node:path';
 import { larecodeHome } from '../config/config.js';
 import { LareError } from '../error/error.js';
-import { redactValue } from '../permission/redact.js';
+import { redactSecrets, redactValue } from '../permission/redact.js';
 import type { ProviderMessage } from '../provider/provider.js';
 import type { ToolCall, ToolResult } from '../tool/tool.js';
 
@@ -22,6 +23,10 @@ export interface SessionMetadata {
   messageCount: number;
   tokenUsage: number;
   cost: number;
+  provider?: string;
+  model?: string;
+  workingDir?: string;
+  title?: string;
 }
 
 export interface SessionMessage {
@@ -48,15 +53,19 @@ interface StoredMessage {
 
 interface StoredSession {
   id: string;
-  metadata: {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    messageCount: number;
-    tokenUsage: number;
-    cost: number;
+  metadata?: {
+    id?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    messageCount?: number;
+    tokenUsage?: number;
+    cost?: number;
+    provider?: string;
+    model?: string;
+    workingDir?: string;
+    title?: string;
   };
-  messages: StoredMessage[];
+  messages?: StoredMessage[];
 }
 
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -93,18 +102,30 @@ function toStored(session: Session): StoredSession {
 }
 
 function fromStored(stored: StoredSession): Session {
+  const messages = Array.isArray(stored.messages) ? stored.messages : [];
+  const metadata = stored.metadata ?? {};
+  const createdAt = new Date(metadata.createdAt ?? 0);
+  const updatedAt = new Date(metadata.updatedAt ?? createdAt);
   return {
     id: stored.id,
     metadata: {
-      ...stored.metadata,
-      createdAt: new Date(stored.metadata.createdAt),
-      updatedAt: new Date(stored.metadata.updatedAt),
+      id: stored.id,
+      createdAt: Number.isNaN(createdAt.getTime()) ? new Date(0) : createdAt,
+      updatedAt: Number.isNaN(updatedAt.getTime()) ? new Date() : updatedAt,
+      messageCount:
+        typeof metadata.messageCount === 'number' ? metadata.messageCount : messages.length,
+      tokenUsage: typeof metadata.tokenUsage === 'number' ? metadata.tokenUsage : 0,
+      cost: typeof metadata.cost === 'number' ? metadata.cost : 0,
+      provider: metadata.provider,
+      model: metadata.model,
+      workingDir: metadata.workingDir,
+      title: metadata.title,
     },
-    messages: stored.messages.map((message) => ({
+    messages: messages.map((message) => ({
       ...message,
       toolCalls: message.toolCalls as ToolCall[] | undefined,
       toolResults: message.toolResults as ToolResult[] | undefined,
-      timestamp: new Date(message.timestamp),
+      timestamp: new Date(message.timestamp ?? 0),
     })),
   };
 }
@@ -119,18 +140,20 @@ export class Sessions {
     return join(this.dir, `${id}.json`);
   }
 
-  create(initialMessage?: string): Session {
-    const id = crypto.randomUUID();
+  create(initialMessage?: string, metadata: Partial<SessionMetadata> = {}): Session {
+    const id = randomUUID();
     const now = new Date();
     const session: Session = {
       id,
       metadata: {
+        ...metadata,
         id,
-        createdAt: now,
+        createdAt: metadata.createdAt ?? now,
         updatedAt: now,
         messageCount: 0,
-        tokenUsage: 0,
-        cost: 0,
+        tokenUsage: metadata.tokenUsage ?? 0,
+        cost: metadata.cost ?? 0,
+        title: metadata.title ?? initialMessage?.trim().slice(0, 80),
       },
       messages: [],
     };
@@ -183,6 +206,62 @@ export class Sessions {
     return true;
   }
 
+  rewind(id: string, messageCount: number): Session | undefined {
+    const session = this.get(id);
+    if (!session) return undefined;
+    if (!Number.isInteger(messageCount) || messageCount < 0 || messageCount > session.messages.length) {
+      throw new LareError(
+        'SESSION_INVALID',
+        `cannot rewind to ${messageCount}; session has ${session.messages.length} messages`
+      );
+    }
+    session.messages = session.messages.slice(0, messageCount);
+    this.save(session);
+    return session;
+  }
+
+  prune(options: { maxAgeDays?: number; maxSessions?: number; now?: Date } = {}): number {
+    const now = options.now ?? new Date();
+    const sessions = this.list();
+    const doomed = new Set<string>();
+    if (options.maxAgeDays !== undefined) {
+      const cutoff = now.getTime() - Math.max(0, options.maxAgeDays) * 86_400_000;
+      for (const metadata of sessions) {
+        if (metadata.updatedAt.getTime() < cutoff) doomed.add(metadata.id);
+      }
+    }
+    if (options.maxSessions !== undefined) {
+      const keep = Math.max(0, Math.floor(options.maxSessions));
+      for (const metadata of sessions.slice(keep)) doomed.add(metadata.id);
+    }
+    let removed = 0;
+    for (const id of doomed) {
+      if (this.delete(id)) removed += 1;
+    }
+    return removed;
+  }
+
+  export(id: string, format: 'json' | 'markdown' = 'json'): string | undefined {
+    const session = this.get(id);
+    if (!session) return undefined;
+    if (format === 'json') {
+      return `${JSON.stringify(redactValue(session), null, 2)}\n`;
+    }
+    const lines = [
+      `# ${redactSecrets(session.metadata.title ?? session.id)}`,
+      `- id: ${session.id}`,
+      `- created: ${session.metadata.createdAt.toISOString()}`,
+      `- updated: ${session.metadata.updatedAt.toISOString()}`,
+      `- provider: ${session.metadata.provider ?? 'unknown'}`,
+      `- model: ${session.metadata.model ?? 'unknown'}`,
+      '',
+    ];
+    for (const message of session.messages) {
+      lines.push(`## ${message.role}`, '', redactSecrets(message.content), '');
+    }
+    return `${lines.join('\n')}\n`;
+  }
+
   private persist(session: Session): void {
     const file = this.fileFor(session.id);
     if (!file) {
@@ -190,10 +269,14 @@ export class Sessions {
     }
     mkdirSync(this.dir, { recursive: true });
     const redacted = redactValue(toStored(session)) as StoredSession;
-    const temp = `${file}.tmp`;
-    writeFileSync(temp, JSON.stringify(redacted, null, 2) + '\n', { mode: 0o600 });
-    chmodSync(temp, 0o600);
-    renameSync(temp, file);
+    const temp = `${file}.${process.pid}.${randomUUID()}.tmp`;
+    try {
+      writeFileSync(temp, JSON.stringify(redacted, null, 2) + '\n', { mode: 0o600 });
+      chmodSync(temp, 0o600);
+      renameSync(temp, file);
+    } finally {
+      rmSync(temp, { force: true });
+    }
   }
 
   private read(file: string): Session {

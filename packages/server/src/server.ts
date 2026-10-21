@@ -9,6 +9,7 @@ import {
   Sessions,
   VERSION,
   loadEffectiveConfig,
+  removeSessionCheckpoints,
   toProviderHistory,
   type HaltReason,
   type ProviderMessage,
@@ -56,6 +57,7 @@ export interface ServerOptions {
   model?: string;
   runTurn?: TurnHandler;
   maxBodyBytes?: number;
+  rateLimit?: { maxRequests?: number; windowMs?: number } | false;
 }
 
 function defaultTurnHandler(options: ServerOptions): TurnHandler {
@@ -87,6 +89,7 @@ function scopeFor(method: string, parts: string[]): ServerScope | null {
   if (parts[0] !== 'sessions') return null;
   if (method === 'GET' && (parts.length === 1 || parts.length === 2)) return 'read';
   if (method === 'POST' && parts.length === 1) return 'write';
+  if (method === 'DELETE' && parts.length === 2) return 'write';
   if (method === 'POST' && parts.length === 3 && parts[2] === 'share') return 'write';
   if (method === 'POST' && parts.length === 3 && parts[2] === 'messages') return 'run';
   return null;
@@ -109,6 +112,8 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, {
     'content-type': 'application/json',
     'content-length': Buffer.byteLength(payload),
+    'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
   });
   res.end(payload);
 }
@@ -148,6 +153,9 @@ export class Server {
   private readonly shares: Shares;
   private readonly turn: TurnHandler;
   private readonly maxBodyBytes: number;
+  private readonly rateLimitMax: number;
+  private readonly rateLimitWindowMs: number;
+  private readonly rateBuckets = new Map<string, number[]>();
   private readonly host: string;
   private readonly port: number;
   private started = false;
@@ -158,6 +166,10 @@ export class Server {
     this.sessions = options.sessions ?? new Sessions();
     this.shares = options.shares ?? new Shares();
     this.maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+    this.rateLimitMax =
+      options.rateLimit === false ? 0 : (options.rateLimit?.maxRequests ?? 120);
+    this.rateLimitWindowMs =
+      options.rateLimit === false ? 60_000 : (options.rateLimit?.windowMs ?? 60_000);
     this.tokens = [...(options.tokens ?? [])];
     if (options.token) {
       this.tokens.push({ name: 'primary', token: options.token, scopes: ['read', 'write', 'run'] });
@@ -217,6 +229,22 @@ export class Server {
     return { ok: true };
   }
 
+  private checkRateLimit(req: IncomingMessage): { ok: true } | { ok: false; retryAfter: number } {
+    if (this.rateLimitMax <= 0) return { ok: true };
+    const key = `${bearerToken(req.headers.authorization) ?? 'anonymous'}:${req.socket.remoteAddress ?? 'unknown'}`;
+    const now = Date.now();
+    const cutoff = now - this.rateLimitWindowMs;
+    const recent = (this.rateBuckets.get(key) ?? []).filter((time) => time > cutoff);
+    if (recent.length >= this.rateLimitMax) {
+      const retryAfter = Math.max(1, Math.ceil((recent[0] + this.rateLimitWindowMs - now) / 1000));
+      this.rateBuckets.set(key, recent);
+      return { ok: false, retryAfter };
+    }
+    recent.push(now);
+    this.rateBuckets.set(key, recent);
+    return { ok: true };
+  }
+
   private async handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const method = req.method ?? 'GET';
     const url = new URL(req.url ?? '/', 'http://localhost');
@@ -243,6 +271,12 @@ export class Server {
       sendJson(res, authorization.status, { error: authorization.error });
       return;
     }
+    const rate = this.checkRateLimit(req);
+    if (!rate.ok) {
+      res.setHeader('retry-after', String(rate.retryAfter));
+      sendJson(res, 429, { error: 'rate limit exceeded', retryAfter: rate.retryAfter });
+      return;
+    }
 
     try {
       if (method === 'GET' && parts.length === 1) {
@@ -255,6 +289,10 @@ export class Server {
       }
       if (method === 'POST' && parts.length === 1) {
         this.createSession(res);
+        return;
+      }
+      if (method === 'DELETE' && parts.length === 2) {
+        this.deleteSession(res, parts[1]);
         return;
       }
       if (method === 'POST' && parts[2] === 'share') {
@@ -280,8 +318,17 @@ export class Server {
     sendJson(res, 200, { sessions });
   }
 
-  private getSession(res: ServerResponse, id: string): void {
-    const session = this.sessions.get(id);
+  private deleteSession(res: ServerResponse, id: string): void {
+    if (!this.sessions.delete(id)) {
+      sendJson(res, 404, { error: 'session not found' });
+      return;
+    }
+    const checkpoints = removeSessionCheckpoints(id);
+    const shares = this.shares.removeForSession(id);
+    sendJson(res, 200, { deleted: true, checkpoints, shares });
+  }
+
+  private getSession(res: ServerResponse, id: string): void {    const session = this.sessions.get(id);
     if (!session) {
       sendJson(res, 404, { error: 'session not found' });
       return;

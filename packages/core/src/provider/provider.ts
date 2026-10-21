@@ -9,6 +9,7 @@ export interface ProviderCapabilities {
   reasoning: boolean;
   streaming: boolean;
   maxTokens: number;
+  contextWindow?: number;
 }
 
 export interface ModelInfo {

@@ -145,26 +145,49 @@ export async function providerChecks(
   return checks;
 }
 
-async function printProvider(
+export interface DoctorOptions {
+  json?: boolean;
+}
+
+export interface ProviderHealth {
+  provider: string;
+  model: string;
+  checks: ProviderCheck[];
+}
+
+async function checkProvider(
   name: string,
   provider: ProviderConfig,
   model: string,
   timeoutMs: number
-): Promise<string[]> {
-  const checks = await providerChecks(name, provider, model, { timeoutMs });
-  console.log(`  ${name}`);
-  for (const check of checks) {
+): Promise<ProviderHealth> {
+  return {
+    provider: name,
+    model,
+    checks: await providerChecks(name, provider, model, { timeoutMs }),
+  };
+}
+
+function providerProblemLines(health: ProviderHealth): string[] {
+  return health.checks
+    .filter((check) => !check.ok)
+    .map(
+      (check) =>
+        `provider "${health.provider}" model "${health.model}": ${check.label} — ${check.detail}`
+    );
+}
+
+function printProviderHealth(health: ProviderHealth): string[] {
+  console.log(`  ${health.provider}${health.model ? ` / ${health.model}` : ''}`);
+  for (const check of health.checks) {
     const mark = check.ok ? ok('✓') : bad('✗');
     const detail = check.ok ? dim(check.detail) : bad(check.detail);
     console.log(`    ${mark} ${check.label.padEnd(12)} ${detail}`);
   }
-  return checks
-    .filter((check) => !check.ok)
-    .map((check) => `provider "${name}": ${check.label} — ${check.detail}`);
+  return providerProblemLines(health);
 }
 
-function printInstructions(): void {
-  const files = discoverInstructions(process.cwd());
+function printInstructions(files = discoverInstructions(process.cwd())): void {
   console.log('\nInstructions');
   if (files.length === 0) {
     console.log(`  ${dim('none found in ' + process.cwd())}`);
@@ -201,20 +224,67 @@ function homeRow(): { line: string; problem?: string } {
   }
 }
 
-export async function runDoctor(): Promise<void> {
+export async function runDoctor(options: DoctorOptions = {}): Promise<void> {
   const config: Config = loadEffectiveConfig();
   const problems = validateConfig(config);
   const home = homeRow();
   if (home.problem) problems.push(home.problem);
 
+  const instructions = discoverInstructions(process.cwd());
+  const path = configPath();
+  const project = existsSync(projectConfigPath()) ? projectConfigPath() : undefined;
+
+  const healthMatrix = await Promise.all(
+    Object.entries(config.providers).map(([name, provider]) => {
+      const primary = name === config.defaultProvider ? config.defaultModel : '';
+      const models = provider.models.length > 0 ? provider.models : primary ? [primary] : [];
+      return Promise.all(models.map((model) => checkProvider(name, provider, model, 4000)));
+    })
+  );
+  const health = healthMatrix.flat();
+  const providerProblems = health.flatMap((entry) => providerProblemLines(entry));
+  problems.push(...providerProblems);
+
+  if (options.json) {
+    console.log(
+      JSON.stringify(
+        {
+          version: VERSION,
+          config: {
+            path,
+            project,
+            home: larecodeHome(),
+            provider: config.defaultProvider,
+            model: config.defaultModel,
+            providers: Object.keys(config.providers).length,
+            mcpServers: Object.keys(config.mcpServers ?? {}).length,
+            execution: config.execution?.backend ?? 'local',
+            mode: config.permissions.mode,
+          },
+          providers: health,
+          instructions: instructions.map((file) => ({
+            file: file.relative,
+            status: file.status,
+          })),
+          problems,
+          ok: problems.length === 0,
+        },
+        null,
+        2
+      ) + '\n'
+    );
+    process.exitCode = problems.length === 0 ? 0 : 1;
+    return;
+  }
+
   console.log(`larecode ${VERSION} doctor\n`);
 
-  const path = configPath();
-  const pathState = existsSync(path) ? '' : dim(' (missing — defaults active)');
   console.log('Config');
-  console.log(`  path            ${path}${pathState}`);
+  console.log(
+    `  path            ${path}${existsSync(path) ? '' : dim(' (missing — defaults active)')}`
+  );
   console.log(home.line);
-  if (existsSync(projectConfigPath())) console.log(`  project         ${projectConfigPath()}`);
+  if (project) console.log(`  project         ${project}`);
   console.log(`  provider        ${config.defaultProvider}`);
   console.log(`  model           ${config.defaultModel}`);
   console.log(`  providers       ${Object.keys(config.providers).length} configured`);
@@ -222,25 +292,13 @@ export async function runDoctor(): Promise<void> {
   console.log(`  execution       ${config.execution?.backend ?? 'local'}`);
 
   console.log('\nProviders');
-  const providerProblems = (
-    await Promise.all(
-      Object.entries(config.providers).map(([name, provider]) =>
-        printProvider(
-          name,
-          provider,
-          name === config.defaultProvider ? config.defaultModel : (provider.models[0] ?? ''),
-          4000
-        )
-      )
-    )
-  ).flat();
-  problems.push(...providerProblems);
+  for (const entry of health) printProviderHealth(entry);
 
   console.log('\nPermissions');
   console.log(`  mode            ${config.permissions.mode}`);
   console.log(`  groups          ${config.permissions.allowedGroups.join(', ') || dim('none')}`);
 
-  printInstructions();
+  printInstructions(instructions);
 
   if (problems.length > 0) {
     console.log(`\n${bad(`${problems.length} problem${problems.length === 1 ? '' : 's'}`)}`);

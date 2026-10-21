@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { realpathSync } from 'node:fs';
-import { chmod, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { LareError } from '../error/error.js';
 
@@ -9,7 +9,7 @@ export const MAX_STREAM_BYTES = 1024 * 1024;
 export const DEFAULT_GLOB_LIMIT = 1000;
 export const DEFAULT_GREP_LIMIT = 200;
 
-const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist']);
+const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'coverage']);
 
 function realpathOrUndefined(path: string): string | undefined {
   try {
@@ -101,6 +101,35 @@ export function globToRegExp(pattern: string): RegExp {
   return new RegExp(out.join(''));
 }
 
+export async function readFilesConcurrent(
+  root: string,
+  files: string[],
+  options: { maxBytes?: number; concurrency?: number } = {}
+): Promise<Array<{ file: string; buf: Buffer }>> {
+  const { maxBytes = Infinity, concurrency = 32 } = options;
+  const out: Array<{ file: string; buf: Buffer }> = [];
+  let cursor = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, Math.max(1, files.length)) },
+    async () => {
+      while (true) {
+        const index = cursor;
+        cursor += 1;
+        if (index >= files.length) return;
+        const file = files[index];
+        try {
+          const buf = await readFile(join(root, file));
+          if (buf.length <= maxBytes) out.push({ file, buf });
+        } catch {
+          continue;
+        }
+      }
+    }
+  );
+  await Promise.all(workers);
+  return out;
+}
+
 export async function* walkFiles(root: string): AsyncGenerator<string> {
   const stack: string[] = [''];
   while (stack.length > 0) {
@@ -138,6 +167,28 @@ export function applyReplacement(
     throw new LareError('TOOL_EXECUTION_FAILED', 'find text must not be empty');
   }
   const occurrences = content.split(find).length - 1;
+  if (occurrences === 0 && content.includes('\r\n') && !find.includes('\r\n')) {
+    const crlfOnly = !content.replace(/\r\n/g, '').includes('\n');
+    if (crlfOnly) {
+      const normalized = content.replace(/\r\n/g, '\n');
+      const normalizedFind = find.replace(/\r\n/g, '\n');
+      const normalizedReplace = replace.replace(/\r\n/g, '\n');
+      const normalizedOccurrences = normalized.split(normalizedFind).length - 1;
+      if (normalizedOccurrences > 0) {
+        if (normalizedOccurrences > 1 && !replaceAll) {
+          throw new LareError(
+            'TOOL_EXECUTION_FAILED',
+            `text is not unique in ${displayPath} (${normalizedOccurrences} matches); pass more context or set replaceAll`,
+            { context: { path: displayPath, occurrences: normalizedOccurrences } }
+          );
+        }
+        return {
+          updated: normalized.split(normalizedFind).join(normalizedReplace).replace(/\n/g, '\r\n'),
+          replacements: normalizedOccurrences,
+        };
+      }
+    }
+  }
   if (occurrences === 0) {
     throw new LareError('TOOL_EXECUTION_FAILED', `text not found in ${displayPath}`, {
       context: { path: displayPath },

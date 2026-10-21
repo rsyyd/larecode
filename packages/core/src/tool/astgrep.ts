@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { Lang, parse, type SgNode } from '@ast-grep/napi';
+import type { Lang, SgNode } from '@ast-grep/napi';
 import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
 import { looksBinary, resolveInWorkspace, walkFiles } from './files.js';
@@ -12,27 +12,39 @@ interface AstGrepArgs {
   maxResults?: number;
 }
 
-const LANGS: Record<string, Lang> = {
-  ts: Lang.TypeScript,
-  typescript: Lang.TypeScript,
-  tsx: Lang.Tsx,
-  js: Lang.JavaScript,
-  javascript: Lang.JavaScript,
-  jsx: Lang.Tsx,
+type AstGrepModule = typeof import('@ast-grep/napi');
+type LangKey = 'TypeScript' | 'Tsx' | 'JavaScript';
+
+const LANGS: Record<string, LangKey> = {
+  ts: 'TypeScript',
+  typescript: 'TypeScript',
+  tsx: 'Tsx',
+  js: 'JavaScript',
+  javascript: 'JavaScript',
+  jsx: 'Tsx',
 };
 
-const EXT_LANGS: Record<string, Lang> = {
-  '.ts': Lang.TypeScript,
-  '.tsx': Lang.Tsx,
-  '.js': Lang.JavaScript,
-  '.mjs': Lang.JavaScript,
-  '.cjs': Lang.JavaScript,
-  '.jsx': Lang.Tsx,
+const EXT_LANGS: Record<string, LangKey> = {
+  '.ts': 'TypeScript',
+  '.tsx': 'Tsx',
+  '.js': 'JavaScript',
+  '.mjs': 'JavaScript',
+  '.cjs': 'JavaScript',
+  '.jsx': 'Tsx',
 };
 
 export const AST_GREP_LIMIT = 50;
 const MAX_FILE_BYTES = 512 * 1024;
 const MAX_MATCH_CHARS = 200;
+
+let astGrepPromise: Promise<AstGrepModule | null> | undefined;
+
+function loadAstGrep(): Promise<AstGrepModule | null> {
+  if (!astGrepPromise) {
+    astGrepPromise = import('@ast-grep/napi').catch(() => null);
+  }
+  return astGrepPromise;
+}
 
 function extensionOf(file: string): string {
   const dot = file.lastIndexOf('.');
@@ -47,11 +59,89 @@ function hasErrorNode(node: SgNode): boolean {
   return false;
 }
 
-export function astGrepTool(): Tool {
+function langValue(ast: AstGrepModule, key: LangKey): Lang {
+  return ast.Lang[key];
+}
+
+export function patternToRegex(pattern: string): RegExp {
+  let escaped = '';
+  for (let index = 0; index < pattern.length; index += 1) {
+    const char = pattern[index];
+    if (char === '$') {
+      let end = index;
+      while (end + 1 < pattern.length && pattern[end + 1] === '$') end += 1;
+      let name = end + 1;
+      while (name < pattern.length && /[A-Za-z_]/.test(pattern[name])) name += 1;
+      if (name > end + 1) {
+        escaped += '[\\s\\S]*?';
+        index = name - 1;
+        continue;
+      }
+      escaped += '\\$';
+      continue;
+    }
+    escaped += /[.*+?^${}()|[\]\\]/.test(char) ? `\\${char}` : char;
+  }
+  try {
+    return new RegExp(escaped);
+  } catch (error) {
+    throw new LareError(
+      'TOOL_EXECUTION_FAILED',
+      `invalid pattern: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+async function fallbackSearch(
+  root: string,
+  sub: string | undefined,
+  pattern: string,
+  forcedLang: LangKey | undefined,
+  cap: number
+): Promise<{ matches: Array<{ file: string; line: number; text: string }>; count: number; truncated: boolean; fallback: boolean }> {
+  const regex = patternToRegex(pattern);
+  const matches: Array<{ file: string; line: number; text: string }> = [];
+  let truncated = false;
+  search: for await (const file of walkFiles(root)) {
+    if (matches.length >= cap) break;
+    const fileLang = EXT_LANGS[extensionOf(file)];
+    if (!fileLang) continue;
+    if (forcedLang && fileLang !== forcedLang) continue;
+    let buf: Buffer;
+    try {
+      buf = await readFile(join(root, file));
+    } catch {
+      continue;
+    }
+    if (looksBinary(buf) || buf.length > MAX_FILE_BYTES) continue;
+    const lines = buf.toString('utf8').split('\n');
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index];
+      if (!regex.test(line)) continue;
+      const text = line.trim();
+      matches.push({
+        file: sub === undefined ? file : `${sub.replace(/\/+$/, '')}/${file}`,
+        line: index + 1,
+        text: text.length > MAX_MATCH_CHARS ? `${text.slice(0, MAX_MATCH_CHARS)}…` : text,
+      });
+      if (matches.length >= cap) {
+        truncated = true;
+        break search;
+      }
+    }
+  }
+  return { matches, count: matches.length, truncated, fallback: true };
+}
+
+export interface AstGrepOptions {
+  load?: () => Promise<AstGrepModule | null>;
+}
+
+export function astGrepTool(options: AstGrepOptions = {}): Tool {
   return {
     name: 'ast_grep',
     description:
-      'Structural code search with ast-grep patterns, e.g. "function $NAME($$$ARGS) { $$$BODY }" or "console.log($ARG)". Returns file, line, and matched text.',
+      'Structural code search with ast-grep patterns, e.g. "function $NAME($$$ARGS) { $$$BODY }" or "console.log($ARG)". Returns file, line, and matched text. Falls back to text matching when ast-grep is unavailable.',
     schema: {
       type: 'object',
       properties: {
@@ -73,7 +163,7 @@ export function astGrepTool(): Tool {
       if (typeof pattern !== 'string' || pattern.trim() === '') {
         throw new LareError('TOOL_EXECUTION_FAILED', 'ast_grep requires a pattern');
       }
-      let forcedLang: Lang | undefined;
+      let forcedLang: LangKey | undefined;
       if (lang !== undefined) {
         forcedLang = LANGS[lang.toLowerCase()];
         if (!forcedLang) {
@@ -83,8 +173,15 @@ export function astGrepTool(): Tool {
           );
         }
       }
+
+      const root =
+        sub === undefined ? context.workingDir : resolveInWorkspace(context.workingDir, sub);
+      const cap = maxResults ?? AST_GREP_LIMIT;
+      const ast = options.load ? await options.load() : await loadAstGrep();
+      if (!ast) return fallbackSearch(root, sub, pattern, forcedLang, cap);
+
       try {
-        const probe = parse(forcedLang ?? Lang.TypeScript, pattern).root();
+        const probe = ast.parse(forcedLang ? langValue(ast, forcedLang) : ast.Lang.TypeScript, pattern).root();
         if (hasErrorNode(probe)) {
           throw new Error('pattern does not parse as valid code');
         }
@@ -95,37 +192,38 @@ export function astGrepTool(): Tool {
         );
       }
 
-      const root =
-        sub === undefined ? context.workingDir : resolveInWorkspace(context.workingDir, sub);
-      const cap = maxResults ?? AST_GREP_LIMIT;
       const matches: Array<{ file: string; line: number; text: string }> = [];
       let truncated = false;
 
-      search: for await (const file of walkFiles(root)) {
-        if (matches.length >= cap) break;
-        const fileLang = EXT_LANGS[extensionOf(file)];
-        if (!fileLang) continue;
-        if (forcedLang && fileLang !== forcedLang) continue;
-        let buf: Buffer;
-        try {
-          buf = await readFile(join(root, file));
-        } catch {
-          continue;
-        }
-        if (looksBinary(buf) || buf.length > MAX_FILE_BYTES) continue;
-        const ast = parse(fileLang, buf.toString('utf8')).root();
-        for (const node of ast.findAll({ rule: { pattern } })) {
-          const first = node.text().split('\n')[0].trim();
-          matches.push({
-            file: sub === undefined ? file : `${sub.replace(/\/+$/, '')}/${file}`,
-            line: node.range().start.line + 1,
-            text: first.length > MAX_MATCH_CHARS ? `${first.slice(0, MAX_MATCH_CHARS)}…` : first,
-          });
-          if (matches.length >= cap) {
-            truncated = true;
-            break search;
+      try {
+        search: for await (const file of walkFiles(root)) {
+          if (matches.length >= cap) break;
+          const fileLang = EXT_LANGS[extensionOf(file)];
+          if (!fileLang) continue;
+          if (forcedLang && fileLang !== forcedLang) continue;
+          let buf: Buffer;
+          try {
+            buf = await readFile(join(root, file));
+          } catch {
+            continue;
+          }
+          if (looksBinary(buf) || buf.length > MAX_FILE_BYTES) continue;
+          const tree = ast.parse(langValue(ast, fileLang), buf.toString('utf8')).root();
+          for (const node of tree.findAll({ rule: { pattern } })) {
+            const first = node.text().split('\n')[0].trim();
+            matches.push({
+              file: sub === undefined ? file : `${sub.replace(/\/+$/, '')}/${file}`,
+              line: node.range().start.line + 1,
+              text: first.length > MAX_MATCH_CHARS ? `${first.slice(0, MAX_MATCH_CHARS)}…` : first,
+            });
+            if (matches.length >= cap) {
+              truncated = true;
+              break search;
+            }
           }
         }
+      } catch {
+        return fallbackSearch(root, sub, pattern, forcedLang, cap);
       }
       return { matches, count: matches.length, truncated };
     },

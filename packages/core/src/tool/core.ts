@@ -15,7 +15,7 @@ import { readTool } from './read.js';
 import { sessionSearchTool } from './session-search.js';
 import { skillTool } from './skill.js';
 import { taskTool } from './task.js';
-import { webFetchTool, webSearchTool } from './web.js';
+import { webFetchTool, webSearchTool, type WebSearchOptions } from './web.js';
 import { writeTool } from './write.js';
 
 export interface CoreToolOptions {
@@ -24,6 +24,7 @@ export interface CoreToolOptions {
   skills?: Skills;
   subagents?: Subagents;
   agent?: { provider: string; model: string };
+  webSearch?: WebSearchOptions;
 }
 
 export function coreTools(options: CoreToolOptions = {}): Tool[] {
@@ -37,7 +38,7 @@ export function coreTools(options: CoreToolOptions = {}): Tool[] {
     astGrepTool(),
     patchTool(),
     webFetchTool(),
-    webSearchTool(),
+    webSearchTool(options.webSearch),
     browserTool(),
     sessionSearchTool(),
   ];

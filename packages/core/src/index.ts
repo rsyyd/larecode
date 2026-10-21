@@ -180,8 +180,15 @@ export {
   loadEffectiveConfig,
   validateConfig,
   saveConfig,
+  CONFIG_SCHEMA_VERSION,
 } from './config/config.js';
-export type { Config, ProviderConfig } from './config/config.js';
+export type {
+  Config,
+  ContextConfig,
+  FallbackTarget,
+  ProviderConfig,
+  WebSearchConfig,
+} from './config/config.js';
 
 export { LSP } from './lsp/lsp.js';
 export type { LSPCapabilities, LSPOptions, SymbolInfo } from './lsp/lsp.js';
@@ -251,6 +258,12 @@ export type {
   ContextSectionName,
   ContextSectionReport,
 } from './context/assembler.js';
+export { CONTEXT_HEADER, ContextBuilder, sanitizeContext } from './context/inject.js';
+export type {
+  ContextBuilderOptions,
+  ContextReport,
+  ContextSourceReport,
+} from './context/inject.js';
 export type { ContextQuery, ContextResult, RelevanceScore } from './context/context.js';
 export {
   buildRepoMap,
@@ -281,11 +294,14 @@ export {
   htmlToText,
   decodeEntities,
   parseHttpUrl,
+  assertPublicHttpUrl,
+  isPrivateAddress,
   WEB_FETCH_MAX_CHARS,
+  WEB_FETCH_MAX_REDIRECTS,
   WEB_SEARCH_LIMIT,
   WEB_SEARCH_MAX_LIMIT,
 } from './tool/web.js';
-export type { SearchResult } from './tool/web.js';
+export type { SearchResult, WebSearchOptions } from './tool/web.js';
 export { browserTool, cdpEndpoint, DEFAULT_CDP_ENDPOINT, BROWSER_ACTIONS } from './tool/browser.js';
 
 export {
@@ -325,6 +341,8 @@ export {
   createUsageRecorder,
   estimateCost,
   estimateTokens,
+  applyTokenRatio,
+  tokenRatio,
   formatCost,
   formatTokens,
   DEFAULT_MODEL_PRICING,

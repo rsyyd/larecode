@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { loadEffectiveConfig } from '../config/config.js';
+import { loadEffectiveConfig, type FallbackTarget } from '../config/config.js';
 import { backendFromConfig } from '../exec/backend.js';
 import { compactProviderMessages } from '../context/compact.js';
+import { CONTEXT_HEADER, ContextBuilder, type ContextReport } from '../context/inject.js';
 import { LSP } from '../lsp/lsp.js';
 import { Skills } from '../skill/skill.js';
 import { LareError } from '../error/error.js';
@@ -21,9 +22,11 @@ import { coreTools } from '../tool/core.js';
 import { Tools, validateToolArguments, type Tool, type ToolCall } from '../tool/tool.js';
 import {
   DEFAULT_MODEL_PRICING,
+  applyTokenRatio,
   createUsageRecorder,
   estimateCost,
   estimateTokens,
+  tokenRatio,
   type UsageAggregate,
   type UsageRecorder,
 } from '../usage/usage.js';
@@ -61,6 +64,13 @@ export type AgentRuntimeEvent =
   | { type: 'tool_start'; callId: string; name: string; args: unknown }
   | { type: 'tool_end'; callId: string; name: string; ok: boolean; output: string }
   | { type: 'usage'; usage: UsageAggregate }
+  | {
+      type: 'fallback';
+      from: string;
+      provider: string;
+      model: string;
+      reason: string;
+    }
   | AgentRuntimeStopEvent;
 
 export function isAgentRuntimeStopEvent(event: AgentRuntimeEvent): event is AgentRuntimeStopEvent {
@@ -93,7 +103,9 @@ export interface AgentRuntimeOptions {
   durationBudget?: number;
   compactAtTokens?: number;
   compactKeepRecent?: number;
+  context?: boolean;
   usageRecorder?: UsageRecorder;
+  fallbacks?: FallbackTarget[];
 }
 
 export interface AgentRuntime {
@@ -102,6 +114,7 @@ export interface AgentRuntime {
   getModel(): string;
   getUsage(): UsageAggregate;
   getHistory(): ProviderMessage[];
+  getContextReport(): ContextReport;
   setAgent(agent: AgentRuntimeAgentName): void;
   selectModel(provider: string, model: string): void;
   reset(): void;
@@ -245,10 +258,14 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly durationBudget: number;
   private readonly compactAtTokens: number;
   private readonly compactKeepRecent: number;
-  private readonly startedAt = Date.now();
+  private readonly contextBuilder: ContextBuilder;
+  private readonly fallbacks: FallbackTarget[];
+  private fallbackCursor = 0;
+  private startedAt = Date.now();
   private agent: AgentRuntimeAgentName;
   private messages: ProviderMessage[];
   private tokensUsed = 0;
+  private tokenRatioValue = 1;
 
   constructor(options: AgentRuntimeOptions = {}) {
     const cwd = options.workingDir ?? process.cwd();
@@ -269,6 +286,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.durationBudget = options.durationBudget ?? 600_000;
     this.compactAtTokens = options.compactAtTokens ?? 96_000;
     this.compactKeepRecent = options.compactKeepRecent ?? 6;
+    this.contextBuilder = ContextBuilder.fromConfig(cwd, config, options.context);
+    this.fallbacks = options.fallbacks ?? config.fallbacks ?? [];
     this.usage = options.usageRecorder ?? createUsageRecorder(this.sessionId);
     this.agent = options.agent ?? 'plan';
 
@@ -339,6 +358,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
         workingDir: this.workingDir,
       }),
       agent: { provider: this.provider, model: this.model },
+      webSearch: config.webSearch,
     });
   }
 
@@ -366,6 +386,51 @@ export class DefaultAgentRuntime implements AgentRuntime {
     return this.messages.map((message) => ({ ...message }));
   }
 
+  getContextReport(): ContextReport {
+    return this.contextBuilder.report();
+  }
+
+  private switchToFallback(
+    reason: unknown
+  ): { from: string; provider: string; model: string } | undefined {
+    if (this.fallbackCursor >= this.fallbacks.length) return undefined;
+    if (reason instanceof LareError && reason.code === 'CANCELLED') return undefined;
+    const from = this.provider;
+    const seen = new Set<string>();
+    while (this.fallbackCursor < this.fallbacks.length) {
+      const target = this.fallbacks[this.fallbackCursor];
+      this.fallbackCursor += 1;
+      const key = `${target.provider}${target.model ? `:${target.model}` : ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (target.provider === from && (target.model === undefined || target.model === this.model)) {
+        continue;
+      }
+      if (!this.providers.get(target.provider)) continue;
+      const model = target.model ?? this.model;
+      this.provider = target.provider;
+      this.model = model;
+      defaultLogger.warn('provider fallback', { from, provider: target.provider, model, reason });
+      return { from, provider: target.provider, model };
+    }
+    return undefined;
+  }
+
+  private *fallbackNotice(
+    switched: { from: string; provider: string; model: string } | undefined,
+    reason: string
+  ): Generator<AgentRuntimeEvent, void, unknown> {
+    if (switched) {
+      yield {
+        type: 'fallback',
+        from: switched.from,
+        provider: switched.provider,
+        model: switched.model,
+        reason,
+      };
+    }
+  }
+
   setAgent(agent: AgentRuntimeAgentName): void {
     if (agent === this.agent) return;
     this.agent = agent;
@@ -376,8 +441,26 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.messages = [{ role: 'system', content: this.systemPrompt() }];
   }
 
+  private async applyContext(prompt: string): Promise<void> {
+    let report: ContextReport;
+    try {
+      report = await this.contextBuilder.build(prompt);
+    } catch (error) {
+      defaultLogger.warn('context build failed', {
+        reason: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
+    const base = this.systemPrompt();
+    this.messages[0] = {
+      role: 'system',
+      content: report.text ? `${base}\n\n${CONTEXT_HEADER}\n${report.text}` : base,
+    };
+  }
+
   async *run(input: AgentRuntimeTurnInput): AsyncGenerator<AgentRuntimeEvent> {
     if (input.agent) this.setAgent(input.agent);
+    await this.applyContext(input.prompt);
     await this.compactHistory(input.signal);
     this.messages.push({ role: 'user', content: input.prompt });
 
@@ -406,6 +489,13 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
         const adapter = this.providers.get(this.provider);
         if (!adapter) {
+          const switched = this.switchToFallback(
+            new LareError('PROVIDER_UNAVAILABLE', `Provider "${this.provider}" is not available`)
+          );
+          if (switched) {
+            yield* this.fallbackNotice(switched, 'provider unavailable');
+            continue;
+          }
           throw new LareError(
             'PROVIDER_UNAVAILABLE',
             `Provider "${this.provider}" is not available`
@@ -474,6 +564,15 @@ export class DefaultAgentRuntime implements AgentRuntime {
               yield { type: 'text', text: chunk };
             }
           }
+        } catch (error) {
+          if (text === '' && calls.length === 0) {
+            const switched = this.switchToFallback(error);
+            if (switched) {
+              yield* this.fallbackNotice(switched, 'provider error');
+              continue;
+            }
+          }
+          throw error;
         } finally {
           deadline.cancel();
         }
@@ -485,6 +584,11 @@ export class DefaultAgentRuntime implements AgentRuntime {
           const failure = new LareError('EMPTY_RESPONSE', 'provider returned an empty response', {
             retryable: true,
           });
+          const switched = this.switchToFallback(failure);
+          if (switched) {
+            yield* this.fallbackNotice(switched, 'empty response');
+            continue;
+          }
           yield { type: 'error', error: failure.toJSON() };
           return;
         }
@@ -716,9 +820,13 @@ export class DefaultAgentRuntime implements AgentRuntime {
   }
 
   private recordUsage(text: string, reported: ProviderUsage | undefined): void {
-    const input =
-      reported?.input ?? estimateTokens(this.messages.map((message) => message.content).join('\n'));
-    const output = reported?.output ?? estimateTokens(text);
+    const estimatedInput = estimateTokens(
+      this.messages.map((message) => message.content).join('\n')
+    );
+    const ratio = reported ? tokenRatio(estimatedInput, reported.input) : undefined;
+    if (ratio !== undefined) this.tokenRatioValue = this.tokenRatioValue * 0.7 + ratio * 0.3;
+    const input = reported?.input ?? applyTokenRatio(estimatedInput, this.tokenRatioValue);
+    const output = reported?.output ?? applyTokenRatio(estimateTokens(text), this.tokenRatioValue);
     const tokens = {
       input,
       output,

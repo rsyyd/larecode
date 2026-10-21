@@ -17,6 +17,8 @@ export interface CronAddOptions {
   prompt: string[];
   name?: string;
   allow?: string;
+  retries?: string;
+  timeout?: string;
 }
 
 export interface CronDeps {
@@ -82,6 +84,8 @@ export function cronAdd(options: CronAddOptions, deps: CronDeps = {}): number {
       prompt: options.prompt.join(' '),
       name: options.name,
       policy: parseAllow(options.allow),
+      retries: options.retries === undefined ? 0 : Number.parseInt(options.retries, 10),
+      timeoutMs: options.timeout === undefined ? undefined : Number.parseInt(options.timeout, 10),
     });
     const policy = job.policy.length > 0 ? job.policy.join(',') : 'none';
     write(
@@ -125,6 +129,28 @@ export function cronRemove(id: string, deps: CronDeps = {}): number {
     return 1;
   }
   write(`${ok('removed')} ${id}\n`);
+  return 0;
+}
+
+export function cronLogs(id: string, deps: CronDeps & { json?: boolean } = {}): number {
+  const write = deps.write ?? ((text: string) => process.stdout.write(text));
+  const job = (deps.jobs ?? new Jobs()).get(id);
+  if (!job) {
+    write(`${bad('cron:')} job ${id} not found\n`);
+    return 1;
+  }
+  if (deps.json) {
+    write(`${JSON.stringify({ job, result: job.lastResult ?? null }, null, 2)}\n`);
+    return 0;
+  }
+  if (!job.lastResult) {
+    write(`${dim('no runs yet')}\n`);
+    return 0;
+  }
+  write(`${summarize(job.lastResult)}\n`);
+  write(`${dim(`attempts ${job.lastResult.attempts ?? 1} · ${job.lastResult.durationMs ?? 0}ms`)}\n`);
+  if (job.lastResult.error) write(`${bad(job.lastResult.error)}\n`);
+  write(`${job.lastResult.output}\n`);
   return 0;
 }
 

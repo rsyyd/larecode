@@ -30,6 +30,11 @@ export interface CronRunDeps {
   signal?: AbortSignal;
   onChunk?: (text: string) => void;
   now?: () => Date;
+  retryDelayMs?: number;
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function runCronJob(job: CronJob, deps: CronRunDeps = {}): Promise<CronResult> {
@@ -40,35 +45,71 @@ export async function runCronJob(job: CronJob, deps: CronRunDeps = {}): Promise<
     ((options) => {
       throw new Error(`no loop factory configured for ${options.model}`);
     });
-  const loop = createLoop({
-    provider: config.defaultProvider,
-    model: config.defaultModel,
-    workingDir: deps.cwd,
-    permissions: cronPermissions(job),
-    unattended: true,
-    abortSignal: deps.signal,
-  });
-
+  const retries = Math.max(0, job.retries ?? 0);
+  const timeoutMs = Math.max(1000, job.timeoutMs ?? 600_000);
+  const startedAt = Date.now();
+  let attempts = 0;
   let output = '';
   let failure: string | undefined;
-  try {
-    for await (const chunk of loop.run(job.prompt)) {
-      output += chunk;
-      deps.onChunk?.(chunk);
+  let halt: string | null = null;
+  let tokens = 0;
+  let cost = 0;
+
+  for (let attempt = 1; attempt <= retries + 1; attempt += 1) {
+    attempts = attempt;
+    if (deps.signal?.aborted) {
+      failure = 'cancelled';
+      break;
     }
-  } catch (error) {
-    failure = error instanceof Error ? error.message : String(error);
+    const timeout = AbortSignal.timeout(timeoutMs);
+    const signal = deps.signal ? AbortSignal.any([deps.signal, timeout]) : timeout;
+    let loop: CronLoop | undefined;
+    let attemptFailure: string | undefined;
+    try {
+      loop = createLoop({
+        provider: config.defaultProvider,
+        model: config.defaultModel,
+        workingDir: deps.cwd,
+        permissions: cronPermissions(job),
+        unattended: true,
+        abortSignal: signal,
+      });
+      for await (const chunk of loop.run(job.prompt)) {
+        output += chunk;
+        deps.onChunk?.(chunk);
+      }
+      halt = loop.getHaltReason();
+    } catch (error) {
+      attemptFailure = error instanceof Error ? error.message : String(error);
+    }
+    if (timeout.aborted && !deps.signal?.aborted) {
+      attemptFailure = `timed out after ${timeoutMs}ms`;
+    }
+    if (loop) {
+      const usage = loop.getUsage();
+      tokens += usage.totalTokens.total;
+      cost += usage.totalCost.totalCost;
+      halt = loop.getHaltReason();
+    }
+    if (attemptFailure === undefined) {
+      failure = undefined;
+      break;
+    }
+    failure = attemptFailure;
+    if (deps.signal?.aborted) break;
+    if (attempt <= retries) await wait(deps.retryDelayMs ?? 500);
   }
 
-  const usage = loop.getUsage();
   return {
     at: now(),
     status: failure === undefined ? 'ok' : 'error',
     output: output.slice(-CRON_OUTPUT_MAX_CHARS),
     error: failure,
-    tokens: usage.totalTokens.total,
-    cost: usage.totalCost.totalCost,
-    halt: loop.getHaltReason(),
+    tokens,
+    cost,
+    halt,
+    attempts,
+    durationMs: Date.now() - startedAt,
   };
 }
 

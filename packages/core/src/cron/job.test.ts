@@ -48,6 +48,19 @@ describe('Jobs', () => {
     expect(job.policy).toEqual(['read']);
   });
 
+  it('clamps retries and timeouts', () => {
+    const jobs = new Jobs(file);
+    const job = jobs.add({
+      schedule: 'hourly',
+      prompt: 'ping',
+      retries: 99,
+      timeoutMs: 5,
+    });
+    expect(job.retries).toBe(5);
+    expect(job.timeoutMs).toBe(1000);
+    expect(new Jobs(file).get(job.id)?.retries).toBe(5);
+  });
+
   it('rejects bad schedules and policies', () => {
     const jobs = new Jobs(file);
     const code = (fn: () => unknown) => {
