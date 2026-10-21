@@ -8,6 +8,7 @@ export type AcpStopReason = 'end_turn' | 'max_tokens' | 'cancelled' | 'refusal';
 
 export interface AcpTurnContext {
   sessionId: string;
+  cwd: string;
   signal: AbortSignal;
   onChunk: (text: string) => void;
 }
@@ -50,7 +51,10 @@ export class AcpAgent {
   private readonly version: string;
   private readonly send: (message: unknown) => void;
   private readonly sessions: Sessions;
-  private readonly turn: AcpTurnHandler;
+  private readonly workingDir?: string;
+  private readonly customTurn?: AcpTurnHandler;
+  private readonly clientOptions: Omit<LareClientOptions, 'workingDir'>;
+  private readonly cwds = new Map<string, string>();
   private readonly pending = new Map<string, PendingSession>();
 
   constructor(options: AcpAgentOptions = {}) {
@@ -60,23 +64,24 @@ export class AcpAgent {
     this.send =
       options.send ?? ((message: unknown) => process.stdout.write(`${JSON.stringify(message)}\n`));
     this.sessions = options.sessions ?? new Sessions();
-    const client = new LareClient({
-      workingDir: options.workingDir,
+    this.workingDir = options.workingDir;
+    this.customTurn = options.runTurn;
+    this.clientOptions = {
       sessions: this.sessions,
       provider: options.provider,
       model: options.model,
       loopFactory: options.loopFactory,
+    };
+  }
+
+  private async defaultTurn(prompt: string, context: AcpTurnContext): Promise<AcpStopReason> {
+    const client = new LareClient({ ...this.clientOptions, workingDir: context.cwd });
+    const result = await client.run(prompt, {
+      sessionId: context.sessionId,
+      signal: context.signal,
+      onChunk: context.onChunk,
     });
-    this.turn =
-      options.runTurn ??
-      (async (prompt, context) => {
-        const result = await client.run(prompt, {
-          sessionId: context.sessionId,
-          signal: context.signal,
-          onChunk: context.onChunk,
-        });
-        return result.stopReason;
-      });
+    return result.stopReason;
   }
 
   async serve(): Promise<void> {
@@ -124,7 +129,7 @@ export class AcpAgent {
       case 'initialize':
         return this.initialize();
       case 'session/new':
-        return this.sessionNew();
+        return this.sessionNew(request.params);
       case 'session/prompt':
         return await this.sessionPrompt(request.params);
       default:
@@ -148,8 +153,10 @@ export class AcpAgent {
     };
   }
 
-  private sessionNew(): unknown {
+  private sessionNew(params: unknown): unknown {
     const session = this.sessions.create();
+    const cwd = (params as { cwd?: string } | undefined)?.cwd;
+    if (typeof cwd === 'string' && cwd.length > 0) this.cwds.set(session.id, cwd);
     this.pending.set(session.id, { abort: null });
     return { sessionId: session.id };
   }
@@ -164,8 +171,10 @@ export class AcpAgent {
     const abort = new AbortController();
     pending.abort = abort;
     try {
-      const stopReason = await this.turn(text, {
+      const turn = this.customTurn ?? this.defaultTurn.bind(this);
+      const stopReason = await turn(text, {
         sessionId,
+        cwd: this.cwds.get(sessionId) ?? this.workingDir ?? process.cwd(),
         signal: abort.signal,
         onChunk: (chunk) => {
           this.send({

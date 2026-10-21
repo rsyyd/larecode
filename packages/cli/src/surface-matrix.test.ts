@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -9,6 +9,7 @@ import {
   Providers,
   Sessions,
   Tools,
+  coreTools,
   runCronJob,
   type AgentRuntimeLoopOptions,
   type CronJob,
@@ -58,8 +59,39 @@ function allow(): Permissions {
   return new Permissions({ mode: 'allow', allowedGroups: [] });
 }
 
-function matrix(options: Partial<AgentRuntimeLoopOptions> = {}) {
-  const adapter = new MatrixAdapter();
+class WriteAdapter extends MatrixAdapter {
+  override async *streamChat(messages: ProviderMessage[]): AsyncGenerator<ProviderStreamEvent> {
+    this.requests.push(messages.map((message) => ({ ...message })));
+    if (messages.at(-1)?.role === 'tool') {
+      yield { type: 'text', text: 'written' };
+      return;
+    }
+    yield {
+      type: 'tool_calls',
+      calls: [
+        {
+          id: 'call-1',
+          name: 'write',
+          arguments: JSON.stringify({ path: 'result.txt', content: 'hello from server' }),
+        },
+      ],
+    };
+  }
+}
+
+function matrix(options?: Partial<AgentRuntimeLoopOptions>): {
+  adapter: MatrixAdapter;
+  loop: AgentRuntimeLoop;
+  providers: Providers;
+};
+function matrix<T extends ProviderAdapter>(
+  options: Partial<AgentRuntimeLoopOptions>,
+  adapter: T
+): { adapter: T; loop: AgentRuntimeLoop; providers: Providers };
+function matrix(
+  options: Partial<AgentRuntimeLoopOptions> = {},
+  adapter: ProviderAdapter = new MatrixAdapter()
+) {
   const providers = new Providers();
   providers.register(adapter);
   const loop = new AgentRuntimeLoop({
@@ -244,6 +276,67 @@ describe('surface integration matrix', () => {
     expect(out.at(-1)?.result?.stopReason).toBe('end_turn');
   });
 
+  it('executes a write tool through the server surface', async () => {
+    const adapter = new WriteAdapter();
+    const tools = new Tools();
+    const write = coreTools().find((tool) => tool.name === 'write');
+    if (!write) throw new Error('write tool missing');
+    tools.register(write);
+    const server = new Server({
+      port: 0,
+      token: 'tool-token',
+      sessions: new Sessions(join(dir, 'server-tools')),
+      workingDir: dir,
+      runTurn: async function* (prompt, context) {
+        const runtime = matrix(
+          {
+            workingDir: dir,
+            history: context.history,
+            abortSignal: context.signal,
+            tools,
+          },
+          adapter
+        );
+        for await (const chunk of runtime.loop.run(prompt)) yield chunk;
+        const usage = runtime.loop.getUsage();
+        return {
+          halt: runtime.loop.getHaltReason(),
+          tokens: usage.totalTokens.total,
+          cost: usage.totalCost.totalCost,
+        };
+      },
+    });
+    await server.start();
+
+    let output = '';
+    try {
+      const headers = {
+        authorization: 'Bearer tool-token',
+        'content-type': 'application/json',
+      };
+      const created = (await (
+        await fetch(`${server.url}/sessions`, { method: 'POST', headers })
+      ).json()) as { id: string };
+      const response = await fetch(`${server.url}/sessions/${created.id}/messages`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ content: 'write the file' }),
+      });
+      output = await response.text();
+    } finally {
+      await server.stop();
+    }
+
+    expect(output).toContain('written');
+    expect(await readFile(join(dir, 'result.txt'), 'utf8')).toBe('hello from server');
+    expect(adapter.requests).toHaveLength(2);
+    expect(
+      adapter.requests[1]?.some(
+        (message) => message.role === 'tool' && message.toolCallId === 'call-1'
+      )
+    ).toBe(true);
+  });
+
   it('sends accumulated history across three server turns', async () => {
     const sessions = new Sessions(join(dir, 'server-history'));
     const histories: ProviderMessage[][] = [];
@@ -344,6 +437,59 @@ describe('surface integration matrix', () => {
       'user:two',
       'assistant:matrix-ok',
     ]);
+  });
+
+  it('executes a write tool through ACP', async () => {
+    const adapter = new WriteAdapter();
+    const tools = new Tools();
+    const write = coreTools().find((tool) => tool.name === 'write');
+    if (!write) throw new Error('write tool missing');
+    tools.register(write);
+    const out: {
+      method?: string;
+      result?: { sessionId?: string; stopReason?: string };
+      params?: { update?: { content?: { text?: string } } };
+    }[] = [];
+    const agent = new AcpAgent({
+      sessions: new Sessions(join(dir, 'acp-tools')),
+      provider: PROVIDER,
+      model: MODEL,
+      send: (message) => out.push(message as (typeof out)[number]),
+      loopFactory: (options) =>
+        matrix({ ...options, provider: PROVIDER, model: MODEL, tools }, adapter).loop,
+    });
+
+    await agent.handleLine(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 0,
+        method: 'initialize',
+        params: { protocolVersion: 1, clientCapabilities: {} },
+      })
+    );
+    await agent.handleLine(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'session/new',
+        params: { cwd: dir, mcpServers: [] },
+      })
+    );
+    const sessionId = out.at(-1)?.result?.sessionId;
+    if (!sessionId) throw new Error('session/new did not return a session id');
+    await agent.handleLine(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'session/prompt',
+        params: { sessionId, prompt: [{ type: 'text', text: 'write the file' }] },
+      })
+    );
+
+    expect(out.at(-1)?.result).toEqual({ stopReason: 'end_turn' });
+    expect(out.some((message) => message.params?.update?.content?.text === 'written')).toBe(true);
+    expect(await readFile(join(dir, 'result.txt'), 'utf8')).toBe('hello from server');
+    expect(adapter.requests).toHaveLength(2);
   });
 
   it('keeps history across three SDK turns', async () => {
