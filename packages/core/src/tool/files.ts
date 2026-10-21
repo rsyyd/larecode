@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { realpathSync } from 'node:fs';
-import { readdir } from 'node:fs/promises';
-import { dirname, join, resolve, sep } from 'node:path';
+import { chmod, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import { LareError } from '../error/error.js';
 
 export const MAX_READ_BYTES = 1024 * 1024;
@@ -46,6 +46,26 @@ export function resolveInWorkspace(workingDir: string, input: string): string {
 
 export function sha256(data: string | Buffer): string {
   return createHash('sha256').update(data).digest('hex');
+}
+
+export async function writeFileAtomic(abs: string, content: string): Promise<void> {
+  const temporary = join(
+    dirname(abs),
+    `.${basename(abs)}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`
+  );
+  let mode: number | undefined;
+  try {
+    mode = (await stat(abs)).mode;
+  } catch {
+    mode = undefined;
+  }
+  try {
+    await writeFile(temporary, content, 'utf8');
+    if (mode !== undefined) await chmod(temporary, mode & 0o7777);
+    await rename(temporary, abs);
+  } finally {
+    await rm(temporary, { force: true });
+  }
 }
 
 export function globToRegExp(pattern: string): RegExp {

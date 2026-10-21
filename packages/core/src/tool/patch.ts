@@ -1,7 +1,7 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
-import { applyReplacement, resolveInWorkspace, sha256 } from './files.js';
+import { applyReplacement, resolveInWorkspace, sha256, writeFileAtomic } from './files.js';
 
 interface PatchArgs {
   path: string;
@@ -57,7 +57,7 @@ export function patchTool(): Tool {
         false,
         input
       );
-      await writeFile(abs, updated, 'utf8');
+      await writeFileAtomic(abs, updated);
 
       return { path: input, replacements, sha256: sha256(updated) };
     },

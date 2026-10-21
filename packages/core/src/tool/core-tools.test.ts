@@ -1,4 +1,14 @@
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -130,6 +140,17 @@ describe('write', () => {
     const result = await call('write', { path: 'x.txt', content: 'b' });
     expect((result.output as { created: boolean }).created).toBe(false);
     expect(await readFile(join(dir, 'x.txt'), 'utf8')).toBe('b');
+  });
+
+  it('replaces files atomically, preserves mode, and leaves no temp files', async () => {
+    await writeFile(join(dir, 'run.sh'), 'old');
+    await chmod(join(dir, 'run.sh'), 0o755);
+
+    const result = await call('write', { path: 'run.sh', content: 'new' });
+    expect(result.success).toBe(true);
+    expect(await readFile(join(dir, 'run.sh'), 'utf8')).toBe('new');
+    expect((await stat(join(dir, 'run.sh'))).mode & 0o777).toBe(0o755);
+    expect(await readdir(dir)).toEqual(['run.sh']);
   });
 });
 

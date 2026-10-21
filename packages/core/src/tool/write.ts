@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type { Tool } from './tool.js';
-import { resolveInWorkspace, sha256 } from './files.js';
+import { resolveInWorkspace, sha256, writeFileAtomic } from './files.js';
 
 interface WriteArgs {
   path: string;
@@ -27,7 +27,7 @@ export function writeTool(): Tool {
       const created = !existsSync(abs);
 
       await mkdir(dirname(abs), { recursive: true });
-      await writeFile(abs, content, 'utf8');
+      await writeFileAtomic(abs, content);
 
       return {
         path: input,
