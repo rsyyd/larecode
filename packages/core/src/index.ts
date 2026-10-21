@@ -36,6 +36,7 @@ export type {
 } from './agent/subagent.js';
 
 export { Providers, providersFromConfig } from './provider/provider.js';
+export type { LareCodeFetch } from './provider/fetch.js';
 export type {
   ProviderAdapter,
   ProviderCapabilities,
