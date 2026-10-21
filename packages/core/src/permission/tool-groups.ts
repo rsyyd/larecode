@@ -19,5 +19,6 @@ export const TOOL_PERMISSION_GROUPS: Record<string, PermissionGroup> = {
 };
 
 export function toolPermissionGroup(name: string): PermissionGroup {
+  if (name.startsWith('mcp_')) return 'external-services';
   return TOOL_PERMISSION_GROUPS[name] ?? 'write';
 }

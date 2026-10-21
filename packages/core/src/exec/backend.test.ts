@@ -86,6 +86,15 @@ describe('dockerArgs', () => {
     expect(args.slice(-4)).toEqual(['node:22-alpine', 'sh', '-lc', 'echo hi']);
   });
 
+  it('keeps hostile paths and images as single argv values', () => {
+    const hostile = `/tmp/x; touch /tmp/pwned 'quoted' $(id)`;
+    const args = dockerArgs({ ...request('echo hi'), cwd: hostile }, { image: 'alpine; rm -rf /' });
+
+    expect(args[args.indexOf('-v') + 1]).toBe(`${hostile}:${hostile}`);
+    expect(args[args.indexOf('-w') + 1]).toBe(hostile);
+    expect(args.slice(-4)).toEqual(['alpine; rm -rf /', 'sh', '-lc', 'echo hi']);
+  });
+
   it('honours network, user, and extra args', () => {
     const args = dockerArgs(request('ls'), {
       image: 'alpine',
@@ -119,6 +128,13 @@ describe('sshArgs', () => {
 
   it('quotes apostrophes in the working directory', () => {
     expect(shellQuote(`/tmp/it's`)).toBe(`'/tmp/it'\\''s'`);
+  });
+
+  it('keeps hostile working directories inside the quoted remote cd', () => {
+    const hostile = `/tmp/x'; touch /tmp/pwned; echo '`;
+    const args = sshArgs({ ...request('echo hi'), cwd: hostile }, { host: 'box' });
+
+    expect(args.at(-1)).toBe(`cd '/tmp/x'\\''; touch /tmp/pwned; echo '\\''' && echo hi`);
   });
 });
 
