@@ -150,6 +150,10 @@ export function App({
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [streaming, setStreaming] = useState(false);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [size, setSize] = useState({
+    columns: stdout?.columns ?? 80,
+    rows: stdout?.rows ?? 24,
+  });
   const [frame, setFrame] = useState(0);
   const [permission, setPermission] = useState<PendingPermission | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -169,11 +173,25 @@ export function App({
     };
   }, [internal_eventEmitter]);
 
+  useEffect(() => {
+    if (!stdout) return;
+    const onResize = (): void => {
+      setSize({
+        columns: stdout.columns ?? 80,
+        rows: stdout.rows ?? 24,
+      });
+    };
+    stdout.on('resize', onResize);
+    return () => {
+      stdout.off('resize', onResize);
+    };
+  }, [stdout]);
+
   const theme = getTheme(themeName);
   const home = messages.length === 0;
   const agentLabel = agent === 'plan' ? 'Plan' : 'Build';
-  const columns = Math.max(1, (stdout?.columns ?? 80) - 1);
-  const rows = Math.max(1, (stdout?.rows ?? 24) - 1);
+  const columns = Math.max(1, size.columns - 1);
+  const rows = Math.max(1, size.rows - 1);
   const promptWidth = home ? Math.min(75, Math.max(20, columns - 4)) : columns;
   const popupWidth = Math.min(60, Math.max(24, columns - 2));
   const popupLimit = Math.max(1, Math.min(10, rows - 6));
