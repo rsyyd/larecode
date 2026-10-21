@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `larecode sessions rm <id>` deletes a session together with its checkpoints and share links.
 - Default runtimes register the `lsp`, `task`, and `skill` tools, and `@general` subagent turns work in chat.
 - Chat connects configured MCP servers at startup, registers their tools, and skips servers that fail to connect.
+- Added an async `SessionStore` with file-backed and in-memory implementations.
 
 ### Removed
 

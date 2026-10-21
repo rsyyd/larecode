@@ -120,6 +120,8 @@ export {
   toProviderHistory,
 } from './session/session.js';
 export type { Session, SessionMetadata, SessionMessage } from './session/session.js';
+export { FileSessionStore, MemorySessionStore } from './session/store.js';
+export type { SessionStore } from './session/store.js';
 export {
   searchSessions,
   searchHistory,
