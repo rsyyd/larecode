@@ -16,12 +16,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.3.9
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test
       - run: bun run lint
       - run: bun run build
+      - name: Check reproducible build
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sha256sum dist/larecode > /tmp/larecode.sha
+          bun run build
+          sha256sum -c /tmp/larecode.sha
 
   node:
     runs-on: ubuntu-latest
@@ -29,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.3.9
       - run: bun install --frozen-lockfile
       - run: node node_modules/typescript/bin/tsc --noEmit
       - run: node node_modules/vitest/vitest.mjs run
@@ -40,6 +46,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.3.9
       - run: bun install --frozen-lockfile
       - run: bun run test:security
+
+  tmux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+      - run: sudo apt-get update && sudo apt-get install -y tmux
+      - run: bun install --frozen-lockfile
+      - run: LARECODE_TMUX=1 bunx vitest run scripts/tmux.test.ts

@@ -34,13 +34,14 @@ The surface matrix uses one fake provider and a shared session store, so it can 
 
 ## CI
 
-`.github/workflows/ci.yml` runs three jobs:
+`.github/workflows/ci.yml` runs four jobs:
 
-- **test** on Ubuntu and macOS with Bun: install, typecheck, full suite, lint, build.
+- **test** on Ubuntu and macOS with Bun: install, typecheck, full suite, lint, build, and a reproducible-build hash check on Ubuntu.
 - **node** on Ubuntu: `tsc` and the full suite through Node instead of Bun.
 - **security** on Ubuntu: `bun run test:security`.
+- **tmux** on Ubuntu: installs tmux and runs the TUI smoke test.
 
-A pull request is mergeable only when all three are green.
+A pull request is mergeable only when all four are green.
 
 ## Adding a test
 
@@ -55,6 +56,6 @@ A pull request is mergeable only when all three are green.
 These are not in CI:
 
 - A live provider turn with your own key (`larecode doctor`, then `larecode run "say hi"`).
-- Termux on Android and a real `tmux` resize.
+- Termux on Android; the tmux smoke test runs on Ubuntu CI but not inside Termux.
 - Windows through WSL or the npm package.
 - Editor integration with Zed or another ACP client.

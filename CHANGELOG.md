@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Configs written by 0.1 are normalized on load: missing `allowedGroups`, `mcpServers`, and `execution` fields are filled in and the version is upgraded.
 - `larecode setup` rejects an invalid base URL or empty model before writing a config, and refuses to save a config that fails validation.
 - Regression coverage proves that client disconnects abort server turns, MCP servers reconnect cleanly, and every package version matches the CLI.
+- A real tmux smoke test drives the TUI, streams a turn, and resizes the window; CI now also verifies reproducible build hashes and pins Bun 1.3.9.
 - A single session now continues across server, SDK, and ACP surfaces with full history.
 - ACP turns run tools in the `cwd` supplied by `session/new` instead of the process directory; server and ACP write-tool round trips are covered end to end.
 - Testing, troubleshooting, and release checklist documentation, plus a CI-enforced relative-link check for every Markdown file.
