@@ -179,9 +179,12 @@ export async function setupCommand(options: SetupOptions, deps: SetupDeps = {}):
     (!process.env.VITEST && process.stdin.isTTY === true && process.stdout.isTTY === true);
   const effective = !hasChoices && canPrompt ? await interactiveSetup(deps) : options;
 
+  const loaded = loadConfig(path);
+  const base = exists(path) ? loaded : { ...loaded, providers: {} };
+
   let built: ReturnType<typeof buildConfig>;
   try {
-    built = buildConfig(loadConfig(path), effective);
+    built = buildConfig(base, effective);
   } catch (error) {
     write(`${bad('setup:')} ${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;

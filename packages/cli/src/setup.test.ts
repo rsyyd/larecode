@@ -116,6 +116,7 @@ describe('setupCommand', () => {
     const written = JSON.parse(await readFile(path, 'utf8')) as Config;
     expect(written.defaultProvider).toBe('anthropic');
     expect(written.defaultModel).toBe('claude-3-5-sonnet-latest');
+    expect(Object.keys(written.providers)).toEqual(['anthropic']);
     expect(written.providers['anthropic']).toMatchObject({
       type: 'anthropic',
       baseUrl: 'https://api.anthropic.com',

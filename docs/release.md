@@ -10,7 +10,7 @@ A release is a tagged commit that passes every gate below. Patch releases fix de
 
 ## Preconditions
 
-- [ ] Every P0 task for the target version is complete.
+- [ ] Every required task for the target version is complete.
 - [ ] `CHANGELOG.md` has an entry for every user-visible change.
 - [ ] CI is green on `main`, including the macOS, Node, and security jobs.
 - [ ] No open security advisory affects the release.
