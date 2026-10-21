@@ -16,6 +16,39 @@ describe('App', () => {
     expect(frame).toContain('Plan · test-model');
   });
 
+  it('restores a saved conversation and continues it', async () => {
+    const runTurn = async (prompt: string, onChunk: (chunk: string) => void): Promise<void> => {
+      expect(prompt).toBe('continue');
+      onChunk('next answer');
+    };
+
+    const { stdin, lastFrame } = render(
+      <App
+        model="m"
+        runTurn={runTurn}
+        initialMessages={[
+          { role: 'user', text: 'earlier question' },
+          { role: 'agent', text: 'earlier answer' },
+          { role: 'tool', text: 'read · a.ts' },
+        ]}
+      />
+    );
+
+    expect(lastFrame() ?? '').toContain('earlier question');
+    expect(lastFrame() ?? '').toContain('earlier answer');
+    expect(lastFrame() ?? '').toContain('read · a.ts');
+
+    await flush();
+    stdin.write('continue');
+    await flush();
+    stdin.write('\r');
+    await flush();
+
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('continue');
+    expect(frame).toContain('next answer');
+  });
+
   it('streams agent chunks into the conversation', async () => {
     const runTurn = async (
       _prompt: string,

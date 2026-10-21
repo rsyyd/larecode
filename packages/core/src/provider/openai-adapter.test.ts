@@ -21,6 +21,17 @@ function rawStream(body: string): Response {
   return { ok: true, body: stream } as unknown as Response;
 }
 
+function byteStream(body: string): Response {
+  const bytes = new TextEncoder().encode(body);
+  const stream = new ReadableStream({
+    start(controller) {
+      for (const byte of bytes) controller.enqueue(new Uint8Array([byte]));
+      controller.close();
+    },
+  });
+  return { ok: true, body: stream } as unknown as Response;
+}
+
 describe('OpenAIAdapter specifics', () => {
   it('sends bearer auth and openrouter attribution headers per config type', async () => {
     const calls: { url: string; init?: RequestInit }[] = [];
@@ -133,6 +144,35 @@ describe('Providers registry', () => {
 });
 
 describe('OpenAIAdapter streamChat', () => {
+  it('parses events split one byte at a time and skips junk payloads', async () => {
+    const body =
+      [
+        'event: message',
+        'data: {"choices":[{"delta":{"content":"he"}}]}',
+        '',
+        'data: not-json',
+        '',
+        'data: {"choices":[{"delta":{"content":"llo"}}]}',
+        '',
+        'data: [DONE]',
+        '',
+      ].join('\r\n') + '\r\n';
+
+    const fetchImpl = (async () => byteStream(body)) as LareCodeFetch;
+    const adapter = new OpenAIAdapter({
+      name: 'mock',
+      baseUrl: 'http://mock/v1',
+      models: ['m'],
+      fetchImpl,
+    });
+
+    const chunks: string[] = [];
+    for await (const chunk of adapter.streamComplete('go', { model: 'm' })) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks.join('')).toBe('hello');
+  });
   it('streams text and assembles fragmented tool calls', async () => {
     const body =
       [
