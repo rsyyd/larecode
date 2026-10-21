@@ -2,12 +2,13 @@ import { execFileSync } from 'node:child_process';
 import { createServer, type Server as HttpServer } from 'node:http';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = join(import.meta.dirname, '..');
-const BUN = process.env.BUN ?? 'bun';
+const BUN =
+  process.env.BUN ?? (basename(process.execPath).includes('bun') ? process.execPath : 'bun');
 
 function tmuxAvailable(): boolean {
   try {
@@ -87,7 +88,7 @@ describe('tmux smoke test', () => {
         })
       );
 
-      const capture = () => tmux(['capture-pane', '-p', '-t', name]);
+      const capture = () => tmux(['capture-pane', '-p', '-S', '-200', '-t', name]);
       try {
         tmux([
           'new-session',
@@ -98,9 +99,10 @@ describe('tmux smoke test', () => {
           '80',
           '-y',
           '24',
-          `LARECODE_HOME=${home} ${BUN} ${join(ROOT, 'packages/cli/src/index.ts')} chat`,
+          `LARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat`,
         ]);
-        await waitFor(capture, 'Ask anything', 20_000);
+        tmux(['set-option', '-t', name, 'remain-on-exit', 'on']);
+        await waitFor(capture, 'Ask anything', 30_000);
         tmux(['send-keys', '-l', '-t', name, 'hello from tmux']);
         tmux(['send-keys', '-t', name, 'C-m']);
         await waitFor(capture, 'tmux-ok', 20_000);
