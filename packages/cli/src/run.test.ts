@@ -81,6 +81,18 @@ describe('runTask', () => {
     expect(output).toContain('42 tokens');
   });
 
+  it('emits a single JSON object in json mode', async () => {
+    const loop = fakeLoop(['Hel', 'lo'], { total: 42 });
+    const { result, output } = await invoke({ task: 'go', json: true }, { createLoop: () => loop });
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(output)).toMatchObject({
+      text: 'Hello',
+      halt: null,
+      exitCode: 0,
+      usage: { totalTokens: { total: 42 } },
+    });
+  });
+
   it('exits three when a turn halts before finishing', async () => {
     const loop = fakeLoop(['partial'], { halt: 'budget' });
     const { result, output } = await invoke({ task: 'go' }, { createLoop: () => loop });

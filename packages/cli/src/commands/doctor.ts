@@ -208,6 +208,31 @@ function printInstructions(files = discoverInstructions(process.cwd())): void {
   }
 }
 
+export function suggestionFor(problem: string): string {
+  if (problem.includes('no API key')) {
+    return 'run "larecode setup --provider <name>" or add apiKey to the provider config';
+  }
+  if (problem.includes('not in the provider catalog')) {
+    return 'check the model id or add it to the provider models list';
+  }
+  if (problem.includes('not writable')) {
+    return 'fix permissions or set LARECODE_HOME to a writable directory';
+  }
+  if (problem.includes('auth')) {
+    return 'verify apiKey and baseUrl for this provider';
+  }
+  if (problem.includes('reachability')) {
+    return 'check that the provider is running and baseUrl is reachable';
+  }
+  if (problem.includes('streaming')) {
+    return 'confirm the provider supports streaming and the selected model exists';
+  }
+  if (problem.includes('default model') || problem.includes('defaultModel')) {
+    return 'set defaultModel or run "larecode setup --model <id>"';
+  }
+  return 'run "larecode doctor" after fixing the config or environment';
+}
+
 function homeRow(): { line: string; problem?: string } {
   const home = larecodeHome();
   if (!existsSync(home)) {
@@ -267,6 +292,7 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<void> {
             status: file.status,
           })),
           problems,
+          suggestions: problems.map(suggestionFor),
           ok: problems.length === 0,
         },
         null,
@@ -303,6 +329,8 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<void> {
   if (problems.length > 0) {
     console.log(`\n${bad(`${problems.length} problem${problems.length === 1 ? '' : 's'}`)}`);
     for (const problem of problems) console.log(`  ${bad('×')} ${problem}`);
+    console.log('\nSuggestions');
+    for (const suggestion of problems.map(suggestionFor)) console.log(`  ${ok('→')} ${suggestion}`);
     process.exitCode = 1;
   } else {
     console.log(`\n${ok('✓')} configuration valid`);

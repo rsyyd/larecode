@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { LareCodeFetch, ProviderConfig } from '@larecode/core';
-import { providerChecks } from './doctor.js';
+import { providerChecks, suggestionFor } from './doctor.js';
 
 function okJson(data: unknown): Response {
   return { ok: true, json: async () => data } as unknown as Response;
@@ -82,5 +82,16 @@ describe('doctor provider checks', () => {
       ok: false,
       detail: expect.stringContaining('401'),
     });
+  });
+
+  it('suggests actionable fixes for common problems', () => {
+    expect(suggestionFor('provider "x" model "y": auth — no API key configured')).toContain(
+      'larecode setup'
+    );
+    expect(suggestionFor('provider "x": model — zz is not in the provider catalog')).toContain(
+      'provider models list'
+    );
+    expect(suggestionFor('home directory /x is not writable')).toContain('LARECODE_HOME');
+    expect(suggestionFor('something unknown')).toContain('larecode doctor');
   });
 });

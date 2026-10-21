@@ -25,6 +25,16 @@ export interface UpdateDeps {
   fetchImpl?: typeof fetch;
   write?: (text: string) => void;
   version?: string;
+  execPath?: string;
+}
+
+export function installHints(execPath: string, latest: string): string[] {
+  if (/homebrew|Cellar/i.test(execPath)) return ['brew upgrade larecode'];
+  if (/scoop/i.test(execPath)) return ['scoop update larecode'];
+  if (/[\\/](node|bun)(\.exe)?$/i.test(execPath)) {
+    return [`npm install -g larecode@${latest}`, `bun add --global larecode@${latest}`];
+  }
+  return [`download the release binary from https://github.com/rsyyd/larecode/releases`];
 }
 
 export async function updateCommand(
@@ -56,6 +66,7 @@ export async function updateCommand(
 
   write(`${ok('✓')} update available: ${current} -> ${latest}\n`);
   if (options.check) return;
-  write(`  npm install -g larecode@${latest}\n`);
-  write(`  bun add --global larecode@${latest}\n`);
+  for (const hint of installHints(deps.execPath ?? process.execPath, latest)) {
+    write(`  ${hint}\n`);
+  }
 }

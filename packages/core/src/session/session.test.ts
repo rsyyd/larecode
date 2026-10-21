@@ -1,4 +1,13 @@
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -167,5 +176,42 @@ describe('Sessions persistence', () => {
     const sessions = new Sessions(dir);
     sessions.create('one');
     expect(readdirSync(dir).some((name) => name.endsWith('.tmp'))).toBe(false);
+  });
+
+  it('acquires a lock per session file and times out on a fresh lock', () => {
+    const sessions = new Sessions(dir);
+    const session = sessions.create('one');
+    writeFileSync(join(dir, `${session.id}.json.lock`), '');
+    expect(() => {
+      session.messages.push({
+        role: 'assistant',
+        content: 'blocked',
+        timestamp: new Date(),
+      });
+      sessions.save(session);
+    }).toThrow(/locked by another process/);
+  });
+
+  it('recovers from a stale lock and serializes parallel writes', async () => {
+    const sessions = new Sessions(dir);
+    const session = sessions.create('one');
+    const lock = join(dir, `${session.id}.json.lock`);
+    writeFileSync(lock, '');
+    const old = new Date(Date.now() - 60_000);
+    utimesSync(lock, old, old);
+
+    sessions.save(session);
+    expect(existsSync(lock)).toBe(false);
+    expect(new Sessions(dir).get(session.id)?.metadata.messageCount).toBe(1);
+
+    const first = sessions.create('a');
+    const second = sessions.create('b');
+    await Promise.all([
+      Promise.resolve().then(() => sessions.save(first)),
+      Promise.resolve().then(() => sessions.save(second)),
+    ]);
+    const reloaded = new Sessions(dir);
+    expect(reloaded.get(first.id)?.messages).toHaveLength(1);
+    expect(reloaded.get(second.id)?.messages).toHaveLength(1);
   });
 });

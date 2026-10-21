@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { VERSION } from '@larecode/core';
+import { VERSION, installCrashReporter } from '@larecode/core';
 import { runDoctor } from './commands/doctor.js';
 import { runCommand } from './commands/run.js';
 import { serveCommand } from './commands/serve.js';
@@ -12,6 +12,8 @@ import { updateCommand } from './commands/update.js';
 import { setupCommand } from './commands/setup.js';
 import { acpCommand } from './commands/acp.js';
 import { chatCommand } from './commands/chat.js';
+import { debugCommand, feedbackCommand, usageCommand } from './commands/diagnostics.js';
+import { auditLogCommand, auditVerifyCommand } from './commands/audit.js';
 import {
   sessionsExportCommand,
   sessionsListCommand,
@@ -26,11 +28,50 @@ const program = new Command();
 
 program.name('larecode').description("Every agent's best, in one CLI.").version(VERSION);
 
+program.addHelpText(
+  'after',
+  `
+Concepts:
+  session     saved transcript; resume with "larecode chat --resume <id>"
+  provider    model backend from config.json (openai-compatible, anthropic, ollama, ...)
+  fallback    explicit provider chain used when the primary returns no output
+  permissions read, write, shell, network, browser, skills, subagent
+  context     repo map, retrieval, and memory injected within a token budget
+  agent       role preset: build, plan, or review; tools differ per agent
+  checkpoint  local snapshot created before each tool call
+`
+);
+
 program
   .command('doctor', { isDefault: false })
   .description('Check configuration, providers, models, streaming, and permissions')
   .option('--json', 'print machine-readable JSON')
   .action((options: { json?: boolean }) => runDoctor(options));
+
+program
+  .command('usage')
+  .description('Show local token and cost usage across saved sessions')
+  .option('--json', 'print machine-readable JSON')
+  .action((options: { json?: boolean }) => {
+    process.exitCode = usageCommand(options);
+  });
+
+program
+  .command('debug')
+  .description('Write a redacted local debug bundle')
+  .option('--json', 'print machine-readable JSON')
+  .action((options: { json?: boolean }) => {
+    process.exitCode = debugCommand(options);
+  });
+
+program
+  .command('feedback')
+  .description('Save a redacted feedback report locally')
+  .argument('<text>', 'feedback text')
+  .option('--json', 'print machine-readable JSON')
+  .action((text: string, options: { json?: boolean }) => {
+    process.exitCode = feedbackCommand(text, options);
+  });
 
 program
   .command('acp')
@@ -165,7 +206,21 @@ program
   .option('--verify', 'record a test baseline first and fail only on new test failures')
   .option('--provider <name>', 'provider to use for this run')
   .option('--model <name>', 'model to use for this run')
+  .option('--json', 'emit a single JSON result object instead of streaming')
   .action(runCommand);
+
+program
+  .command('audit')
+  .description('Inspect and verify the local audit log')
+  .option('--verify', 'verify the hash chain')
+  .option('--json', 'print machine-readable JSON')
+  .option('--limit <n>', 'show only the newest entries')
+  .action((options: { verify?: boolean; json?: boolean; limit?: string }) => {
+    const limit = options.limit === undefined ? undefined : Number.parseInt(options.limit, 10);
+    process.exitCode = options.verify
+      ? auditVerifyCommand(options)
+      : auditLogCommand({ json: options.json, limit });
+  });
 
 const mcp = program.command('mcp').description('Manage MCP servers and call their tools');
 
@@ -303,4 +358,5 @@ program.action(async () => {
   process.exitCode = await chatCommand();
 });
 
+installCrashReporter();
 program.parseAsync(process.argv);

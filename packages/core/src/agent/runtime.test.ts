@@ -3,6 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { LareError } from '../error/error.js';
+import { Metrics } from '../metrics/metrics.js';
+import { AuditLog } from '../permission/audit.js';
 import { Permissions } from '../permission/permission.js';
 import {
   Providers,
@@ -474,6 +476,173 @@ describe('AgentRuntime contract', () => {
     }
 
     expect(events).toEqual([{ type: 'halt', reason: 'cancelled' }]);
+  });
+
+  it('runs safe read-only tool calls in parallel and keeps serial for writes', async () => {
+    let active = 0;
+    let peak = 0;
+    const started: string[] = [];
+    const tools = new Tools();
+    const tool = (name: string) => ({
+      name,
+      description: name,
+      schema: { type: 'object' as const, properties: {}, required: [] },
+      async execute() {
+        started.push(name);
+        active += 1;
+        peak = Math.max(peak, active);
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        active -= 1;
+        return 'ok';
+      },
+    });
+    tools.register(tool('read'));
+    tools.register(tool('write'));
+
+    class TwoReadsAdapter extends TextAdapter {
+      calls = 0;
+      override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+        this.calls += 1;
+        if (this.calls === 1) {
+          yield {
+            type: 'tool_calls',
+            calls: [
+              { id: 'c1', name: 'read', arguments: '{}' },
+              { id: 'c2', name: 'read', arguments: '{}' },
+            ],
+          };
+          return;
+        }
+        if (this.calls === 2) {
+          yield {
+            type: 'tool_calls',
+            calls: [
+              { id: 'c3', name: 'write', arguments: '{}' },
+              { id: 'c4', name: 'write', arguments: '{}' },
+            ],
+          };
+          return;
+        }
+        yield { type: 'text', text: 'done' };
+      }
+    }
+
+    const providers = new Providers();
+    providers.register(new TwoReadsAdapter());
+    const runtimeInstance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools,
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      context: false,
+    });
+    const events: AgentRuntimeEvent[] = [];
+    for await (const event of runtimeInstance.run({
+      prompt: 'go',
+      signal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(peak).toBe(2);
+    expect(started.slice(0, 2)).toEqual(['read', 'read']);
+    expect(events.filter((event) => event.type === 'tool_end')).toHaveLength(4);
+    expect(events.at(-1)).toEqual({ type: 'halt', reason: 'completed' });
+  });
+
+  it('records runtime metrics for turns, providers and tools', async () => {
+    const tools = new Tools();
+    tools.register({
+      name: 'read',
+      description: 'read',
+      schema: { type: 'object' as const, properties: {}, required: [] },
+      async execute() {
+        return 'ok';
+      },
+    });
+
+    class OneCallAdapter extends TextAdapter {
+      calls = 0;
+      override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+        this.calls += 1;
+        if (this.calls === 1) {
+          yield { type: 'tool_calls', calls: [{ id: 'c1', name: 'read', arguments: '{}' }] };
+          return;
+        }
+        yield { type: 'text', text: 'done' };
+      }
+    }
+
+    const providers = new Providers();
+    providers.register(new OneCallAdapter());
+    const metrics = new Metrics();
+    const runtimeInstance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools,
+      metrics,
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      context: false,
+    });
+    for await (const _event of runtimeInstance.run({
+      prompt: 'go',
+      signal: new AbortController().signal,
+    })) {
+    }
+
+    const snapshot = metrics.snapshot();
+    expect(snapshot.turns).toBe(1);
+    expect(snapshot.tools.calls).toBe(1);
+    expect(snapshot.tools.byName.read).toMatchObject({ calls: 1, errors: 0 });
+    expect(snapshot.providers.byName.fake?.calls).toBe(2);
+  });
+
+  it('records permission decisions in the audit log', async () => {
+    const tools = new Tools();
+    tools.register({
+      name: 'read',
+      description: 'read',
+      schema: { type: 'object' as const, properties: {}, required: [] },
+      async execute() {
+        return 'ok';
+      },
+    });
+
+    class OneCallAdapter extends TextAdapter {
+      calls = 0;
+      override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+        this.calls += 1;
+        if (this.calls === 1) {
+          yield { type: 'tool_calls', calls: [{ id: 'c1', name: 'read', arguments: '{}' }] };
+          return;
+        }
+        yield { type: 'text', text: 'done' };
+      }
+    }
+
+    const providers = new Providers();
+    providers.register(new OneCallAdapter());
+    const audit = new AuditLog();
+    const runtimeInstance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools,
+      audit,
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      context: false,
+    });
+    for await (const _event of runtimeInstance.run({
+      prompt: 'go',
+      signal: new AbortController().signal,
+    })) {
+    }
+
+    expect(audit.entries).toEqual([
+      expect.objectContaining({ group: 'read', allowed: true, source: 'tool:read' }),
+    ]);
   });
 
   it('treats halt and error as terminal events', () => {
