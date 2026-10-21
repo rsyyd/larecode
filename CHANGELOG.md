@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Long conversations are compacted automatically before they exceed the runtime context budget, keeping recent tool calls intact.
 - MCP tools now map to the `external-services` permission group, with adversarial tests for Docker/SSH argument quoting and provider streaming.
 - `larecode doctor` now checks provider auth, model catalog, and a streaming probe instead of only reachability.
+- A single session now continues across server, SDK, and ACP surfaces with full history.
 
 ### Removed
 
