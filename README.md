@@ -13,7 +13,7 @@
 
 Lare Code is an open-source AI coding agent for the terminal. It runs on your machine, works with any OpenAI-compatible provider (plus Anthropic, Ollama, OpenRouter, and custom endpoints), and checks every tool call against a permission policy before it runs.
 
-Status: early release (0.1.x). See the [changelog](CHANGELOG.md) for what changed and what is planned.
+Status: early release (0.2.0). See the [changelog](CHANGELOG.md) for what changed and what is planned.
 
 ## Features
 

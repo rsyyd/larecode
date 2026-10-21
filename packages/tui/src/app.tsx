@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Box, Text, useApp, useInput, useStdin, useStdout, type Key } from 'ink';
-import { formatCost, formatTokens, type UsageAggregate } from '@larecode/core';
+import { VERSION, formatCost, formatTokens, type UsageAggregate } from '@larecode/core';
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
 import { COMMANDS, filterCommands } from './palette.js';
@@ -126,7 +126,7 @@ export function App({
   catalogs = [],
   onSelectModel,
   theme: initialTheme = 'dark',
-  version = '0.1.1',
+  version = VERSION,
   initialMessages = [],
   getUsage,
   onClear,

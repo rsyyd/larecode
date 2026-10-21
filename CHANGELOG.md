@@ -6,9 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-21
+
 ### Added
 
-- Product requirements document covering 16 sub-PRDs, 280 tasks, release gates, and the 0.2.0-1.0 version plan.
 - `AgentRuntime` contract types and ADR-0002, the first step toward one runtime for every surface.
 - `DefaultAgentRuntime` now owns the chat loop; `ChatSession` is a thin adapter with unchanged behavior.
 - `run`, server, gateway, cron, and SDK/ACP now use `AgentRuntimeLoop` with the build agent; gateway and cron pass their pre-authorized policies through.
@@ -34,7 +35,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Configs written by 0.1 are normalized on load: missing `allowedGroups`, `mcpServers`, and `execution` fields are filled in and the version is upgraded.
 - `larecode setup` prompts for a provider, base URL, model, and API key in a terminal; flags still support scripted setup. It rejects an invalid base URL or empty model before writing a config, and refuses to save a config that fails validation.
 - Regression coverage proves that client disconnects abort server turns, MCP servers reconnect cleanly, and every package version matches the CLI.
-- A real tmux smoke test drives the TUI, streams a turn, and resizes the window; CI now also verifies reproducible build hashes and pins Bun 1.3.9.\n- Coverage baseline for 0.2.0: 86.9% of statements overall, with core at 90.4%, CLI at 61.9%, TUI at 93.1%, server at 81.5%, gateway at 94.4%, and SDK at 96.5%.\n- The README claims are now audited against tests and workflows; plugin activation and memory retrieval are explicitly deferred to 0.3.0 instead of being advertised.
+- A real tmux smoke test drives the TUI, streams a turn, and resizes the window; CI now also verifies reproducible build hashes and pins Bun 1.3.9.
+- Coverage baseline for 0.2.0: 86.9% of statements overall, with core at 90.4%, CLI at 61.9%, TUI at 93.1%, server at 81.5%, gateway at 94.4%, and SDK at 96.5%.
+- The README claims are now audited against tests and workflows; plugin activation and memory retrieval are explicitly deferred to 0.3.0 instead of being advertised.
 - A single session now continues across server, SDK, and ACP surfaces with full history.
 - ACP turns run tools in the `cwd` supplied by `session/new` instead of the process directory; server and ACP write-tool round trips are covered end to end.
 - Testing, troubleshooting, and release checklist documentation, plus a CI-enforced relative-link check for every Markdown file.
@@ -86,6 +89,7 @@ First public release.
 
 - The desktop app is deferred; v1 ships as the CLI plus gateway and share links.
 
-[Unreleased]: https://github.com/rsyyd/larecode/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/rsyyd/larecode/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/rsyyd/larecode/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/rsyyd/larecode/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/rsyyd/larecode/releases/tag/v0.1.0

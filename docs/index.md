@@ -39,7 +39,6 @@ Other install options, including Homebrew, Scoop, and a curl installer, are on t
 
 **Reference**
 
-- [Product requirements](PRD.md): roadmap, release gates, and the 280-task backlog
 - [CLI reference](cli.md): every command and option
 - [Testing](testing.md): test layers, commands, and CI gates
 - [Troubleshooting](troubleshooting.md): fix provider, permission, and session errors

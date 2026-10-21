@@ -15,7 +15,7 @@
     },
     "packages/cli": {
       "name": "@larecode/cli",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@larecode/core": "*",
         "@larecode/gateway": "*",
@@ -27,7 +27,7 @@
     },
     "packages/core": {
       "name": "@larecode/core",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@ast-grep/napi": "0.51.0",
         "@modelcontextprotocol/sdk": "^1.32.1",
@@ -35,7 +35,7 @@
     },
     "packages/gateway": {
       "name": "@larecode/gateway",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@larecode/core": "*",
       },
@@ -47,7 +47,7 @@
     },
     "packages/sdk": {
       "name": "@larecode/sdk",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@larecode/core": "*",
       },
@@ -59,7 +59,7 @@
     },
     "packages/server": {
       "name": "@larecode/server",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@larecode/core": "*",
         "@modelcontextprotocol/sdk": "^1.32.1",
@@ -72,7 +72,7 @@
     },
     "packages/skills": {
       "name": "@larecode/skills",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@larecode/core": "*",
       },
@@ -84,7 +84,7 @@
     },
     "packages/tui": {
       "name": "@larecode/tui",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@larecode/core": "*",
         "ink": "^5.0.0",
