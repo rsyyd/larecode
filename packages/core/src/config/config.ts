@@ -62,7 +62,16 @@ export function defaultConfig(): Config {
 export function loadConfig(path: string = configPath()): Config {
   if (!existsSync(path)) return defaultConfig();
   const raw = JSON.parse(readFileSync(path, 'utf8')) as Partial<Config>;
-  return { ...defaultConfig(), ...raw };
+  const defaults = defaultConfig();
+  return {
+    ...defaults,
+    ...raw,
+    version: VERSION,
+    permissions: { ...defaults.permissions, ...raw.permissions },
+    providers: raw.providers ?? defaults.providers,
+    mcpServers: raw.mcpServers ?? defaults.mcpServers,
+    execution: raw.execution ?? defaults.execution,
+  };
 }
 
 export function loadEffectiveConfig(

@@ -28,6 +28,33 @@ describe('config', () => {
     expect(Object.keys(config.providers)).toContain('ollama');
   });
 
+  it('upgrades a 0.1 config with missing sections', () => {
+    writeFileSync(
+      join(home, 'config.json'),
+      JSON.stringify({
+        version: '0.1.0',
+        defaultProvider: 'legacy',
+        defaultModel: 'legacy-model',
+        providers: {
+          legacy: {
+            type: 'openai-compatible',
+            baseUrl: 'https://legacy.example/v1',
+            models: ['legacy-model'],
+          },
+        },
+        permissions: { mode: 'ask' },
+      })
+    );
+
+    const config = loadConfig();
+
+    expect(config.version).toBe(defaultConfig().version);
+    expect(config.permissions).toEqual({ mode: 'ask', allowedGroups: ['read'] });
+    expect(config.mcpServers).toEqual({});
+    expect(config.execution).toEqual({ backend: 'local' });
+    expect(config.providers.legacy?.models).toEqual(['legacy-model']);
+  });
+
   it('round-trips through save and load with 0600 permissions', () => {
     const config = defaultConfig();
     config.defaultModel = 'gpt-4o-mini';
