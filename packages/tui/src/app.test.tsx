@@ -388,6 +388,109 @@ describe('App', () => {
     expect(lastFrame()).toContain('Plan · Combo');
   });
 
+  it('queues prompts submitted while a turn is streaming', async () => {
+    const received: string[] = [];
+    let resolveFirst: (() => void) | undefined;
+    const runTurn = async (prompt: string, onChunk: (chunk: string) => void): Promise<void> => {
+      received.push(prompt);
+      if (received.length === 1) {
+        onChunk('first');
+        await new Promise<void>((resolve) => {
+          resolveFirst = resolve;
+        });
+      } else {
+        onChunk(`answer ${prompt}`);
+      }
+    };
+
+    const { stdin, lastFrame } = render(<App runTurn={runTurn} model="m" />);
+    await flush();
+    stdin.write('one');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    await flush();
+
+    stdin.write('two');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    await flush();
+    expect(lastFrame()).toContain('queued · 1 waiting');
+
+    resolveFirst?.();
+    await flush();
+    await flush();
+    await flush();
+    expect(received).toEqual(['one', 'two']);
+    expect(lastFrame()).toContain('answer two');
+  });
+
+  it('shows /status with provider, model, agent, and usage', async () => {
+    const { stdin, lastFrame } = render(<App provider="9router" model="Combo" />);
+    await flush();
+    stdin.write('/status');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('» ');
+    expect(frame).toContain('agent Plan');
+    expect(frame).toContain('model 9router/Combo');
+  });
+
+  it('lists sessions and resumes one from /sessions', async () => {
+    const { stdin, lastFrame } = render(
+      <App
+        sessions={[
+          { id: 's1', title: 'fix parser', provider: '9router', model: 'Combo' },
+          { id: 's2', title: 'docs pass' },
+        ]}
+        onResumeSession={(id) =>
+          id === 's2' ? [{ role: 'user', text: 'docs conversation' }] : undefined
+        }
+      />
+    );
+    await flush();
+    stdin.write('/sessions');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame()).toContain('sessions · 1/2');
+    expect(lastFrame()).toContain('fix parser · Combo');
+
+    stdin.write('\x1b[B');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame()).toContain('docs conversation');
+    expect(lastFrame()).toContain('resumed s2');
+  });
+
+  it('shows unavailable models in the picker and blocks selecting them', async () => {
+    const onSelectModel = vi.fn();
+    const { stdin, lastFrame } = render(
+      <App
+        provider="9router"
+        model="Combo"
+        catalogs={[{ provider: '9router', models: ['Combo', 'Broken'], unavailable: ['Broken'] }]}
+        onSelectModel={onSelectModel}
+      />
+    );
+    await flush();
+    stdin.write('/model');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame()).toContain('Broken · unavailable');
+
+    stdin.write('\x1b[B');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(onSelectModel).not.toHaveBeenCalled();
+  });
+
   it('reports an unknown provider when switching models', async () => {
     const onSelectModel = vi.fn(() => {
       throw new Error('Provider "nope" is not available');

@@ -150,6 +150,7 @@ function runtime(events: AgentRuntimeEvent[], seen: AgentRuntimeTurnInput[] = []
     }),
     setAgent: () => {},
     selectModel: () => {},
+    loadHistory: () => {},
     reset: () => {},
     async *run(input) {
       seen.push(input);
@@ -223,6 +224,7 @@ describe('AgentRuntime contract', () => {
 
   it('falls back to a configured provider when the primary fails', async () => {
     class AuthFails extends TextAdapter {
+      // oxlint-disable-next-line require-yield
       override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
         throw new LareError('PROVIDER_AUTH_FAILED', 'bad key');
       }

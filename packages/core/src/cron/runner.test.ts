@@ -92,6 +92,7 @@ describe('runCronJob', () => {
           attempts += 1;
           if (attempts === 1) {
             return {
+              // oxlint-disable-next-line require-yield
               async *run() {
                 throw new Error('transient');
               },

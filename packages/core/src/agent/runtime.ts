@@ -117,6 +117,7 @@ export interface AgentRuntime {
   getContextReport(): ContextReport;
   setAgent(agent: AgentRuntimeAgentName): void;
   selectModel(provider: string, model: string): void;
+  loadHistory(history: ProviderMessage[]): void;
   reset(): void;
   run(input: AgentRuntimeTurnInput): AsyncIterable<AgentRuntimeEvent>;
 }
@@ -439,6 +440,10 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
   reset(): void {
     this.messages = [{ role: 'system', content: this.systemPrompt() }];
+  }
+
+  loadHistory(history: ProviderMessage[]): void {
+    this.messages = [{ role: 'system', content: this.systemPrompt() }, ...history];
   }
 
   private async applyContext(prompt: string): Promise<void> {

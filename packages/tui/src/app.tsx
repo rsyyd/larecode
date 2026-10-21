@@ -23,6 +23,15 @@ export type PermissionConfirm = (request: PermissionPrompt) => Promise<boolean>;
 export interface ModelCatalog {
   provider: string;
   models: string[];
+  unavailable?: string[];
+}
+
+export interface SessionSummary {
+  id: string;
+  title?: string;
+  provider?: string;
+  model?: string;
+  updatedAt?: string | number;
 }
 
 export interface AppProps {
@@ -30,6 +39,9 @@ export interface AppProps {
   model?: string;
   catalogs?: ModelCatalog[];
   onSelectModel?: (provider: string, model: string) => void;
+  sessions?: SessionSummary[];
+  onResumeSession?: (id: string) => ChatMessage[] | undefined;
+  sessionId?: string;
   theme?: ThemeName;
   version?: string;
   initialMessages?: ChatMessage[];
@@ -101,25 +113,34 @@ interface PendingPermission {
 }
 
 type PopupState =
-  { kind: 'model'; index: number } | { kind: 'theme'; index: number } | { kind: 'help' };
+  | { kind: 'model'; index: number }
+  | { kind: 'theme'; index: number }
+  | { kind: 'sessions'; index: number }
+  | { kind: 'help' };
 
 interface PickerRow {
   text: string;
   header?: boolean;
   item?: number;
+  disabled?: boolean;
 }
 
 function modelListing(catalogs: ModelCatalog[]): {
-  choices: { provider: string; model: string }[];
+  choices: { provider: string; model: string; unavailable: boolean }[];
   rows: PickerRow[];
 } {
-  const choices: { provider: string; model: string }[] = [];
+  const choices: { provider: string; model: string; unavailable: boolean }[] = [];
   const rows: PickerRow[] = [];
   for (const catalog of catalogs) {
     rows.push({ text: catalog.provider, header: true });
     for (const model of catalog.models) {
-      rows.push({ text: model, item: choices.length });
-      choices.push({ provider: catalog.provider, model });
+      const unavailable = catalog.unavailable?.includes(model) ?? false;
+      rows.push({
+        text: `${model}${unavailable ? ' · unavailable' : ''}`,
+        item: choices.length,
+        disabled: unavailable,
+      });
+      choices.push({ provider: catalog.provider, model, unavailable });
     }
   }
   return { choices, rows };
@@ -127,11 +148,19 @@ function modelListing(catalogs: ModelCatalog[]): {
 
 const THEME_CHOICES: ThemeName[] = ['dark', 'light'];
 
+function sessionTitle(session: SessionSummary): string {
+  const title = (session.title ?? 'untitled').slice(0, 40);
+  return session.model ? `${title} · ${session.model}` : title;
+}
+
 export function App({
   provider: initialProvider,
   model = 'no model',
   catalogs = [],
   onSelectModel,
+  sessions = [],
+  onResumeSession,
+  sessionId: initialSessionId,
   theme: initialTheme = 'dark',
   version = VERSION,
   initialMessages = [],
@@ -153,6 +182,7 @@ export function App({
   const [agent, setAgent] = useState<'plan' | 'build'>('plan');
   const [currentProvider, setCurrentProvider] = useState(initialProvider);
   const [currentModel, setCurrentModel] = useState(model);
+  const [currentSessionId, setCurrentSessionId] = useState(initialSessionId);
   const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
   const [popup, setPopup] = useState<PopupState | null>(null);
   const [paletteIndex, setPaletteIndex] = useState(0);
@@ -164,7 +194,14 @@ export function App({
   });
   const [frame, setFrame] = useState(0);
   const [permission, setPermission] = useState<PendingPermission | null>(null);
+  const [queue, setQueue] = useState<string[]>([]);
+  const queueRef = useRef<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+
+  const setQueued = (next: string[]): void => {
+    queueRef.current = next;
+    setQueue(next);
+  };
 
   const updateInput = (next: InputState): void => {
     inputRef.current = next;
@@ -227,6 +264,38 @@ export function App({
       case '/help':
         setPopup({ kind: 'help' });
         break;
+      case '/new':
+        setMessages([]);
+        onClear?.();
+        setScrollOffset(0);
+        break;
+      case '/sessions': {
+        if (sessions.length === 0) {
+          addNote('no saved sessions');
+          break;
+        }
+        const index = Math.max(
+          0,
+          sessions.findIndex((session) => session.id === currentSessionId)
+        );
+        setPopup({ kind: 'sessions', index });
+        break;
+      }
+      case '/status': {
+        const lines = [
+          `agent ${agentLabel}`,
+          `model ${currentProvider ?? '?'}/${currentModel}`,
+          ...(usage && usage.totalTokens.total > 0
+            ? [
+                `tokens ${formatTokens(usage.totalTokens.total)}`,
+                `cost ${formatCost(usage.totalCost.totalCost)}`,
+              ]
+            : []),
+          ...(queue.length > 0 ? [`queued ${queue.length}`] : []),
+        ];
+        addNote(lines.join(' · '));
+        break;
+      }
       case '/clear':
         setMessages([]);
         onClear?.();
@@ -328,6 +397,11 @@ export function App({
       setStreaming(false);
       abortRef.current = null;
       if (getUsage) setUsage(getUsage());
+      const next = queueRef.current.shift();
+      if (next !== undefined) {
+        setQueued([...queueRef.current]);
+        void submit(next);
+      }
     }
   };
 
@@ -342,7 +416,12 @@ export function App({
       runCommand(trimmed);
       return;
     }
-    if (streaming) return;
+    if (streaming) {
+      const next = [...queueRef.current, trimmed];
+      setQueued(next);
+      addNote(`queued · ${next.length} waiting`);
+      return;
+    }
 
     setMessages((current) => [...current, { role: 'user', text: trimmed }]);
 
@@ -408,7 +487,12 @@ export function App({
         if (key.return) setPopup(null);
         return;
       }
-      const count = popup.kind === 'model' ? modelChoices.length : THEME_CHOICES.length;
+      const count =
+        popup.kind === 'model'
+          ? modelChoices.length
+          : popup.kind === 'sessions'
+            ? sessions.length
+            : THEME_CHOICES.length;
       if (key.upArrow) {
         setPopup({ ...popup, index: Math.max(0, popup.index - 1) });
         return;
@@ -420,13 +504,26 @@ export function App({
       if (key.return) {
         if (popup.kind === 'model') {
           const choice = modelChoices[popup.index];
-          if (choice) {
+          if (choice && !choice.unavailable) {
             try {
               onSelectModel?.(choice.provider, choice.model);
               setCurrentProvider(choice.provider);
               setCurrentModel(choice.model);
             } catch (error) {
               addNote(`error: ${describeError(error)}`);
+            }
+          }
+        } else if (popup.kind === 'sessions') {
+          const session = sessions[popup.index];
+          if (session) {
+            const restored = onResumeSession?.(session.id);
+            if (!restored) {
+              addNote(`session ${session.id} could not be loaded`);
+            } else {
+              setMessages(restored);
+              setCurrentSessionId(session.id);
+              setScrollOffset(0);
+              addNote(`resumed ${session.id}`);
             }
           }
         } else {
@@ -457,6 +554,7 @@ export function App({
     if (key.escape || (key.ctrl && raw === 'c')) {
       if (streaming) {
         abortRef.current?.abort();
+        if (queueRef.current.length > 0) setQueued([]);
         addNote('interrupted');
       } else if (key.ctrl && raw === 'c') {
         exit();
@@ -527,6 +625,7 @@ export function App({
               frame={frame}
               session={false}
               usage={undefined}
+              queued={queue.length}
             />
           </Home>
         ) : (
@@ -558,6 +657,7 @@ export function App({
           frame={frame}
           session={true}
           usage={usageLabel}
+          queued={queue.length}
         />
       )}
 
@@ -596,6 +696,16 @@ export function App({
             <ListPopup
               title={`theme · ${THEME_CHOICES[popup.index]}`}
               items={THEME_CHOICES}
+              selected={popup.index}
+              footer={listFooter(popupWidth)}
+              theme={theme}
+              width={popupWidth}
+              limit={popupLimit}
+            />
+          ) : popup?.kind === 'sessions' ? (
+            <ListPopup
+              title={`sessions · ${popup.index + 1}/${sessions.length}`}
+              items={sessions.map((session) => sessionTitle(session))}
               selected={popup.index}
               footer={listFooter(popupWidth)}
               theme={theme}
@@ -678,6 +788,7 @@ function Prompt({
   frame,
   session,
   usage,
+  queued = 0,
 }: {
   width: number;
   input: InputState;
@@ -688,6 +799,7 @@ function Prompt({
   frame: number;
   session: boolean;
   usage?: string;
+  queued?: number;
 }) {
   const empty = input.text.length === 0;
   const placeholder = `Ask anything… "${PLACEHOLDERS[0]}"`;
@@ -746,6 +858,7 @@ function Prompt({
             <Text color={theme.accent}>{SPINNER[frame % SPINNER.length]}</Text>
             <Text color={theme.text}>{' esc'}</Text>
             <Text color={theme.muted}>{' interrupt'}</Text>
+            {queued > 0 ? <Text color={theme.warning}>{` · ${queued} queued`}</Text> : null}
           </Text>
         ) : (
           <Text color={theme.muted}>{homeLabel()}</Text>
