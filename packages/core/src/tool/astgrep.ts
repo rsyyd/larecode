@@ -98,7 +98,12 @@ async function fallbackSearch(
   pattern: string,
   forcedLang: LangKey | undefined,
   cap: number
-): Promise<{ matches: Array<{ file: string; line: number; text: string }>; count: number; truncated: boolean; fallback: boolean }> {
+): Promise<{
+  matches: Array<{ file: string; line: number; text: string }>;
+  count: number;
+  truncated: boolean;
+  fallback: boolean;
+}> {
   const regex = patternToRegex(pattern);
   const matches: Array<{ file: string; line: number; text: string }> = [];
   let truncated = false;
@@ -181,7 +186,9 @@ export function astGrepTool(options: AstGrepOptions = {}): Tool {
       if (!ast) return fallbackSearch(root, sub, pattern, forcedLang, cap);
 
       try {
-        const probe = ast.parse(forcedLang ? langValue(ast, forcedLang) : ast.Lang.TypeScript, pattern).root();
+        const probe = ast
+          .parse(forcedLang ? langValue(ast, forcedLang) : ast.Lang.TypeScript, pattern)
+          .root();
         if (hasErrorNode(probe)) {
           throw new Error('pattern does not parse as valid code');
         }

@@ -103,8 +103,12 @@ describe('sessions api', () => {
     const instance = await start();
     const id = await createSession(instance);
     expect(
-      (await fetch(`${instance.url}/sessions/${id}`, { method: 'DELETE', headers: auth(READ_TOKEN) }))
-        .status
+      (
+        await fetch(`${instance.url}/sessions/${id}`, {
+          method: 'DELETE',
+          headers: auth(READ_TOKEN),
+        })
+      ).status
     ).toBe(403);
     const deleted = await fetch(`${instance.url}/sessions/${id}`, {
       method: 'DELETE',

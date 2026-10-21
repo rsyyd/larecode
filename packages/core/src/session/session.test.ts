@@ -131,9 +131,7 @@ describe('Sessions persistence', () => {
       join(dir, 'legacy-1.json'),
       JSON.stringify({
         id: 'legacy-1',
-        messages: [
-          { role: 'user', content: 'hi', timestamp: '2020-01-01T00:00:00.000Z' },
-        ],
+        messages: [{ role: 'user', content: 'hi', timestamp: '2020-01-01T00:00:00.000Z' }],
       })
     );
     const session = new Sessions(dir).get('legacy-1')!;
