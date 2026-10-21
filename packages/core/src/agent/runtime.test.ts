@@ -72,6 +72,24 @@ class SpecAdapter extends TextAdapter {
   }
 }
 
+class CompactAdapter extends TextAdapter {
+  readonly requests: ProviderMessage[][] = [];
+  summaries = 0;
+
+  override async complete(): Promise<string> {
+    this.summaries += 1;
+    return 'condensed history';
+  }
+
+  override async *streamChat(
+    messages: ProviderMessage[],
+    _options?: CompletionOptions
+  ): AsyncGenerator<ProviderStreamEvent> {
+    this.requests.push(messages.map((message) => ({ ...message })));
+    yield { type: 'text', text: 'done' };
+  }
+}
+
 class EmptyAdapter extends TextAdapter {
   override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {}
 }
@@ -133,6 +151,45 @@ function runtime(events: AgentRuntimeEvent[], seen: AgentRuntimeTurnInput[] = []
 }
 
 describe('AgentRuntime contract', () => {
+  it('compacts old history and keeps recent tool calls intact', async () => {
+    const adapter = new CompactAdapter();
+    const providers = new Providers();
+    providers.register(adapter);
+    const history: ProviderMessage[] = [];
+    for (let index = 0; index < 8; index += 1) {
+      history.push({ role: 'user', content: `question ${index} ${'q'.repeat(400)}` });
+      history.push({ role: 'assistant', content: `answer ${index} ${'a'.repeat(400)}` });
+    }
+    history.push({ role: 'tool', content: 'tool payload', toolCallId: 'call-1' });
+
+    const runtime = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      agent: 'plan',
+      history,
+      compactAtTokens: 300,
+      compactKeepRecent: 4,
+    });
+
+    for await (const _event of runtime.run({
+      prompt: 'new question',
+      signal: new AbortController().signal,
+    })) {
+      // drain
+    }
+
+    expect(adapter.summaries).toBe(1);
+    expect(adapter.requests).toHaveLength(1);
+    const sent = adapter.requests[0] ?? [];
+    expect(sent[0]?.role).toBe('system');
+    expect(sent[0]?.content).toContain('Working directory');
+    expect(sent[1]?.content).toContain('[compacted summary]');
+    expect(sent[1]?.content).toContain('condensed history');
+    expect(sent.at(-1)?.content).toBe('new question');
+    expect(sent.some((message) => message.toolCallId === 'call-1')).toBe(true);
+  });
+
   it('registers lsp, task, and skill tools by default', async () => {
     const adapter = new SpecAdapter();
     const providers = new Providers();

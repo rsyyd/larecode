@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { loadEffectiveConfig } from '../config/config.js';
 import { backendFromConfig } from '../exec/backend.js';
+import { compactProviderMessages } from '../context/compact.js';
 import { LSP } from '../lsp/lsp.js';
 import { Skills } from '../skill/skill.js';
 import { LareError } from '../error/error.js';
@@ -90,6 +91,8 @@ export interface AgentRuntimeOptions {
   requestTimeoutMs?: number;
   tokenBudget?: number;
   durationBudget?: number;
+  compactAtTokens?: number;
+  compactKeepRecent?: number;
   usageRecorder?: UsageRecorder;
 }
 
@@ -240,6 +243,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly requestTimeoutMs: number;
   private readonly tokenBudget: number;
   private readonly durationBudget: number;
+  private readonly compactAtTokens: number;
+  private readonly compactKeepRecent: number;
   private readonly startedAt = Date.now();
   private agent: AgentRuntimeAgentName;
   private messages: ProviderMessage[];
@@ -262,6 +267,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.requestTimeoutMs = options.requestTimeoutMs ?? 120_000;
     this.tokenBudget = options.tokenBudget ?? 200_000;
     this.durationBudget = options.durationBudget ?? 600_000;
+    this.compactAtTokens = options.compactAtTokens ?? 96_000;
+    this.compactKeepRecent = options.compactKeepRecent ?? 6;
     this.usage = options.usageRecorder ?? createUsageRecorder(this.sessionId);
     this.agent = options.agent ?? 'plan';
 
@@ -287,6 +294,36 @@ export class DefaultAgentRuntime implements AgentRuntime {
         .filter((message) => message.role !== 'system')
         .map((message) => ({ ...message })),
     ];
+  }
+
+  private async compactHistory(signal: AbortSignal): Promise<void> {
+    const adapter = this.providers.get(this.provider);
+    if (!adapter) return;
+    try {
+      const result = await compactProviderMessages(this.messages, {
+        maxTokens: this.compactAtTokens,
+        keepRecent: this.compactKeepRecent,
+        summarize: (transcript) =>
+          adapter.complete(transcript, {
+            model: this.model,
+            systemPrompt:
+              'Summarize the conversation for future context. Preserve decisions, files, and open tasks.',
+            abortSignal: signal,
+            timeoutMs: this.requestTimeoutMs,
+          }),
+      });
+      if (result.compacted) {
+        this.messages = result.messages;
+        defaultLogger.info('context compacted', {
+          before: result.tokensBefore,
+          after: result.tokensAfter,
+        });
+      }
+    } catch (error) {
+      defaultLogger.warn('context compaction failed', {
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   private defaultTools(config: ReturnType<typeof loadEffectiveConfig>): Tool[] {
@@ -341,6 +378,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
   async *run(input: AgentRuntimeTurnInput): AsyncGenerator<AgentRuntimeEvent> {
     if (input.agent) this.setAgent(input.agent);
+    await this.compactHistory(input.signal);
     this.messages.push({ role: 'user', content: input.prompt });
 
     let iterations = 0;

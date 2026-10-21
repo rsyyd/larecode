@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `larecode run` now exits `3` when a turn halts on a budget or limit and `130` when cancelled.
 - The TUI re-renders on terminal resize and is tested at 40, 60, and 80 columns.
 - Server, ACP, and SDK keep full conversation history across turns; ACP accepts runtime injection for providers and loop factories.
+- Long conversations are compacted automatically before they exceed the runtime context budget, keeping recent tool calls intact.
 
 ### Removed
 

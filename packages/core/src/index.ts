@@ -261,11 +261,17 @@ export {
 export type { FileFacts, SymbolFact, RepoMapOptions } from './context/repomap.js';
 export {
   compactMessages,
+  compactProviderMessages,
   estimateMessagesTokens,
+  estimateProviderMessagesTokens,
   SUMMARY_MARKER,
   CLEARED_TOOL_RESULT,
 } from './context/compact.js';
-export type { CompactionOptions, CompactionResult } from './context/compact.js';
+export type {
+  CompactionOptions,
+  CompactionResult,
+  ProviderCompactionResult,
+} from './context/compact.js';
 export { astGrepTool, AST_GREP_LIMIT } from './tool/astgrep.js';
 export {
   webFetchTool,
