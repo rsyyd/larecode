@@ -244,6 +244,135 @@ describe('surface integration matrix', () => {
     expect(out.at(-1)?.result?.stopReason).toBe('end_turn');
   });
 
+  it('sends accumulated history across three server turns', async () => {
+    const sessions = new Sessions(join(dir, 'server-history'));
+    const histories: ProviderMessage[][] = [];
+    const server = new Server({
+      port: 0,
+      token: 'history-token',
+      sessions,
+      workingDir: dir,
+      runTurn: async function* (_prompt, context) {
+        histories.push(context.history);
+        yield `reply-${histories.length}`;
+        return { halt: null, tokens: 0, cost: 0 };
+      },
+    });
+    await server.start();
+
+    try {
+      const headers = {
+        authorization: 'Bearer history-token',
+        'content-type': 'application/json',
+      };
+      const created = (await (
+        await fetch(`${server.url}/sessions`, { method: 'POST', headers })
+      ).json()) as { id: string };
+      for (const content of ['one', 'two', 'three']) {
+        const response = await fetch(`${server.url}/sessions/${created.id}/messages`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ content }),
+        });
+        await response.text();
+      }
+    } finally {
+      await server.stop();
+    }
+
+    expect(histories.map((history) => history.length)).toEqual([0, 2, 4]);
+    expect(histories[2]?.map((message) => `${message.role}:${message.content}`)).toEqual([
+      'user:one',
+      'assistant:reply-1',
+      'user:two',
+      'assistant:reply-2',
+    ]);
+  });
+
+  it('keeps history across three ACP turns', async () => {
+    const histories: ProviderMessage[][] = [];
+    const out: { result?: { sessionId?: string } }[] = [];
+    const agent = new AcpAgent({
+      sessions: new Sessions(join(dir, 'acp-history')),
+      provider: PROVIDER,
+      model: MODEL,
+      send: (message) => out.push(message as (typeof out)[number]),
+      loopFactory: (options) => {
+        histories.push(options.history ?? []);
+        return matrix(options).loop;
+      },
+    });
+
+    await agent.handleLine(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 0,
+        method: 'initialize',
+        params: { protocolVersion: 1, clientCapabilities: {} },
+      })
+    );
+    await agent.handleLine(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'session/new',
+        params: { cwd: dir, mcpServers: [] },
+      })
+    );
+
+    const send = async (id: number, sessionId: string, text: string): Promise<void> => {
+      await agent.handleLine(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id,
+          method: 'session/prompt',
+          params: { sessionId, prompt: [{ type: 'text', text }] },
+        })
+      );
+    };
+
+    const sessionId = out.at(-1)?.result?.sessionId;
+    if (!sessionId) throw new Error('session/new did not return a session id');
+    await send(2, sessionId, 'one');
+    await send(3, sessionId, 'two');
+    await send(4, sessionId, 'three');
+
+    expect(histories.map((history) => history.length)).toEqual([0, 2, 4]);
+    expect(histories[2]?.map((message) => `${message.role}:${message.content}`)).toEqual([
+      'user:one',
+      'assistant:matrix-ok',
+      'user:two',
+      'assistant:matrix-ok',
+    ]);
+  });
+
+  it('keeps history across three SDK turns', async () => {
+    const histories: ProviderMessage[][] = [];
+    const client = new LareClient({
+      workingDir: dir,
+      provider: PROVIDER,
+      model: MODEL,
+      sessions: new Sessions(join(dir, 'sdk-history')),
+      loopFactory: (options) => {
+        histories.push(options.history ?? []);
+        return matrix(options).loop;
+      },
+    });
+    const session = client.sessions.create();
+
+    for (const prompt of ['one', 'two', 'three']) {
+      await client.run(prompt, { sessionId: session.id });
+    }
+
+    expect(histories.map((history) => history.length)).toEqual([0, 2, 4]);
+    expect(histories[2]?.map((message) => `${message.role}:${message.content}`)).toEqual([
+      'user:one',
+      'assistant:matrix-ok',
+      'user:two',
+      'assistant:matrix-ok',
+    ]);
+  });
+
   it('streams through the gateway surface', async () => {
     const sessions = new Sessions(join(dir, 'gateway-sessions'));
     const sent: { chat_id: string; text: string }[] = [];

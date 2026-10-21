@@ -1,6 +1,6 @@
 import { createInterface } from 'node:readline';
 import { Sessions, VERSION } from '@larecode/core';
-import { LareClient } from './client.js';
+import { LareClient, type LareClientOptions } from './client.js';
 
 export const ACP_PROTOCOL_VERSION = 1;
 
@@ -22,6 +22,9 @@ export interface AcpAgentOptions {
   runTurn?: AcpTurnHandler;
   sessions?: Sessions;
   workingDir?: string;
+  provider?: string;
+  model?: string;
+  loopFactory?: LareClientOptions['loopFactory'];
 }
 
 interface JsonRpcRequest {
@@ -60,6 +63,9 @@ export class AcpAgent {
     const client = new LareClient({
       workingDir: options.workingDir,
       sessions: this.sessions,
+      provider: options.provider,
+      model: options.model,
+      loopFactory: options.loopFactory,
     });
     this.turn =
       options.runTurn ??
