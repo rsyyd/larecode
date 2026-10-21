@@ -1,6 +1,7 @@
 import { LareError } from '../error/error.js';
+import { defaultLogger, type Logger } from '../logger/logger.js';
 import type { Tool, ToolSchema } from '../tool/tool.js';
-import type { MCP, MCPTool } from './mcp.js';
+import { MCP, type MCPTool, type MCPServerConfig } from './mcp.js';
 
 function toToolSchema(schema: Record<string, unknown>): ToolSchema {
   const properties: ToolSchema['properties'] = {};
@@ -42,4 +43,43 @@ function toTool(server: string, mcp: MCP, tool: MCPTool): Tool {
 export async function mcpTools(mcp: MCP, server: string): Promise<Tool[]> {
   const tools = await mcp.listTools(server);
   return tools.map((tool) => toTool(server, mcp, tool));
+}
+
+export interface McpToolset {
+  mcp: MCP;
+  connected: string[];
+  tools: Tool[];
+  close(): Promise<void>;
+}
+
+export async function connectMcpTools(
+  servers: Record<string, MCPServerConfig> | undefined,
+  options: { logger?: Logger } = {}
+): Promise<McpToolset> {
+  const logger = options.logger ?? defaultLogger;
+  const mcp = new MCP({ logger });
+  const connected: string[] = [];
+  const tools: Tool[] = [];
+
+  for (const [name, server] of Object.entries(servers ?? {})) {
+    try {
+      await mcp.connect({ ...server, name });
+      connected.push(name);
+      tools.push(...(await mcpTools(mcp, name)));
+    } catch (error) {
+      logger.warn('mcp server unavailable', {
+        server: name,
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return {
+    mcp,
+    connected,
+    tools,
+    async close() {
+      for (const name of connected) await mcp.disconnect(name);
+    },
+  };
 }

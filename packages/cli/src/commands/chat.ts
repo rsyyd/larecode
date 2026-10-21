@@ -4,6 +4,7 @@ import {
   Permissions,
   Providers,
   Sessions,
+  connectMcpTools,
   createSubagents,
   loadEffectiveConfig,
   providersFromConfig,
@@ -83,12 +84,14 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
   for (const adapter of providersFromConfig(config)) providers.register(adapter);
 
   const permissions = new Permissions(config.permissions);
+  const mcp = await connectMcpTools(config.mcpServers);
 
   const session = new ChatSession({
     provider,
     model,
     providers,
     permissions,
+    extraTools: mcp.tools,
     workingDir: process.cwd(),
     sessionId: stored.id,
     history: toProviderHistory(stored.messages),
@@ -140,19 +143,23 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     onChunk(result.text);
   };
 
-  await startTui({
-    provider,
-    model,
-    initialMessages: sessionMessages(stored),
-    runTurn,
-    runSubagentTurn,
-    catalogs: Object.entries(config.providers).map(([name, entry]) => ({
-      provider: name,
-      models: entry.models,
-    })),
-    onSelectModel: (nextProvider, nextModel) => session.selectModel(nextProvider, nextModel),
-    getUsage: () => session.getUsage(),
-    onClear: () => session.reset(),
-  });
+  try {
+    await startTui({
+      provider,
+      model,
+      initialMessages: sessionMessages(stored),
+      runTurn,
+      runSubagentTurn,
+      catalogs: Object.entries(config.providers).map(([name, entry]) => ({
+        provider: name,
+        models: entry.models,
+      })),
+      onSelectModel: (nextProvider, nextModel) => session.selectModel(nextProvider, nextModel),
+      getUsage: () => session.getUsage(),
+      onClear: () => session.reset(),
+    });
+  } finally {
+    await mcp.close();
+  }
   return 0;
 }

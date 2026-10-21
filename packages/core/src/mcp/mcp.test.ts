@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MCP } from './mcp.js';
-import { mcpTools } from './tools.js';
+import { connectMcpTools, mcpTools } from './tools.js';
 import { Tools, type ToolContext } from '../tool/tool.js';
 import { Logger } from '../logger/logger.js';
 import { Permissions, type PermissionPolicy } from '../permission/permission.js';
@@ -329,5 +329,55 @@ describe('mcp tools', () => {
     );
     expect(result.success).toBe(true);
     expect(result.output).toEqual({ text: 'echo: hi' });
+  });
+});
+
+describe('connectMcpTools', () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'lare-mcp-tools-'));
+    await writeFile(join(dir, 'server.cjs'), FAKE_SERVER);
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it('connects configured servers and registers their tools', async () => {
+    const set = await connectMcpTools(
+      {
+        fake: {
+          name: 'fake',
+          transport: 'stdio',
+          command: process.execPath,
+          args: [join(dir, 'server.cjs')],
+        },
+      },
+      { logger: quiet() }
+    );
+
+    expect(set.connected).toEqual(['fake']);
+    expect(set.tools.map((tool) => tool.name)).toEqual(['mcp_fake_echo']);
+    await set.close();
+  });
+
+  it('skips a broken server and keeps the healthy ones', async () => {
+    const set = await connectMcpTools(
+      {
+        broken: { name: 'broken', transport: 'stdio', command: 'lare-missing-mcp-server-xyz' },
+        fake: {
+          name: 'fake',
+          transport: 'stdio',
+          command: process.execPath,
+          args: [join(dir, 'server.cjs')],
+        },
+      },
+      { logger: quiet() }
+    );
+
+    expect(set.connected).toEqual(['fake']);
+    expect(set.tools.map((tool) => tool.name)).toEqual(['mcp_fake_echo']);
+    await set.close();
   });
 });

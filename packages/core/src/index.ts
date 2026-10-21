@@ -187,7 +187,8 @@ export { sessionSearchTool } from './tool/session-search.js';
 
 export { MCP } from './mcp/mcp.js';
 export type { MCPServerConfig, MCPTool } from './mcp/mcp.js';
-export { mcpTools } from './mcp/tools.js';
+export { connectMcpTools, mcpTools } from './mcp/tools.js';
+export type { McpToolset } from './mcp/tools.js';
 export { MCP_PRESETS, MCP_PRESET_NAMES } from './mcp/presets.js';
 
 export {

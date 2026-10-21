@@ -76,6 +76,7 @@ export interface AgentRuntimeOptions {
   workingDir?: string;
   providers?: Providers;
   tools?: Tools;
+  extraTools?: Tool[];
   permissions?: Permissions;
   checkpoints?: AgentCheckpointSink;
   unattended?: boolean;
@@ -275,7 +276,9 @@ export class DefaultAgentRuntime implements AgentRuntime {
       this.tools = options.tools;
     } else {
       this.tools = new Tools();
-      for (const tool of this.defaultTools(config)) this.tools.register(tool);
+      for (const tool of [...this.defaultTools(config), ...(options.extraTools ?? [])]) {
+        this.tools.register(tool);
+      }
     }
 
     this.messages = [
