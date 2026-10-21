@@ -12,6 +12,7 @@ import {
   toProviderHistory,
   type ChatPermissionConfirm,
   type Session,
+  type UsageAggregate,
 } from '@larecode/core';
 import { startTui, type AppProps, type ChatMessage } from '@larecode/tui';
 
@@ -19,6 +20,25 @@ export interface ChatCommandOptions {
   provider?: string;
   model?: string;
   resume?: string;
+}
+
+export function startTurn(sessions: Sessions, stored: Session, prompt: string): void {
+  stored.messages.push({ role: 'user', content: prompt, timestamp: new Date() });
+  sessions.save(stored);
+}
+
+export function finishTurn(
+  sessions: Sessions,
+  stored: Session,
+  assistant: string,
+  usage: UsageAggregate
+): void {
+  if (assistant !== '') {
+    stored.messages.push({ role: 'assistant', content: assistant, timestamp: new Date() });
+  }
+  stored.metadata.tokenUsage = usage.totalTokens.total;
+  stored.metadata.cost = usage.totalCost.totalCost;
+  sessions.save(stored);
 }
 
 export function sessionMessages(session: Session): ChatMessage[] {
@@ -89,6 +109,7 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
 
     let detail = '';
     let assistant = '';
+    startTurn(sessions, stored, prompt);
     try {
       for await (const event of session.run(prompt, {
         signal,
@@ -107,15 +128,7 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
         }
       }
     } finally {
-      const now = new Date();
-      stored.messages.push({ role: 'user', content: prompt, timestamp: now });
-      if (assistant !== '') {
-        stored.messages.push({ role: 'assistant', content: assistant, timestamp: now });
-      }
-      const usage = session.getUsage();
-      stored.metadata.tokenUsage = usage.totalTokens.total;
-      stored.metadata.cost = usage.totalCost.totalCost;
-      sessions.save(stored);
+      finishTurn(sessions, stored, assistant, session.getUsage());
     }
   };
 

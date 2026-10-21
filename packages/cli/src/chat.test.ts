@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Sessions } from '@larecode/core';
-import { sessionMessages } from './commands/chat.js';
+import { finishTurn, sessionMessages, startTurn } from './commands/chat.js';
 
 let dir: string;
 
@@ -31,5 +31,37 @@ describe('sessionMessages', () => {
       { role: 'user', text: 'hello' },
       { role: 'agent', text: 'hi there' },
     ]);
+  });
+});
+
+describe('turn persistence', () => {
+  it('keeps the last user message when the process dies mid-turn', () => {
+    const sessions = new Sessions(dir);
+    const stored = sessions.create();
+    startTurn(sessions, stored, 'say hi');
+
+    const restarted = new Sessions(dir).get(stored.id)!;
+    expect(restarted.messages.map((message) => message.content)).toEqual(['say hi']);
+  });
+
+  it('records the assistant reply and usage after the turn', () => {
+    const sessions = new Sessions(dir);
+    const stored = sessions.create();
+    startTurn(sessions, stored, 'say hi');
+    finishTurn(sessions, stored, 'hello', {
+      totalTokens: { input: 3, output: 2, total: 5 },
+      totalCost: { inputCost: 0, outputCost: 0, totalCost: 0 },
+      byModel: {},
+      conversationId: stored.id,
+      startedAt: 0,
+      updatedAt: 0,
+    });
+
+    const restarted = new Sessions(dir).get(stored.id)!;
+    expect(sessionMessages(restarted)).toEqual([
+      { role: 'user', text: 'say hi' },
+      { role: 'agent', text: 'hello' },
+    ]);
+    expect(restarted.metadata.tokenUsage).toBe(5);
   });
 });
