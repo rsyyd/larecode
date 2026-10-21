@@ -81,10 +81,17 @@ describe('runTask', () => {
     expect(output).toContain('42 tokens');
   });
 
-  it('reports a halted turn', async () => {
+  it('exits three when a turn halts before finishing', async () => {
     const loop = fakeLoop(['partial'], { halt: 'budget' });
-    const { output } = await invoke({ task: 'go' }, { createLoop: () => loop });
+    const { result, output } = await invoke({ task: 'go' }, { createLoop: () => loop });
+    expect(result.exitCode).toBe(3);
     expect(output).toContain('halted: budget');
+  });
+
+  it('exits 130 when a turn is cancelled', async () => {
+    const error = Object.assign(new Error('cancelled'), { code: 'CANCELLED' });
+    const { result } = await invoke({ task: 'go' }, { createLoop: () => fakeLoop([], { error }) });
+    expect(result.exitCode).toBe(130);
   });
 
   it('exits one when the agent fails', async () => {

@@ -242,6 +242,14 @@ export type {
 } from './plugin/plugin.js';
 
 export { Context, CONTEXT_BUDGET_TOKENS, CONTEXT_MAX_FILES } from './context/context.js';
+export { CONTEXT_ALLOCATION, assembleContext } from './context/assembler.js';
+export type {
+  AssembledContext,
+  ContextInputName,
+  ContextSection,
+  ContextSectionName,
+  ContextSectionReport,
+} from './context/assembler.js';
 export type { ContextQuery, ContextResult, RelevanceScore } from './context/context.js';
 export {
   buildRepoMap,

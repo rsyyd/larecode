@@ -61,6 +61,8 @@ larecode run [options] <task>
 --model <name>     model to use for this run
 ```
 
+Exit codes: `0` success, `1` error, `3` halted before finishing (budget, iterations, or tool-call limit), `130` cancelled.
+
 ## larecode serve
 
 Serve the HTTP API with SSE streaming.

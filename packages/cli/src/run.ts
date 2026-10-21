@@ -39,6 +39,13 @@ export interface RunTaskResult {
   verify?: VerifyReport;
 }
 
+export const RUN_EXIT = {
+  success: 0,
+  error: 1,
+  halted: 3,
+  cancelled: 130,
+} as const;
+
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
 const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
 const ok = (text: string) => `\x1b[32m${text}\x1b[0m`;
@@ -87,7 +94,8 @@ export async function runTask(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     write(`\n${bad('error:')} ${message}\n`);
-    return { exitCode: 1 };
+    const cancelled = (error as { code?: string }).code === 'CANCELLED';
+    return { exitCode: cancelled ? RUN_EXIT.cancelled : RUN_EXIT.error };
   }
 
   const halt = loop.getHaltReason();
@@ -97,6 +105,7 @@ export async function runTask(
   write(
     `\n${dim(`${model} · ${usage.totalTokens.total} tokens · $${usage.totalCost.totalCost.toFixed(4)}`)}\n`
   );
+  if (halt) return { exitCode: RUN_EXIT.halted };
 
   if (!options.verify || !command || !baseline) return { exitCode: 0 };
 
