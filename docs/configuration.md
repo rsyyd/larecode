@@ -33,7 +33,8 @@ Set `LARECODE_HOME` to move the global directory (used by tests and sandboxes).
     }
   },
   "mcpServers": {},
-  "execution": { "backend": "local" }
+  "execution": { "backend": "local" },
+  "checkpoints": false
 }
 ```
 
@@ -54,6 +55,10 @@ It refuses to overwrite an existing config unless you pass `--force`.
 | `ssh`    | `{"backend": "ssh", "ssh": {"host": "devbox", "user": "me"}}`            |
 
 Docker runs with `--network none` unless you set `"network": true`. SSH uses batch mode and non-interactive auth (keys only). `larecode doctor` validates the shape of whichever backend you pick.
+
+## Checkpoints
+
+Set `"checkpoints": true` to record a git-backed snapshot of the workspace before and after every tool call. Snapshots live under `~/.larecode/checkpoints` and stay per session. Off by default; it needs `git` on `PATH` and adds a git add/index pass to every tool call. A failed checkpoint logs a warning and never fails the turn.
 
 ## Environment variables
 

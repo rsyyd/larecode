@@ -14,6 +14,7 @@ export { DefaultAgentRuntime, isAgentRuntimeStopEvent } from './agent/runtime.js
 export { AgentRuntimeLoop } from './agent/runtime-loop.js';
 export type { AgentRuntimeLoopOptions } from './agent/runtime-loop.js';
 export type {
+  AgentCheckpointSink,
   AgentRuntime,
   AgentRuntimeAgentName,
   AgentRuntimeEvent,

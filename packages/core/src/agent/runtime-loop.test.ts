@@ -137,6 +137,36 @@ describe('AgentRuntimeLoop', () => {
     expect(loop.getUsage().totalTokens.total).toBeGreaterThan(0);
   });
 
+  it('checkpoints around each tool call when enabled', async () => {
+    const seen: unknown[] = [];
+    const labels: string[] = [];
+    const tools = new Tools();
+    tools.register(echoTool(seen));
+    const providers = new Providers();
+    providers.register(new ToolAdapter());
+    const loop = new AgentRuntimeLoop({
+      provider: 'fake',
+      model: 'test-model',
+      agent: 'build',
+      providers,
+      tools,
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      checkpoints: {
+        async create(label = 'checkpoint') {
+          labels.push(label);
+          return label;
+        },
+      },
+    });
+
+    for await (const _chunk of loop.run('say hi')) {
+      // drain
+    }
+
+    expect(seen).toEqual([{ text: 'hi' }]);
+    expect(labels).toEqual(['pre-tool echo', 'post-tool echo']);
+  });
+
   it('honors unattended pre-authorization', async () => {
     const seen: unknown[] = [];
     const tools = new Tools();

@@ -21,6 +21,7 @@ export interface Config {
   providers: Record<string, ProviderConfig>;
   mcpServers: Record<string, MCPServerConfig>;
   execution?: ExecutionConfig;
+  checkpoints?: boolean;
 }
 
 export function larecodeHome(): string {

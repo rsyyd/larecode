@@ -1,5 +1,6 @@
 import {
   ChatSession,
+  Checkpoints,
   Permissions,
   Providers,
   Sessions,
@@ -75,6 +76,9 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     workingDir: process.cwd(),
     sessionId: stored.id,
     history: toProviderHistory(stored.messages),
+    checkpoints: config.checkpoints
+      ? new Checkpoints({ root: process.cwd(), sessionId: stored.id })
+      : undefined,
   });
 
   const runTurn: AppProps['runTurn'] = async (prompt, onChunk, signal, agent, confirm) => {

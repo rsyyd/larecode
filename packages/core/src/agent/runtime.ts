@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { loadEffectiveConfig } from '../config/config.js';
 import { LareError } from '../error/error.js';
 import type { LareErrorJSON } from '../error/error.js';
+import { defaultLogger } from '../logger/logger.js';
 import { Permissions, type PermissionGroup } from '../permission/permission.js';
 import { toolPermissionGroup } from '../permission/tool-groups.js';
 import { Providers, providersFromConfig } from '../provider/provider.js';
@@ -60,6 +61,10 @@ export function isAgentRuntimeStopEvent(event: AgentRuntimeEvent): event is Agen
   return event.type === 'halt' || event.type === 'error';
 }
 
+export interface AgentCheckpointSink {
+  create(label?: string): Promise<unknown>;
+}
+
 export interface AgentRuntimeOptions {
   provider?: string;
   model?: string;
@@ -67,6 +72,7 @@ export interface AgentRuntimeOptions {
   providers?: Providers;
   tools?: Tools;
   permissions?: Permissions;
+  checkpoints?: AgentCheckpointSink;
   unattended?: boolean;
   agent?: AgentRuntimeAgentName;
   sessionId?: string;
@@ -194,6 +200,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly providers: Providers;
   private readonly tools: Tools;
   private readonly permissions: Permissions;
+  private readonly checkpoints?: AgentCheckpointSink;
   private readonly unattended: boolean;
   private readonly usage: UsageRecorder;
   private readonly maxIterations: number;
@@ -216,6 +223,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.workingDir = cwd;
     this.sessionId = options.sessionId ?? randomUUID();
     this.permissions = options.permissions ?? new Permissions(config.permissions);
+    this.checkpoints = options.checkpoints;
     this.unattended = options.unattended ?? false;
     this.maxIterations = options.maxIterations ?? 40;
     this.maxToolCalls = options.maxToolCalls ?? 200;
@@ -581,15 +589,29 @@ export class DefaultAgentRuntime implements AgentRuntime {
     }
 
     const toolCall: ToolCall = { id: call.id, name: call.name, arguments: args };
+    await this.checkpoint(`pre-tool ${call.name}`);
     const result = await this.tools.execute(toolCall, {
       sessionId: this.sessionId,
       workingDir: this.workingDir,
       permissions: this.permissions,
       abortSignal: signal,
     });
+    await this.checkpoint(`post-tool ${call.name}`);
     return result.success
       ? { ok: true, content: renderOutput(result.output) }
       : { ok: false, content: `ERROR: ${result.error ?? 'tool failed'}` };
+  }
+
+  private async checkpoint(label: string): Promise<void> {
+    if (!this.checkpoints) return;
+    try {
+      await this.checkpoints.create(label);
+    } catch (error) {
+      defaultLogger.warn('checkpoint failed', {
+        label,
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   private availableTools(): Tool[] {
