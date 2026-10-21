@@ -31,8 +31,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Long conversations are compacted automatically before they exceed the runtime context budget, keeping recent tool calls intact.
 - MCP tools now map to the `external-services` permission group, with adversarial tests for Docker/SSH argument quoting and provider streaming.
 - `larecode doctor` now checks provider auth, model catalog, and a streaming probe instead of only reachability.
+- Configs written by 0.1 are normalized on load: missing `allowedGroups`, `mcpServers`, and `execution` fields are filled in and the version is upgraded.
 - A single session now continues across server, SDK, and ACP surfaces with full history.
 - ACP turns run tools in the `cwd` supplied by `session/new` instead of the process directory; server and ACP write-tool round trips are covered end to end.
+- Testing, troubleshooting, and release checklist documentation, plus a CI-enforced relative-link check for every Markdown file.
+- The security policy now includes a trust-boundary diagram from model output to tool execution.
 
 ### Removed
 

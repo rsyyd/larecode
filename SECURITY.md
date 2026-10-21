@@ -43,6 +43,20 @@ Lare Code runs on your machine with your permissions. The trust model below is a
 | Execution backends   | Contained by choice   | Docker runs with `--network none` unless opted in; SSH is key-only batch mode               |
 | Local secrets        | Do not leak           | Config files written `0600`; logging redacts secret-shaped values                           |
 
+```mermaid
+flowchart LR
+  Model[Model output] -->|tool calls| Runtime[Agent runtime]
+  User[User or authenticated caller] --> Runtime
+  Project[Project files and MCP output] --> Runtime
+  Runtime --> Permissions{Permission engine}
+  Permissions -->|allowed group| Tools[Built-in tools]
+  Permissions -->|external-services + confirm| MCP[MCP servers]
+  Permissions -->|approved| Backends[Local, Docker, or SSH]
+  Runtime --> Audit[Audit log]
+```
+
+The model, project files, and MCP output are untrusted. Only the permission engine decides whether a validated tool call runs.
+
 ## Supply chain
 
 - Runtime dependencies are intentionally few and permissively licensed (`@modelcontextprotocol/sdk` MIT, `@ast-grep/napi` MIT).

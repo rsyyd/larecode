@@ -20,7 +20,7 @@ program.name('larecode').description("Every agent's best, in one CLI.").version(
 
 program
   .command('doctor', { isDefault: false })
-  .description('Check configuration, providers, permissions, and instruction files')
+  .description('Check configuration, providers, models, streaming, and permissions')
   .action(runDoctor);
 
 program

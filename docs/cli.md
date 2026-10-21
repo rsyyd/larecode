@@ -47,7 +47,7 @@ Write an initial config for your provider.
 
 ## larecode doctor
 
-Check configuration, providers, permissions, and instruction files. Takes no options.
+Check configuration, provider auth, model catalog, a streaming probe, permissions, and instruction files. Takes no options. Exits non-zero when a problem is found.
 
 ## larecode run
 
