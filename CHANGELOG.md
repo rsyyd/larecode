@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Empty provider responses now surface as an explicit `EMPTY_RESPONSE` error instead of a silent completed turn.
 - Tool calls are validated against required arguments and declared types before permission checks or execution.
 - Provider failures that are retryable (429, 5xx, network) are retried with exponential backoff and jitter before any text is streamed; 429 responses now report `RATE_LIMITED`.
+- Provider requests have a per-request timeout (`requestTimeoutMs`, default 120s) alongside the total turn duration budget; timeouts report `PROVIDER_TIMEOUT`.
 
 ### Removed
 

@@ -75,6 +75,7 @@ export interface AgentRuntimeOptions {
   maxToolCalls?: number;
   maxRetries?: number;
   retryDelayMs?: number;
+  requestTimeoutMs?: number;
   tokenBudget?: number;
   durationBudget?: number;
   usageRecorder?: UsageRecorder;
@@ -111,6 +112,35 @@ function isRetryable(error: unknown): boolean {
     error instanceof LareError &&
     (error.retryable || error.code === 'NETWORK_ERROR' || error.code === 'RATE_LIMITED')
   );
+}
+
+interface RequestDeadline {
+  signal: AbortSignal;
+  timedOut: () => boolean;
+  cancel: () => void;
+}
+
+function createDeadline(timeoutMs: number, parent: AbortSignal): RequestDeadline {
+  if (timeoutMs <= 0) {
+    return { signal: parent, timedOut: () => false, cancel: () => {} };
+  }
+  const controller = new AbortController();
+  let timedOut = false;
+  const onAbort = () => controller.abort(parent.reason);
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort(new Error('request timed out'));
+  }, timeoutMs);
+  (timer as { unref?: () => void }).unref?.();
+  parent.addEventListener('abort', onAbort, { once: true });
+  return {
+    signal: controller.signal,
+    timedOut: () => timedOut,
+    cancel: () => {
+      clearTimeout(timer);
+      parent.removeEventListener('abort', onAbort);
+    },
+  };
 }
 
 function waitForRetry(ms: number, signal: AbortSignal): Promise<void> {
@@ -170,6 +200,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly maxToolCalls: number;
   private readonly maxRetries: number;
   private readonly retryDelayMs: number;
+  private readonly requestTimeoutMs: number;
   private readonly tokenBudget: number;
   private readonly durationBudget: number;
   private readonly startedAt = Date.now();
@@ -190,6 +221,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.maxToolCalls = options.maxToolCalls ?? 200;
     this.maxRetries = options.maxRetries ?? 2;
     this.retryDelayMs = options.retryDelayMs ?? 250;
+    this.requestTimeoutMs = options.requestTimeoutMs ?? 120_000;
     this.tokenBudget = options.tokenBudget ?? 200_000;
     this.durationBudget = options.durationBudget ?? 600_000;
     this.usage = options.usageRecorder ?? createUsageRecorder(this.sessionId);
@@ -288,9 +320,10 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
         const specs = adapter.capabilities.tools ? this.toolSpecs() : [];
         let reported: ProviderUsage | undefined;
+        const deadline = createDeadline(this.requestTimeoutMs, input.signal);
         const completion: CompletionOptions = {
           model: this.model,
-          abortSignal: input.signal,
+          abortSignal: deadline.signal,
           ...(specs.length > 0 ? { tools: specs } : {}),
           onUsage: (usage) => {
             reported = usage;
@@ -301,48 +334,54 @@ export class DefaultAgentRuntime implements AgentRuntime {
         let calls: ProviderToolCall[] = [];
         let streamedTokens = 0;
 
-        if (adapter.streamChat) {
-          for await (const event of this.streamWithRetry(
-            () => adapter.streamChat!(this.messages, completion),
-            input.signal
-          )) {
-            if (input.signal.aborted) {
-              yield { type: 'halt', reason: 'cancelled' };
-              return;
+        try {
+          if (adapter.streamChat) {
+            for await (const event of this.streamWithRetry(
+              () => adapter.streamChat!(this.messages, completion),
+              input.signal,
+              deadline
+            )) {
+              if (input.signal.aborted) {
+                yield { type: 'halt', reason: 'cancelled' };
+                return;
+              }
+              if (event.type === 'usage') {
+                reported = event.usage;
+                continue;
+              }
+              if (event.type === 'tool_calls') {
+                calls = event.calls;
+                continue;
+              }
+              streamedTokens += estimateTokens(event.text);
+              if (this.tokensUsed + streamedTokens > this.tokenBudget) break;
+              text += event.text;
+              yield { type: 'text', text: event.text };
             }
-            if (event.type === 'usage') {
-              reported = event.usage;
-              continue;
+          } else {
+            const transcript = renderTranscript(this.messages);
+            for await (const chunk of this.streamWithRetry(
+              () =>
+                adapter.streamComplete(transcript, {
+                  ...completion,
+                  systemPrompt: this.messages[0]?.content,
+                  tools: undefined,
+                }),
+              input.signal,
+              deadline
+            )) {
+              if (input.signal.aborted) {
+                yield { type: 'halt', reason: 'cancelled' };
+                return;
+              }
+              streamedTokens += estimateTokens(chunk);
+              if (this.tokensUsed + streamedTokens > this.tokenBudget) break;
+              text += chunk;
+              yield { type: 'text', text: chunk };
             }
-            if (event.type === 'tool_calls') {
-              calls = event.calls;
-              continue;
-            }
-            streamedTokens += estimateTokens(event.text);
-            if (this.tokensUsed + streamedTokens > this.tokenBudget) break;
-            text += event.text;
-            yield { type: 'text', text: event.text };
           }
-        } else {
-          const transcript = renderTranscript(this.messages);
-          for await (const chunk of this.streamWithRetry(
-            () =>
-              adapter.streamComplete(transcript, {
-                ...completion,
-                systemPrompt: this.messages[0]?.content,
-                tools: undefined,
-              }),
-            input.signal
-          )) {
-            if (input.signal.aborted) {
-              yield { type: 'halt', reason: 'cancelled' };
-              return;
-            }
-            streamedTokens += estimateTokens(chunk);
-            if (this.tokensUsed + streamedTokens > this.tokenBudget) break;
-            text += chunk;
-            yield { type: 'text', text: chunk };
-          }
+        } finally {
+          deadline.cancel();
         }
 
         this.recordUsage(text, reported);
@@ -454,7 +493,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
   private async *streamWithRetry<T>(
     open: () => AsyncIterable<T>,
-    signal: AbortSignal
+    signal: AbortSignal,
+    deadline: RequestDeadline
   ): AsyncGenerator<T> {
     for (let attempt = 0; ; attempt += 1) {
       let emitted = false;
@@ -465,6 +505,12 @@ export class DefaultAgentRuntime implements AgentRuntime {
         }
         return;
       } catch (error) {
+        if (deadline.timedOut() && !signal.aborted) {
+          throw new LareError(
+            'PROVIDER_TIMEOUT',
+            `provider request timed out after ${this.requestTimeoutMs}ms`
+          );
+        }
         if (emitted || signal.aborted || attempt >= this.maxRetries || !isRetryable(error)) {
           throw error;
         }

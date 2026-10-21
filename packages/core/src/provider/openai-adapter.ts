@@ -12,6 +12,7 @@ import type {
   ProviderUsage,
   ToolSpec,
 } from './provider.js';
+import { signalWithTimeout } from './provider.js';
 import type { LareCodeFetch } from './fetch.js';
 import { capabilitiesFor, modelCapabilities } from './capabilities.js';
 
@@ -255,7 +256,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify(this.requestBody(prompt, options, false)),
-        signal: options.abortSignal,
+        signal: signalWithTimeout(options.timeoutMs, options.abortSignal),
       });
     } catch (error) {
       throw LareError.wrap(
@@ -286,7 +287,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify(this.requestBody(prompt, options, true)),
-        signal: options.abortSignal,
+        signal: signalWithTimeout(options.timeoutMs, options.abortSignal),
       });
     } catch (error) {
       throw LareError.wrap(
@@ -319,7 +320,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify(this.chatRequestBody(messages, options)),
-        signal: options.abortSignal,
+        signal: signalWithTimeout(options.timeoutMs, options.abortSignal),
       });
     } catch (error) {
       throw LareError.wrap(

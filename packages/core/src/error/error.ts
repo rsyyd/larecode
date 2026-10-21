@@ -3,6 +3,7 @@ export type ErrorCode =
   | 'CONFIG_INVALID'
   | 'CONFIG_NOT_FOUND'
   | 'PROVIDER_UNAVAILABLE'
+  | 'PROVIDER_TIMEOUT'
   | 'PROVIDER_AUTH_FAILED'
   | 'EMPTY_RESPONSE'
   | 'MODEL_NOT_FOUND'
@@ -49,6 +50,7 @@ export const ERROR_CATEGORIES: Record<
   CONFIG_INVALID: 'system',
   CONFIG_NOT_FOUND: 'system',
   PROVIDER_UNAVAILABLE: 'provider',
+  PROVIDER_TIMEOUT: 'provider',
   PROVIDER_AUTH_FAILED: 'provider',
   EMPTY_RESPONSE: 'provider',
   MODEL_NOT_FOUND: 'provider',

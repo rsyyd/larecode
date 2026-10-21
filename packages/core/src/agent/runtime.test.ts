@@ -3,6 +3,7 @@ import { LareError } from '../error/error.js';
 import { Permissions } from '../permission/permission.js';
 import {
   Providers,
+  type CompletionOptions,
   type ModelInfo,
   type ProviderAdapter,
   type ProviderMessage,
@@ -79,6 +80,23 @@ class PartialAdapter extends TextAdapter {
     this.attempts += 1;
     yield { type: 'text', text: 'partial' };
     throw new LareError('RATE_LIMITED', 'lost the stream', { retryable: true });
+  }
+}
+
+class HangingAdapter extends TextAdapter {
+  attempts = 0;
+
+  override async *streamChat(
+    _messages: ProviderMessage[],
+    options?: CompletionOptions
+  ): AsyncGenerator<ProviderStreamEvent> {
+    this.attempts += 1;
+    await new Promise<void>((_resolve, reject) => {
+      options?.abortSignal?.addEventListener('abort', () => reject(new Error('aborted')), {
+        once: true,
+      });
+    });
+    yield { type: 'text', text: 'late' };
   }
 }
 
@@ -259,6 +277,36 @@ describe('AgentRuntime contract', () => {
     expect(events.at(-1)).toMatchObject({
       type: 'error',
       error: { code: 'RATE_LIMITED' },
+    });
+  });
+
+  it('reports a per-request timeout without retrying', async () => {
+    const adapter = new HangingAdapter();
+    const providers = new Providers();
+    providers.register(adapter);
+    const instance = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      tools: new Tools(),
+      permissions: new Permissions({ mode: 'allow', allowedGroups: [] }),
+      maxRetries: 2,
+      retryDelayMs: 0,
+      requestTimeoutMs: 20,
+    });
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of instance.run({
+      prompt: 'hello',
+      signal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(adapter.attempts).toBe(1);
+    expect(events.at(-1)).toMatchObject({
+      type: 'error',
+      error: { code: 'PROVIDER_TIMEOUT' },
     });
   });
 

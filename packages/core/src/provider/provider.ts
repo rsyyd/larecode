@@ -37,7 +37,27 @@ export interface CompletionOptions {
   tools?: ToolSpec[];
   systemPrompt?: string;
   abortSignal?: AbortSignal;
+  timeoutMs?: number;
   onUsage?: (usage: ProviderUsage) => void;
+}
+
+export function signalWithTimeout(
+  timeoutMs: number | undefined,
+  signal?: AbortSignal
+): AbortSignal {
+  if (!timeoutMs || timeoutMs <= 0) return signal ?? new AbortController().signal;
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    signal?.removeEventListener('abort', onAbort);
+    controller.abort(new Error('request timed out'));
+  }, timeoutMs);
+  (timer as { unref?: () => void }).unref?.();
+  const onAbort = () => {
+    clearTimeout(timer);
+    controller.abort(signal?.reason);
+  };
+  signal?.addEventListener('abort', onAbort, { once: true });
+  return controller.signal;
 }
 
 export interface ProviderToolCall {

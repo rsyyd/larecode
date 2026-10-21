@@ -12,6 +12,7 @@ import type {
   ProviderUsage,
   ToolSpec,
 } from './provider.js';
+import { signalWithTimeout } from './provider.js';
 import type { LareCodeFetch } from './fetch.js';
 import { capabilitiesFor, modelCapabilities } from './capabilities.js';
 
@@ -184,7 +185,7 @@ export class OllamaAdapter implements ProviderAdapter {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify(this.requestBody(prompt, options, false)),
-        signal: options.abortSignal,
+        signal: signalWithTimeout(options.timeoutMs, options.abortSignal),
       });
     } catch (error) {
       throw this.networkError(error);
@@ -221,7 +222,7 @@ export class OllamaAdapter implements ProviderAdapter {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify(this.chatRequestBody(messages, options, true)),
-        signal: options.abortSignal,
+        signal: signalWithTimeout(options.timeoutMs, options.abortSignal),
       });
     } catch (error) {
       throw this.networkError(error);
@@ -293,7 +294,7 @@ export class OllamaAdapter implements ProviderAdapter {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify(this.requestBody(prompt, options, true)),
-        signal: options.abortSignal,
+        signal: signalWithTimeout(options.timeoutMs, options.abortSignal),
       });
     } catch (error) {
       throw this.networkError(error);

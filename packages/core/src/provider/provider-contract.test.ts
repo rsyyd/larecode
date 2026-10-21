@@ -189,6 +189,19 @@ describe.each(SPECS)('provider contract: $label', (spec) => {
     });
   });
 
+  it('complete(): aborts when the request timeout elapses', async () => {
+    const hanging = (async (_url: string | URL | Request, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      });
+    }) as LareCodeFetch;
+    const adapter = spec.create(hanging);
+
+    await expect(adapter.complete('hi', { model: 'm1', timeoutMs: 10 })).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+    });
+  });
+
   it('complete(): maps network failure to NETWORK_ERROR', async () => {
     const failing = (async () => {
       throw new Error('ECONNREFUSED');
