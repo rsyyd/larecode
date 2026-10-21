@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Logger entries redact secrets in messages, context, and error text before handlers receive them.
+- Workspace path checks resolve symlinks, so tools can no longer read or write outside the working directory through a link.
 
 ## [0.1.1] - 2026-10-19
 

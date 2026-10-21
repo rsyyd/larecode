@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
+import { realpathSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
-import { join, resolve, sep } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { LareError } from '../error/error.js';
 
 export const MAX_READ_BYTES = 1024 * 1024;
@@ -10,10 +11,32 @@ export const DEFAULT_GREP_LIMIT = 200;
 
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist']);
 
+function realpathOrUndefined(path: string): string | undefined {
+  try {
+    return realpathSync(path);
+  } catch {
+    return undefined;
+  }
+}
+
+function escapesRoot(root: string, abs: string): boolean {
+  const realRoot = realpathOrUndefined(root) ?? root;
+  let probe = abs;
+  while (true) {
+    const real = realpathOrUndefined(probe);
+    if (real !== undefined) {
+      return real !== realRoot && !real.startsWith(realRoot + sep);
+    }
+    const parent = dirname(probe);
+    if (parent === probe) return true;
+    probe = parent;
+  }
+}
+
 export function resolveInWorkspace(workingDir: string, input: string): string {
   const root = resolve(workingDir);
   const abs = resolve(root, input);
-  if (abs !== root && !abs.startsWith(root + sep)) {
+  if (abs !== root && (!abs.startsWith(root + sep) || escapesRoot(root, abs))) {
     throw new LareError('TOOL_EXECUTION_FAILED', `path escapes workspace: ${input}`, {
       context: { workingDir: root, path: input },
     });

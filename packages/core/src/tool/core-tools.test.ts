@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -63,6 +63,18 @@ describe('core tool contract', () => {
       }
     }
     expect(tools.toToolSpecs()).toHaveLength(12);
+  });
+
+  it('rejects symlinks that escape the workspace', async () => {
+    const outside = await mkdtemp(join(tmpdir(), 'lare-outside-'));
+    await writeFile(join(outside, 'secret.txt'), 'secret');
+    await symlink(outside, join(dir, 'link'));
+
+    const result = await call('read', { path: 'link/secret.txt' });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('escapes workspace');
+
+    await rm(outside, { recursive: true, force: true });
   });
 
   it('rejects paths escaping the workspace', async () => {
