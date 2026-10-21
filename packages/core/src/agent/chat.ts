@@ -71,6 +71,10 @@ export class ChatSession {
     this.runtime.reset();
   }
 
+  loadHistory(history: ProviderMessage[]): void {
+    this.runtime.loadHistory(history);
+  }
+
   async *run(prompt: string, options: ChatRunOptions): AsyncGenerator<ChatEvent> {
     for await (const event of this.runtime.run({ prompt, ...options })) {
       if (event.type === 'text') {

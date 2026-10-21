@@ -79,7 +79,7 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     process.stderr.write(`larecode: session "${options.resume}" not found\n`);
     return 1;
   }
-  const stored =
+  let stored =
     resumed ??
     sessions.create(undefined, {
       provider,
@@ -156,6 +156,7 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     await startTui({
       provider,
       model,
+      sessionId: stored.id,
       initialMessages: sessionMessages(stored),
       runTurn,
       runSubagentTurn,
@@ -163,6 +164,23 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
         provider: name,
         models: entry.models,
       })),
+      sessions: sessions
+        .list()
+        .slice(0, 50)
+        .map((metadata) => ({
+          id: metadata.id,
+          title: metadata.title,
+          provider: metadata.provider,
+          model: metadata.model,
+          updatedAt: metadata.updatedAt.getTime(),
+        })),
+      onResumeSession: (id) => {
+        const target = sessions.get(id);
+        if (!target) return undefined;
+        stored = target;
+        session.loadHistory(toProviderHistory(target.messages));
+        return sessionMessages(target);
+      },
       onSelectModel: (nextProvider, nextModel) => {
         session.selectModel(nextProvider, nextModel);
         stored.metadata.provider = nextProvider;

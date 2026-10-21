@@ -5,6 +5,9 @@ export interface SlashCommand {
 
 export const COMMANDS: SlashCommand[] = [
   { name: '/help', description: 'show keys and commands' },
+  { name: '/new', description: 'start a fresh conversation' },
+  { name: '/sessions', description: 'resume a saved session' },
+  { name: '/status', description: 'show provider, model, and usage' },
   { name: '/clear', description: 'clear the conversation' },
   { name: '/theme', description: 'toggle dark and light' },
   { name: '/model', description: 'list or switch provider and model' },
