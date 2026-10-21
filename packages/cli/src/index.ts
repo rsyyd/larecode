@@ -6,13 +6,21 @@ import { serveCommand } from './commands/serve.js';
 import { serveMcp } from '@larecode/server';
 import type { PermissionGroup } from '@larecode/core';
 import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
-import { cronAdd, cronList, cronRemove, cronRun, cronStart } from './commands/cron.js';
+import { cronAdd, cronList, cronLogs, cronRemove, cronRun, cronStart } from './commands/cron.js';
 import { gatewayCommand } from './commands/gateway.js';
 import { updateCommand } from './commands/update.js';
 import { setupCommand } from './commands/setup.js';
 import { acpCommand } from './commands/acp.js';
 import { chatCommand } from './commands/chat.js';
-import { sessionsRmCommand } from './commands/sessions.js';
+import {
+  sessionsExportCommand,
+  sessionsListCommand,
+  sessionsPruneCommand,
+  sessionsRewindCommand,
+  sessionsRmCommand,
+  sessionsSearchCommand,
+  sessionsShowCommand,
+} from './commands/sessions.js';
 
 const program = new Command();
 
@@ -21,7 +29,8 @@ program.name('larecode').description("Every agent's best, in one CLI.").version(
 program
   .command('doctor', { isDefault: false })
   .description('Check configuration, providers, models, streaming, and permissions')
-  .action(runDoctor);
+  .option('--json', 'print machine-readable JSON')
+  .action((options: { json?: boolean }) => runDoctor(options));
 
 program
   .command('acp')
@@ -81,6 +90,65 @@ program
   });
 
 const sessions = program.command('sessions').description('Manage saved chat sessions');
+
+sessions
+  .command('list')
+  .description('List saved sessions')
+  .option('--json', 'print JSON')
+  .action((options: { json?: boolean }) => {
+    process.exitCode = sessionsListCommand(options);
+  });
+
+sessions
+  .command('show')
+  .description('Show a session transcript')
+  .argument('<id>', 'session id')
+  .option('--json', 'print JSON')
+  .action((id: string, options: { json?: boolean }) => {
+    process.exitCode = sessionsShowCommand(id, options);
+  });
+
+sessions
+  .command('search')
+  .description('Search session transcripts')
+  .argument('<query>', 'search terms')
+  .option('--json', 'print JSON')
+  .option('--limit <n>', 'maximum hits')
+  .action((query: string, options: { json?: boolean; limit?: string }) => {
+    process.exitCode = sessionsSearchCommand(query, {
+      json: options.json,
+      limit: options.limit === undefined ? undefined : Number.parseInt(options.limit, 10),
+    });
+  });
+
+sessions
+  .command('export')
+  .description('Export a redacted session')
+  .argument('<id>', 'session id')
+  .option('--format <format>', 'json or markdown', 'json')
+  .action((id: string, options: { format?: string }) => {
+    process.exitCode = sessionsExportCommand(id, options);
+  });
+
+sessions
+  .command('rewind')
+  .description('Truncate a session transcript to an earlier message count')
+  .argument('<id>', 'session id')
+  .argument('<count>', 'number of messages to keep')
+  .option('--yes', 'confirm dropping later messages')
+  .action((id: string, count: string, options: { yes?: boolean }) => {
+    process.exitCode = sessionsRewindCommand(id, count, options.yes);
+  });
+
+sessions
+  .command('prune')
+  .description('Delete old sessions by age and/or keep count')
+  .option('--older-than <days>', 'delete sessions older than this many days')
+  .option('--keep <count>', 'keep only the newest count')
+  .option('--json', 'print JSON')
+  .action((options: { olderThan?: string; keep?: string; json?: boolean }) => {
+    process.exitCode = sessionsPruneCommand(options);
+  });
 
 sessions
   .command('rm')
@@ -173,9 +241,24 @@ cron
   .argument('<prompt...>', 'task for the agent')
   .option('--name <name>', 'job name')
   .option('--allow <groups>', 'comma-separated permission groups pre-authorized for this job')
-  .action((schedule: string, prompt: string[], options: { name?: string; allow?: string }) => {
-    process.exitCode = cronAdd({ schedule, prompt, name: options.name, allow: options.allow });
-  });
+  .option('--retries <n>', 'retry failed runs up to n times (max 5)')
+  .option('--timeout <ms>', 'abort a run after this many milliseconds')
+  .action(
+    (
+      schedule: string,
+      prompt: string[],
+      options: { name?: string; allow?: string; retries?: string; timeout?: string }
+    ) => {
+      process.exitCode = cronAdd({
+        schedule,
+        prompt,
+        name: options.name,
+        allow: options.allow,
+        retries: options.retries,
+        timeout: options.timeout,
+      });
+    }
+  );
 
 cron
   .command('list')
@@ -190,6 +273,15 @@ cron
   .argument('<id>', 'job id')
   .action((id: string) => {
     process.exitCode = cronRemove(id);
+  });
+
+cron
+  .command('logs')
+  .description('Show the last result and log for a job')
+  .argument('<id>', 'job id')
+  .option('--json', 'print JSON')
+  .action((id: string, options: { json?: boolean }) => {
+    process.exitCode = cronLogs(id, options);
   });
 
 cron

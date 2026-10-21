@@ -1,7 +1,6 @@
-import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { Lang, parse, type SgNode } from '@ast-grep/napi';
-import { looksBinary, walkFiles } from '../tool/files.js';
+import { looksBinary, readFilesConcurrent, walkFiles } from '../tool/files.js';
 import { estimateTokens } from '../usage/usage.js';
 
 export interface RepoMapOptions {
@@ -153,16 +152,14 @@ export async function buildRepoMap(root: string, options: RepoMapOptions = {}): 
 
   const facts: FileFacts[] = [];
   const fileSet = new Set<string>();
+  const candidates: string[] = [];
   for await (const file of walkFiles(root)) {
-    if (facts.length >= maxFiles) break;
-    if (!languageFacts(file)) continue;
-    let buf: Buffer;
-    try {
-      buf = await readFile(join(root, file));
-    } catch {
-      continue;
-    }
-    if (looksBinary(buf) || buf.length > MAX_FILE_BYTES) continue;
+    if (candidates.length >= maxFiles) break;
+    if (languageFacts(file)) candidates.push(file);
+  }
+  const loaded = await readFilesConcurrent(root, candidates, { maxBytes: MAX_FILE_BYTES });
+  for (const { file, buf } of loaded) {
+    if (looksBinary(buf)) continue;
     fileSet.add(file);
     try {
       facts.push(extractFileFacts(buf.toString('utf8'), file));

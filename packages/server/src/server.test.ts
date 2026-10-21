@@ -98,6 +98,31 @@ describe('sessions api', () => {
     const instance = await start();
     expect((await fetch(`${instance.url}/sessions/nope`, { headers: auth() })).status).toBe(404);
   });
+
+  it('deletes a session with a write token and rejects read-only tokens', async () => {
+    const instance = await start();
+    const id = await createSession(instance);
+    expect(
+      (await fetch(`${instance.url}/sessions/${id}`, { method: 'DELETE', headers: auth(READ_TOKEN) }))
+        .status
+    ).toBe(403);
+    const deleted = await fetch(`${instance.url}/sessions/${id}`, {
+      method: 'DELETE',
+      headers: auth(),
+    });
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toMatchObject({ deleted: true });
+    expect((await fetch(`${instance.url}/sessions/${id}`, { headers: auth() })).status).toBe(404);
+  });
+
+  it('rate limits authenticated requests per token and address', async () => {
+    const instance = await start({ rateLimit: { maxRequests: 2, windowMs: 60_000 } });
+    expect((await fetch(`${instance.url}/sessions`, { headers: auth() })).status).toBe(200);
+    expect((await fetch(`${instance.url}/sessions`, { headers: auth() })).status).toBe(200);
+    const limited = await fetch(`${instance.url}/sessions`, { headers: auth() });
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('retry-after')).toBeTruthy();
+  });
 });
 
 describe('share links', () => {

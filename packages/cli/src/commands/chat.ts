@@ -22,6 +22,7 @@ export interface ChatCommandOptions {
 }
 
 export function startTurn(sessions: Sessions, stored: Session, prompt: string): void {
+  if (!stored.metadata.title) stored.metadata.title = prompt.trim().slice(0, 80);
   stored.messages.push({ role: 'user', content: prompt, timestamp: new Date() });
   sessions.save(stored);
 }
@@ -78,7 +79,13 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     process.stderr.write(`larecode: session "${options.resume}" not found\n`);
     return 1;
   }
-  const stored = resumed ?? sessions.create();
+  const stored =
+    resumed ??
+    sessions.create(undefined, {
+      provider,
+      model,
+      workingDir: process.cwd(),
+    });
 
   const providers = new Providers();
   for (const adapter of providersFromConfig(config)) providers.register(adapter);
@@ -121,6 +128,8 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
         } else if (event.type === 'tool_start') {
           detail = toolDetail(event.args);
           onChunk(`\n⎿ ${event.name}${detail ? ` · ${detail}` : ''}\n`);
+        } else if (event.type === 'fallback') {
+          onChunk(`\n↪ fallback ${event.from} → ${event.provider}/${event.model}\n`);
         } else {
           onChunk(`${event.ok ? '✓' : '✗'} ${event.name}${detail ? ` · ${detail}` : ''}\n`);
           detail = '';
@@ -154,8 +163,14 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
         provider: name,
         models: entry.models,
       })),
-      onSelectModel: (nextProvider, nextModel) => session.selectModel(nextProvider, nextModel),
+      onSelectModel: (nextProvider, nextModel) => {
+        session.selectModel(nextProvider, nextModel);
+        stored.metadata.provider = nextProvider;
+        stored.metadata.model = nextModel;
+        sessions.save(stored);
+      },
       getUsage: () => session.getUsage(),
+      getContext: () => session.getContextReport(),
       onClear: () => session.reset(),
     });
   } finally {

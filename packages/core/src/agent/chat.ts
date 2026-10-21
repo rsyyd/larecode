@@ -1,6 +1,7 @@
 import { LareError } from '../error/error.js';
 import type { ProviderMessage } from '../provider/provider.js';
 import type { UsageAggregate } from '../usage/usage.js';
+import type { ContextReport } from '../context/inject.js';
 import {
   DefaultAgentRuntime,
   type AgentRuntime,
@@ -22,7 +23,8 @@ export type ChatRunOptions = Omit<AgentRuntimeTurnInput, 'prompt'>;
 export type ChatEvent =
   | { type: 'text'; text: string }
   | { type: 'tool_start'; name: string; args: unknown }
-  | { type: 'tool_end'; name: string; ok: boolean; output: string };
+  | { type: 'tool_end'; name: string; ok: boolean; output: string }
+  | { type: 'fallback'; from: string; provider: string; model: string; reason: string };
 
 export type ChatSessionOptions = AgentRuntimeOptions;
 
@@ -53,6 +55,10 @@ export class ChatSession {
     return this.runtime.getUsage();
   }
 
+  getContextReport(): ContextReport {
+    return this.runtime.getContextReport();
+  }
+
   getHistory(): ProviderMessage[] {
     return this.runtime.getHistory();
   }
@@ -73,6 +79,14 @@ export class ChatSession {
         yield { type: 'tool_start', name: event.name, args: event.args };
       } else if (event.type === 'tool_end') {
         yield { type: 'tool_end', name: event.name, ok: event.ok, output: event.output };
+      } else if (event.type === 'fallback') {
+        yield {
+          type: 'fallback',
+          from: event.from,
+          provider: event.provider,
+          model: event.model,
+          reason: event.reason,
+        };
       } else if (event.type === 'halt') {
         if (event.reason === 'cancelled') {
           throw new LareError('CANCELLED', 'chat session cancelled');

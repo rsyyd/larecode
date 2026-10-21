@@ -23,7 +23,7 @@ describe('filterCommands', () => {
 
   it('only lists implemented commands', () => {
     const names = COMMANDS.map((command) => command.name);
-    expect(names).toEqual(['/help', '/clear', '/theme', '/model', '/exit']);
+    expect(names).toEqual(['/help', '/clear', '/theme', '/model', '/context', '/exit']);
   });
 });
 

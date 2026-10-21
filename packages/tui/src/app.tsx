@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Box, Text, useApp, useInput, useStdin, useStdout, type Key } from 'ink';
-import { VERSION, formatCost, formatTokens, type UsageAggregate } from '@larecode/core';
+import {
+  VERSION,
+  formatCost,
+  formatTokens,
+  type ContextReport,
+  type UsageAggregate,
+} from '@larecode/core';
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
 import { COMMANDS, filterCommands } from './palette.js';
@@ -28,6 +34,7 @@ export interface AppProps {
   version?: string;
   initialMessages?: ChatMessage[];
   getUsage?: () => UsageAggregate;
+  getContext?: () => ContextReport;
   onClear?: () => void;
   runTurn?: (
     prompt: string,
@@ -129,6 +136,7 @@ export function App({
   version = VERSION,
   initialMessages = [],
   getUsage,
+  getContext,
   onClear,
   runTurn,
   runSubagentTurn,
@@ -261,6 +269,25 @@ export function App({
           addNote(`model → ${nextProvider}/${nextModel}`);
         } catch (error) {
           addNote(`error: ${describeError(error)}`);
+        }
+        break;
+      }
+      case '/context': {
+        const report = getContext?.();
+        if (!report) {
+          addNote('context report unavailable');
+          break;
+        }
+        addNote(
+          `context ${report.used}/${report.total} tok · repo map ${report.sources.repoMap ? 'on' : 'off'} · ${report.sources.retrievalFiles} files · ${report.sources.memoryEntries} memories`
+        );
+        const sections = report.sections
+          .filter((section) => section.tokens > 0)
+          .map((section) => `${section.name} ${section.tokens}${section.truncated ? ' (cut)' : ''}`)
+          .join(' · ');
+        if (sections) addNote(sections);
+        if (report.sources.instructions.length > 0) {
+          addNote(`instructions: ${report.sources.instructions.join(', ')}`);
         }
         break;
       }

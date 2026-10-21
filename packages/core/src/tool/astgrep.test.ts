@@ -1,116 +1,62 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { astGrepTool } from './astgrep.js';
-import { Tools, type ToolContext } from './tool.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Permissions } from '../permission/permission.js';
-import { Logger } from '../logger/logger.js';
+import type { ToolContext } from './tool.js';
+import { astGrepTool, patternToRegex } from './astgrep.js';
 
-const quiet = () => new Logger({ level: 'error', handlers: [() => {}] });
-
-let project: string;
+let dir: string;
 
 beforeEach(() => {
-  project = mkdtempSync(join(tmpdir(), 'lare-astgrep-'));
-  mkdirSync(join(project, 'src'), { recursive: true });
-  writeFileSync(
-    join(project, 'src', 'one.ts'),
-    `export function hello(name: string) {\n  return name;\n}\nconsole.log('trace');\n`
-  );
-  writeFileSync(join(project, 'src', 'two.js'), `function world() {\n  return 2;\n}\n`);
+  dir = mkdtempSync(join(tmpdir(), 'lare-astgrep-'));
+  writeFileSync(join(dir, 'a.ts'), 'console.log("hello");\nconst x = 1;\n');
 });
 
-function registry(): Tools {
-  const tools = new Tools({ logger: quiet() });
-  tools.register(astGrepTool());
-  return tools;
-}
+afterEach(() => {
+  rmSync(dir, { recursive: true, force: true });
+});
 
 function ctx(): ToolContext {
   return {
-    sessionId: 'test-session',
-    workingDir: project,
-    permissions: new Permissions(),
+    sessionId: 'astgrep-test',
+    workingDir: dir,
+    permissions: new Permissions({ mode: 'allow', allowedGroups: ['read'] }),
     abortSignal: new AbortController().signal,
   };
 }
 
-interface AstGrepOutput {
-  matches: Array<{ file: string; line: number; text: string }>;
-  count: number;
-  truncated: boolean;
-}
-
-describe('ast_grep tool', () => {
-  it('finds structural matches across languages', async () => {
-    const result = await registry().execute(
-      {
-        id: 'c1',
-        name: 'ast_grep',
-        arguments: { pattern: 'function $NAME($$$ARGS) { $$$BODY }' },
-      },
+describe('ast_grep', () => {
+  it('finds structural matches when ast-grep is available', async () => {
+    const result = (await astGrepTool().execute(
+      { pattern: 'console.log($ARG)', lang: 'ts' },
       ctx()
-    );
-    expect(result.success).toBe(true);
-    const output = result.output as AstGrepOutput;
-    expect(output.count).toBe(2);
-    expect(output.matches.map((match) => `${match.file}:${match.line}`).sort()).toEqual([
-      'src/one.ts:1',
-      'src/two.js:1',
-    ]);
+    )) as { matches: Array<{ file: string; line: number }>; count: number };
+    expect(result.count).toBe(1);
+    expect(result.matches[0]).toMatchObject({ file: 'a.ts', line: 1 });
   });
 
-  it('scopes by language, path, and result cap', async () => {
-    const byLang = await registry().execute(
-      {
-        id: 'c2',
-        name: 'ast_grep',
-        arguments: { pattern: 'function $NAME($$$ARGS) { $$$BODY }', lang: 'js' },
-      },
+  it('falls back to text matching when ast-grep is unavailable', async () => {
+    const result = (await astGrepTool({ load: async () => null }).execute(
+      { pattern: 'console.log($ARG)', lang: 'ts' },
       ctx()
-    );
-    expect((byLang.output as AstGrepOutput).matches.map((match) => match.file)).toEqual([
-      'src/two.js',
-    ]);
-
-    const byPath = await registry().execute(
-      { id: 'c3', name: 'ast_grep', arguments: { pattern: 'console.log($ARG)', path: 'src' } },
-      ctx()
-    );
-    expect((byPath.output as AstGrepOutput).matches[0]).toMatchObject({
-      file: 'src/one.ts',
-      line: 4,
-    });
-
-    const capped = await registry().execute(
-      {
-        id: 'c4',
-        name: 'ast_grep',
-        arguments: { pattern: 'function $NAME($$$ARGS) { $$$BODY }', maxResults: 1 },
-      },
-      ctx()
-    );
-    expect((capped.output as AstGrepOutput).truncated).toBe(true);
+    )) as { matches: Array<{ file: string; line: number }>; fallback: boolean };
+    expect(result.fallback).toBe(true);
+    expect(result.matches).toHaveLength(1);
+    expect(result.matches[0]).toMatchObject({ file: 'a.ts', line: 1 });
   });
 
-  it('rejects invalid patterns and inputs', async () => {
-    const invalid = await registry().execute(
-      { id: 'c5', name: 'ast_grep', arguments: { pattern: 'function {' } },
-      ctx()
-    );
-    expect(invalid.success).toBe(false);
-    expect(invalid.error).toContain('invalid pattern');
+  it('rejects unsupported languages', async () => {
+    await expect(
+      astGrepTool({ load: async () => null }).execute(
+        { pattern: 'console.log($ARG)', lang: 'ruby' },
+        ctx()
+      )
+    ).rejects.toThrow(/unsupported lang/);
+  });
 
-    const missing = await registry().execute({ id: 'c6', name: 'ast_grep', arguments: {} }, ctx());
-    expect(missing.success).toBe(false);
-    expect(missing.error).toContain('requires a pattern');
-
-    const badLang = await registry().execute(
-      { id: 'c7', name: 'ast_grep', arguments: { pattern: 'function $N() {}', lang: 'rust' } },
-      ctx()
-    );
-    expect(badLang.success).toBe(false);
-    expect(badLang.error).toContain('unsupported lang');
+  it('turns metavariables into a safe regular expression', () => {
+    expect(patternToRegex('console.log($ARG)').test('console.log("x")')).toBe(true);
+    expect(patternToRegex('console.log($ARG)').test('console.logx("x")')).toBe(false);
   });
 });

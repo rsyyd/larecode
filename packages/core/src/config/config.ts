@@ -13,14 +13,39 @@ export interface ProviderConfig {
   models: string[];
 }
 
+export const CONFIG_SCHEMA_VERSION = 2;
+
+export interface ContextConfig {
+  enabled?: boolean;
+  repoMap?: boolean;
+  retrieval?: boolean;
+  memory?: boolean;
+  budgetTokens?: number;
+}
+
+export interface WebSearchConfig {
+  provider?: 'duckduckgo' | 'custom';
+  endpoint?: string;
+  apiKey?: string;
+}
+
+export interface FallbackTarget {
+  provider: string;
+  model?: string;
+}
+
 export interface Config {
   version: string;
+  schemaVersion?: number;
   defaultProvider: string;
   defaultModel: string;
   permissions: PermissionPolicy;
   providers: Record<string, ProviderConfig>;
   mcpServers: Record<string, MCPServerConfig>;
   execution?: ExecutionConfig;
+  context?: ContextConfig;
+  webSearch?: WebSearchConfig;
+  fallbacks?: FallbackTarget[];
   checkpoints?: boolean;
 }
 
@@ -39,6 +64,7 @@ export function projectConfigPath(projectDir: string = process.cwd()): string {
 export function defaultConfig(): Config {
   return {
     version: VERSION,
+    schemaVersion: CONFIG_SCHEMA_VERSION,
     defaultProvider: 'openai-compatible',
     defaultModel: 'gpt-4o',
     permissions: { mode: 'ask', allowedGroups: ['read'] },
@@ -56,6 +82,9 @@ export function defaultConfig(): Config {
     },
     mcpServers: {},
     execution: { backend: 'local' },
+    context: { enabled: true, repoMap: true, retrieval: true, memory: true, budgetTokens: 8000 },
+    webSearch: { provider: 'duckduckgo' },
+    fallbacks: [],
   };
 }
 
@@ -67,10 +96,14 @@ export function loadConfig(path: string = configPath()): Config {
     ...defaults,
     ...raw,
     version: VERSION,
+    schemaVersion: CONFIG_SCHEMA_VERSION,
     permissions: { ...defaults.permissions, ...raw.permissions },
     providers: raw.providers ?? defaults.providers,
     mcpServers: raw.mcpServers ?? defaults.mcpServers,
     execution: raw.execution ?? defaults.execution,
+    context: { ...defaults.context, ...raw.context },
+    webSearch: { ...defaults.webSearch, ...raw.webSearch },
+    fallbacks: raw.fallbacks ?? defaults.fallbacks,
   };
 }
 
@@ -85,9 +118,13 @@ export function loadEffectiveConfig(
   return {
     ...config,
     ...project,
+    schemaVersion: CONFIG_SCHEMA_VERSION,
     permissions: { ...config.permissions, ...project.permissions },
     providers: { ...config.providers, ...project.providers },
     mcpServers: { ...config.mcpServers, ...project.mcpServers },
+    context: { ...config.context, ...project.context },
+    webSearch: { ...config.webSearch, ...project.webSearch },
+    fallbacks: project.fallbacks ?? config.fallbacks,
   };
 }
 
@@ -106,6 +143,19 @@ export function validateConfig(config: Config): string[] {
   }
   for (const [name, entry] of Object.entries(config.providers)) {
     if (!entry.baseUrl) problems.push(`provider "${name}" has no baseUrl`);
+    if (!Array.isArray(entry.models) || entry.models.length === 0) {
+      problems.push(`provider "${name}" has no models`);
+    }
+  }
+  for (const target of config.fallbacks ?? []) {
+    const provider = config.providers[target.provider];
+    if (!provider) {
+      problems.push(`fallback provider "${target.provider}" is not configured`);
+    } else if (target.model && !provider.models.includes(target.model)) {
+      problems.push(
+        `fallback model "${target.model}" is not offered by provider "${target.provider}"`
+      );
+    }
   }
   const execution = config.execution;
   if (execution) {

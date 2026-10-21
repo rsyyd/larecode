@@ -34,7 +34,7 @@ function usage(): UsageAggregate {
 }
 
 class TextAdapter implements ProviderAdapter {
-  readonly name = 'fake';
+  readonly name: string = 'fake';
   readonly seen: ProviderMessage[][] = [];
   readonly capabilities = {
     tools: true,
@@ -140,6 +140,14 @@ function runtime(events: AgentRuntimeEvent[], seen: AgentRuntimeTurnInput[] = []
     getModel: () => 'test-model',
     getUsage: () => usage(),
     getHistory: () => [],
+    getContextReport: () => ({
+      enabled: false,
+      used: 0,
+      total: 0,
+      sections: [],
+      sources: { instructions: [], repoMap: false, retrievalFiles: 0, memoryEntries: 0 },
+      text: '',
+    }),
     setAgent: () => {},
     selectModel: () => {},
     reset: () => {},
@@ -211,6 +219,46 @@ describe('AgentRuntime contract', () => {
     expect(adapter.seenSpecs).toEqual(expect.arrayContaining(['read', 'lsp', 'task', 'skill']));
     expect(adapter.seenSpecs).not.toContain('write');
     rmSync(cwd, { recursive: true, force: true });
+  });
+
+  it('falls back to a configured provider when the primary fails', async () => {
+    class AuthFails extends TextAdapter {
+      override async *streamChat(): AsyncGenerator<ProviderStreamEvent> {
+        throw new LareError('PROVIDER_AUTH_FAILED', 'bad key');
+      }
+    }
+    class BackupAdapter extends TextAdapter {
+      override readonly name = 'backup';
+    }
+    const primary = new AuthFails();
+    const backup = new BackupAdapter();
+    const providers = new Providers();
+    providers.register(primary);
+    providers.register(backup);
+    const runtime = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      fallbacks: [{ provider: 'backup', model: 'test-model' }],
+    });
+
+    const events: AgentRuntimeEvent[] = [];
+    for await (const event of runtime.run({
+      prompt: 'hi',
+      signal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(runtime.getProvider()).toBe('backup');
+    expect(events).toContainEqual({
+      type: 'fallback',
+      from: 'fake',
+      provider: 'backup',
+      model: 'test-model',
+      reason: 'provider error',
+    });
+    expect(events.some((event) => event.type === 'text')).toBe(true);
   });
 
   it('streams events and forwards the turn signal', async () => {

@@ -8,6 +8,7 @@ interface PatchArgs {
   sha256: string;
   find: string;
   replace: string;
+  replaceAll?: boolean;
 }
 
 export function patchTool(): Tool {
@@ -25,11 +26,12 @@ export function patchTool(): Tool {
         },
         find: { type: 'string', description: 'Exact text to replace' },
         replace: { type: 'string', description: 'Replacement text' },
+        replaceAll: { type: 'boolean', description: 'Replace every occurrence (default false)' },
       },
       required: ['path', 'sha256', 'find', 'replace'],
     },
     async execute(args, context) {
-      const { path: input, sha256: expected, find, replace } = args as PatchArgs;
+      const { path: input, sha256: expected, find, replace, replaceAll } = args as PatchArgs;
       const abs = resolveInWorkspace(context.workingDir, input);
 
       let buf: Buffer;
@@ -54,7 +56,7 @@ export function patchTool(): Tool {
         buf.toString('utf8'),
         find,
         replace,
-        false,
+        replaceAll ?? false,
         input
       );
       await writeFileAtomic(abs, updated);

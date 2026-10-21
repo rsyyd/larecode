@@ -1,6 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { looksBinary, walkFiles } from '../tool/files.js';
+import { looksBinary, readFilesConcurrent, walkFiles } from '../tool/files.js';
 import { estimateTokens } from '../usage/usage.js';
 
 export interface ContextQuery {
@@ -56,14 +54,11 @@ export class Context {
     this.docFreq = new Map();
     this.byTerm = new Map();
     this.snippets = new Map();
-    for await (const file of walkFiles(root)) {
-      let buf: Buffer;
-      try {
-        buf = await readFile(join(root, file));
-      } catch {
-        continue;
-      }
-      if (looksBinary(buf) || buf.length > MAX_INDEX_BYTES) continue;
+    const paths: string[] = [];
+    for await (const file of walkFiles(root)) paths.push(file);
+    const loaded = await readFilesConcurrent(root, paths, { maxBytes: MAX_INDEX_BYTES });
+    for (const { file, buf } of loaded) {
+      if (looksBinary(buf)) continue;
       const content = buf.toString('utf8');
       const terms = new Map<string, number>();
       for (const term of tokenize(content)) {

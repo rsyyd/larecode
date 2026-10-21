@@ -80,6 +80,63 @@ describe('runCronJob', () => {
     expect(result.output).toBe('partial ');
     expect(result.error).toContain('provider exploded');
   });
+
+  it('retries failed attempts before giving up', async () => {
+    let attempts = 0;
+    const result = await runCronJob(
+      { ...job, retries: 2 },
+      {
+        loadConfig: () => ({ defaultProvider: 'openai', defaultModel: 'gpt-4o-mini' }),
+        retryDelayMs: 0,
+        createLoop: () => {
+          attempts += 1;
+          if (attempts === 1) {
+            return {
+              async *run() {
+                throw new Error('transient');
+              },
+              getUsage: () => ({
+                totalTokens: { input: 0, output: 0, total: 0 },
+                totalCost: { totalCost: 0 },
+              }),
+              getHaltReason: () => null,
+            } as unknown as CronLoop;
+          }
+          return fakeLoop(['ok']);
+        },
+      }
+    );
+    expect(result.status).toBe('ok');
+    expect(result.attempts).toBe(2);
+    expect(result.output).toBe('ok');
+  });
+
+  it('aborts a run that exceeds its timeout', async () => {
+    const result = await runCronJob(
+      { ...job, timeoutMs: 1000 },
+      {
+        loadConfig: () => ({ defaultProvider: 'openai', defaultModel: 'gpt-4o-mini' }),
+        createLoop: (options) =>
+          ({
+            async *run() {
+              yield 'start';
+              await new Promise((_, reject) => {
+                options.abortSignal?.addEventListener('abort', () => reject(new Error('aborted')), {
+                  once: true,
+                });
+              });
+            },
+            getUsage: () => ({
+              totalTokens: { input: 0, output: 0, total: 0 },
+              totalCost: { totalCost: 0 },
+            }),
+            getHaltReason: () => null,
+          }) as unknown as CronLoop,
+      }
+    );
+    expect(result.status).toBe('error');
+    expect(result.error).toContain('timed out');
+  }, 10_000);
 });
 
 describe('runScheduler', () => {

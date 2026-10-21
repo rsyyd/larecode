@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -124,5 +124,50 @@ describe('Sessions persistence', () => {
     expect(new Sessions(dir).get(session.id)).toBeUndefined();
     expect(sessions.get('../../etc/passwd')).toBeUndefined();
     expect(sessions.delete('../../etc/passwd')).toBe(false);
+  });
+
+  it('migrates legacy session files without metadata', () => {
+    writeFileSync(
+      join(dir, 'legacy-1.json'),
+      JSON.stringify({
+        id: 'legacy-1',
+        messages: [
+          { role: 'user', content: 'hi', timestamp: '2020-01-01T00:00:00.000Z' },
+        ],
+      })
+    );
+    const session = new Sessions(dir).get('legacy-1')!;
+    expect(session.metadata.messageCount).toBe(1);
+    expect(session.metadata.tokenUsage).toBe(0);
+    expect(session.metadata.cost).toBe(0);
+    expect(session.metadata.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it('rewinds, exports redacted content, and prunes by count', async () => {
+    const sessions = new Sessions(dir);
+    const session = sessions.create('secret sk-ant-abcdef1234567890');
+    session.messages.push(
+      { role: 'assistant', content: 'first', timestamp: new Date() },
+      { role: 'user', content: 'second', timestamp: new Date() }
+    );
+    sessions.save(session);
+
+    const markdown = sessions.export(session.id, 'markdown')!;
+    expect(markdown).toContain('## user');
+    expect(markdown).not.toContain('sk-ant-abcdef1234567890');
+
+    sessions.rewind(session.id, 1);
+    expect(new Sessions(dir).get(session.id)!.messages).toHaveLength(1);
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const second = sessions.create('two');
+    sessions.prune({ maxSessions: 1 });
+    expect(new Sessions(dir).list().map((entry) => entry.id)).toEqual([second.id]);
+  });
+
+  it('leaves no temporary files after saving', () => {
+    const sessions = new Sessions(dir);
+    sessions.create('one');
+    expect(readdirSync(dir).some((name) => name.endsWith('.tmp'))).toBe(false);
   });
 });

@@ -144,6 +144,16 @@ export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
+export function tokenRatio(estimated: number, actual: number): number | undefined {
+  if (!Number.isFinite(estimated) || estimated <= 0) return undefined;
+  if (!Number.isFinite(actual) || actual <= 0) return undefined;
+  return Math.min(4, Math.max(0.25, actual / estimated));
+}
+
+export function applyTokenRatio(tokens: number, ratio: number): number {
+  return Math.ceil(tokens * ratio);
+}
+
 export function formatTokens(count: number): string {
   return count >= 1000 ? `${(count / 1000).toFixed(1)}k` : String(count);
 }
