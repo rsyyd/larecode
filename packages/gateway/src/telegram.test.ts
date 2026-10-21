@@ -230,6 +230,57 @@ describe('run', () => {
     expect(sends[0].text).toBe('pong');
   });
 
+  it('processes updates one at a time', async () => {
+    const controller = new AbortController();
+    let polls = 0;
+    let active = 0;
+    let maxActive = 0;
+    const fetchImpl = (async (input: Parameters<typeof fetch>[0]) => {
+      const url = String(input);
+      if (url.includes('/getUpdates')) {
+        polls += 1;
+        if (polls === 1) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              result: [update(1, ALLOWED, 'first'), update(2, ALLOWED, 'second')],
+            }),
+            { status: 200 }
+          );
+        }
+        controller.abort();
+        return new Response(JSON.stringify({ ok: true, result: [] }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    }) as typeof fetch;
+    const loop = {
+      async *run() {
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        yield 'ok';
+        active -= 1;
+      },
+      getUsage: () => ({ totalTokens: { total: 0 }, totalCost: { totalCost: 0 } }),
+      getHaltReason: () => null,
+    } as unknown as GatewayLoop;
+    const instance = new TelegramGateway({
+      token: 'T',
+      allowedChatId: ALLOWED,
+      sessions,
+      chatSessions,
+      fetchImpl,
+      createLoop: () => loop,
+      loadConfig: () => ({ defaultProvider: 'openai', defaultModel: 'gpt-4o-mini' }),
+    });
+
+    await instance.run(controller.signal);
+
+    expect(polls).toBe(2);
+    expect(maxActive).toBe(1);
+    expect(sessions.get(sessions.list()[0].id)?.messages).toHaveLength(4);
+  });
+
   it('survives poll failures until aborted', async () => {
     const controller = new AbortController();
     let calls = 0;

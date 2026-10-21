@@ -19,7 +19,7 @@ Status: early release (0.1.x). See the [changelog](CHANGELOG.md) for what change
 
 - **Provider neutral.** OpenAI-compatible, Anthropic, Ollama, OpenRouter, Z.ai, and custom endpoints, with per-run `--provider` and `--model` overrides.
 - **Permission engine.** Every tool call maps to a permission group; the default is deny, secrets and destructive operations always require confirmation, and every decision lands in an audit log.
-- **Agent loop.** Multi-provider chat, plan mode, subagents, skills, hooks, plugins, checkpoints, memory, and session search.
+- **Agent loop.** Multi-provider chat, plan mode, subagents, skills, checkpoints, and session search.
 - **Code aware.** Built-in file tools plus structural search via `ast-grep` and language server queries via LSP.
 - **MCP both ways.** Consume external MCP servers, or expose larecode tools to editors and other agents over stdio.
 - **Automation.** HTTP API with scoped tokens, share links, cron jobs, and a Telegram gateway, all running under the same permission policy.
@@ -60,6 +60,7 @@ Add `--verify` to record a test baseline first and fail only if new test failure
 - [Getting started](docs/getting-started.md) · [Install options](docs/install.md) · [Configuration](docs/configuration.md)
 - [Providers](docs/providers.md) · [Permissions](docs/permissions.md) · [Tools](docs/tools.md)
 - [MCP](docs/mcp.md) · [Automation](docs/automation.md) · [SDK and editors](docs/sdk.md) · [CLI reference](docs/cli.md)
+- [Claims and evidence](docs/claims.md) · [Surface contract](docs/architecture/surfaces.md)
 
 ## Development
 

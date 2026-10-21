@@ -44,6 +44,8 @@ Other install options, including Homebrew, Scoop, and a curl installer, are on t
 - [Testing](testing.md): test layers, commands, and CI gates
 - [Troubleshooting](troubleshooting.md): fix provider, permission, and session errors
 - [Release checklist](release.md): version bump, smoke test, tag, and rollback
+- [README claims](claims.md): every public claim and the test behind it
+- [Surface contract](architecture/surfaces.md): start, stream, cancel, stop, and status per surface
 - [ADR-0001: Desktop app deferred](architecture/adr/0001-desktop-app-deferred.md): why v1 ends at the CLI
 - [ADR-0002: Agent runtime contract](architecture/adr/0002-agent-runtime-contract.md): one runtime for every surface
 

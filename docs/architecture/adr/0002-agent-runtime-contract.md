@@ -40,7 +40,7 @@ A runtime also exposes its session ID, provider, model, history, aggregate usage
 
 Cancellation is expressed through the per-turn `AbortSignal`. Implementations must stop streaming, stop tool execution, and emit a `halt` event with reason `cancelled`; they must not throw a cancellation error after the stream has started.
 
-ARC-02 implements `DefaultAgentRuntime` and makes `ChatSession` a thin adapter over it. ARC-03 adds `AgentRuntimeLoop` and moves `run`, server, gateway, cron, and SDK/ACP onto the runtime. Those surfaces run the build agent with their working directory; gateway and cron pass an unattended permission policy. Runtime options may include prior history, and server, gateway, and SDK/ACP replay stored messages each turn. `AgentLoop` is now internal to the not-yet-wired subagent path and is no longer exported from the public core API; RUN-11 replaces it.
+ARC-02 implements `DefaultAgentRuntime` and makes `ChatSession` a thin adapter over it. ARC-03 adds `AgentRuntimeLoop` and moves `run`, server, gateway, cron, and SDK/ACP onto the runtime. Those surfaces run the build agent with their working directory; gateway and cron pass an unattended permission policy. Runtime options may include prior history, and server, gateway, and SDK/ACP replay stored messages each turn. `AgentLoop` is now internal to the not-yet-wired subagent path and is no longer exported from the public core API; RUN-11 replaces it. The per-surface mapping of start, stream, cancel, stop, and status is in the [surface contract](../surfaces.md).
 
 ## Consequences
 

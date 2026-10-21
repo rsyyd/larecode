@@ -43,6 +43,26 @@ The surface matrix uses one fake provider and a shared session store, so it can 
 
 A pull request is mergeable only when all four are green.
 
+## Coverage baseline
+
+`bun run test:coverage` writes an HTML report to `coverage/` and a JSON summary. It runs Vitest through Node because Bun does not expose the v8 coverage API on Termux.
+
+Baseline on 2026-10-21, 74 files and 582 tests:
+
+| Package   | Statement coverage |
+| --------- | ------------------ |
+| core      | 90.4%              |
+| cli       | 61.9%              |
+| tui       | 93.1%              |
+| server    | 81.5%              |
+| gateway   | 94.4%              |
+| sdk       | 96.5%              |
+| skills    | 100%               |
+| scripts   | 81.5%              |
+| **total** | **86.9%**          |
+
+Coverage is a baseline, not a merge gate. A change should not lower a package by more than one point without a reason in the pull request.
+
 ## Adding a test
 
 - Mock the provider by passing a `fetchImpl` or pointing `baseUrl` at a local server; never call a live API.
