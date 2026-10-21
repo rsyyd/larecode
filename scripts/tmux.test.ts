@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createServer, type Server as HttpServer } from 'node:http';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -38,7 +38,15 @@ async function waitFor(read: () => string, needle: string, timeoutMs = 15_000): 
     if (last.includes(needle)) return last;
     await delay(150);
   }
-  throw new Error(`timed out waiting for "${needle}"\n--- screen ---\n${last}`);
+  let sessions = '';
+  try {
+    sessions = tmux(['list-sessions']);
+  } catch (error) {
+    sessions = String(error);
+  }
+  throw new Error(
+    `timed out waiting for "${needle}"\n--- sessions ---\n${sessions}\n--- screen ---\n${last}`
+  );
 }
 
 describe('tmux smoke test', () => {
@@ -88,20 +96,21 @@ describe('tmux smoke test', () => {
         })
       );
 
+      const launcher = join(home, 'launch.sh');
+      await writeFile(
+        launcher,
+        `#!/bin/sh\necho "launcher started" | tee '${home}/launch.log'\nLARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat\nstatus=$?\necho "larecode exited with status $status"\nsleep 600\n`,
+        { mode: 0o755 }
+      );
       const capture = () => tmux(['capture-pane', '-p', '-S', '-200', '-t', name]);
       try {
-        tmux([
-          'new-session',
-          '-d',
-          '-s',
-          name,
-          '-x',
-          '80',
-          '-y',
-          '24',
-          `LARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat; status=$?; echo "larecode exited with status $status"; sleep 600`,
-        ]);
-        await waitFor(capture, 'Ask anything', 30_000);
+        tmux(['new-session', '-d', '-s', name, '-x', '80', '-y', '24', `'${launcher}'`]);
+        try {
+          await waitFor(capture, 'Ask anything', 30_000);
+        } catch (error) {
+          const log = await readFile(join(home, 'launch.log'), 'utf8').catch(() => '');
+          throw new Error(`${String(error)}\n--- launcher log ---\n${log}`);
+        }
         tmux(['send-keys', '-l', '-t', name, 'hello from tmux']);
         tmux(['send-keys', '-t', name, 'C-m']);
         await waitFor(capture, 'tmux-ok', 20_000);
