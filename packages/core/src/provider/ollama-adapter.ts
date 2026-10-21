@@ -136,13 +136,17 @@ export class OllamaAdapter implements ProviderAdapter {
   }
 
   private httpError(status: number): LareError {
+    const message =
+      status === 429
+        ? `${this.name} rate limited the request (429); wait a moment and retry, or switch models`
+        : `${this.name} returned ${status}`;
     return new LareError(
       status === 401 || status === 403
         ? 'PROVIDER_AUTH_FAILED'
         : status === 429
           ? 'RATE_LIMITED'
           : 'PROVIDER_UNAVAILABLE',
-      `${this.name} returned ${status}`,
+      message,
       { context: { provider: this.name, status }, retryable: status === 429 || status >= 500 }
     );
   }

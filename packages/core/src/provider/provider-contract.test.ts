@@ -186,6 +186,7 @@ describe.each(SPECS)('provider contract: $label', (spec) => {
     await expect(adapter.complete('hi', { model: 'm1' })).rejects.toMatchObject({
       code: 'RATE_LIMITED',
       retryable: true,
+      message: expect.stringContaining('retry'),
     });
   });
 
