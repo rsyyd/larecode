@@ -284,6 +284,54 @@ describe('sse turn', () => {
     expect(response.status).toBe(413);
   });
 
+  it('aborts the turn when the client disconnects', async () => {
+    let aborted = false;
+    let markStarted: () => void = () => {};
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    const instance = await start({
+      runTurn: async function* (_prompt, context) {
+        markStarted();
+        yield 'partial';
+        await new Promise<void>((resolve) => {
+          if (context.signal.aborted) {
+            aborted = true;
+            resolve();
+            return;
+          }
+          context.signal.addEventListener(
+            'abort',
+            () => {
+              aborted = true;
+              resolve();
+            },
+            { once: true }
+          );
+        });
+        return { halt: null, tokens: 1, cost: 0 };
+      },
+    });
+    const sessionId = await createSession(instance);
+    const controller = new AbortController();
+    const response = await fetch(`${instance.url}/sessions/${sessionId}/messages`, {
+      method: 'POST',
+      headers: auth(),
+      body: JSON.stringify({ content: 'go' }),
+      signal: controller.signal,
+    });
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('missing response body');
+    const first = await reader.read();
+    expect(new TextDecoder().decode(first.value)).toContain('partial');
+
+    controller.abort();
+    await started;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(aborted).toBe(true);
+  });
+
   it('reports handler failures as SSE error events and keeps partial output', async () => {
     const instance = await start({
       runTurn: async function* () {

@@ -170,6 +170,19 @@ describe('mcp client (stdio)', () => {
     expect(result).toBe('echo: hi');
   });
 
+  it('reconnects a server with the same name without leaking the old client', async () => {
+    const config = {
+      name: 'fake',
+      transport: 'stdio' as const,
+      command: process.execPath,
+      args: [join(dir, 'server.cjs')],
+    };
+    await mcp.connect(config);
+    await mcp.connect(config);
+    const tools = await mcp.listTools('fake');
+    expect(tools.map((tool) => tool.name)).toEqual(['echo']);
+  });
+
   it('fails on tool results marked as errors', async () => {
     await expect(mcp.callTool('fake', 'boom', {})).rejects.toMatchObject({
       code: 'MCP_TOOL_FAILED',

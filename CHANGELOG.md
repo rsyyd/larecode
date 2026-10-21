@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `larecode doctor` now checks provider auth, model catalog, and a streaming probe instead of only reachability.
 - Configs written by 0.1 are normalized on load: missing `allowedGroups`, `mcpServers`, and `execution` fields are filled in and the version is upgraded.
 - `larecode setup` rejects an invalid base URL or empty model before writing a config, and refuses to save a config that fails validation.
+- Regression coverage proves that client disconnects abort server turns, MCP servers reconnect cleanly, and every package version matches the CLI.
 - A single session now continues across server, SDK, and ACP surfaces with full history.
 - ACP turns run tools in the `cwd` supplied by `session/new` instead of the process directory; server and ACP write-tool round trips are covered end to end.
 - Testing, troubleshooting, and release checklist documentation, plus a CI-enforced relative-link check for every Markdown file.
