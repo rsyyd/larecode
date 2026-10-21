@@ -99,7 +99,7 @@ describe('tmux smoke test', () => {
       const launcher = join(home, 'launch.sh');
       await writeFile(
         launcher,
-        `#!/bin/sh\necho "launcher started" | tee '${home}/launch.log'\nLARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat\nstatus=$?\necho "larecode exited with status $status"\nsleep 600\n`,
+        `#!/bin/sh\necho "launcher started" | tee '${home}/launch.log'\nCI=false LARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat\nstatus=$?\necho "larecode exited with status $status"\nsleep 600\n`,
         { mode: 0o755 }
       );
       const capture = () => tmux(['capture-pane', '-p', '-S', '-200', '-t', name]);
