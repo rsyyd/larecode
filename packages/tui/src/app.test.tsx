@@ -39,6 +39,25 @@ describe('App', () => {
     expect(frame).toContain('Hello world');
   });
 
+  it('presents the error code and next action', async () => {
+    const runTurn = async (): Promise<void> => {
+      throw Object.assign(new Error('request timed out after 120000ms'), {
+        code: 'PROVIDER_TIMEOUT',
+        retryable: true,
+      });
+    };
+    const { stdin, lastFrame } = render(<App runTurn={runTurn} model="m" />);
+    await flush();
+    stdin.write('hi');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('PROVIDER_TIMEOUT');
+    expect(frame).toContain('request timed out');
+    expect(frame).toContain('retry or switch models');
+  });
+
   it('scrolls back through the conversation with pgup and pgdn', async () => {
     const initialMessages = Array.from({ length: 30 }, (_, index) => ({
       role: 'agent' as const,

@@ -46,6 +46,25 @@ export interface AppProps {
 export const HELP_TEXT =
   'enter send · ctrl+j newline · esc stop · tab agent · pgup/pgdn scroll · @general subagent · / commands · ctrl+c quit';
 
+const NEXT_ACTIONS: Record<string, string> = {
+  RATE_LIMITED: 'wait a moment and retry',
+  PROVIDER_TIMEOUT: 'retry or switch models',
+  PROVIDER_AUTH_FAILED: 'check the provider API key',
+  PROVIDER_UNAVAILABLE: 'check the provider endpoint',
+  NETWORK_ERROR: 'check the connection and retry',
+  EMPTY_RESPONSE: 'retry the turn',
+  PATCH_CONFLICT: 're-read the file and retry',
+};
+
+function describeError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+  const details = error as { code?: unknown; retryable?: unknown };
+  const code = typeof details.code === 'string' ? details.code : undefined;
+  if (!code) return error.message;
+  const action = NEXT_ACTIONS[code] ?? (details.retryable === true ? 'retry the turn' : undefined);
+  return `${code}: ${error.message}${action ? ` · ${action}` : ''}`;
+}
+
 const GENERAL_PREFIX = /^@general\b\s*([\s\S]*)$/;
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 const HOME_KEYS = new Set(['\x1b[H', '\x1bOH', '\x1b[1~', '\x1b[7~']);
@@ -223,7 +242,7 @@ export function App({
           setCurrentModel(nextModel);
           addNote(`model → ${nextProvider}/${nextModel}`);
         } catch (error) {
-          addNote(`error: ${error instanceof Error ? error.message : String(error)}`);
+          addNote(`error: ${describeError(error)}`);
         }
         break;
       }
@@ -258,7 +277,7 @@ export function App({
       );
     } catch (error) {
       if (!controller.signal.aborted) {
-        addNote(`error: ${error instanceof Error ? error.message : String(error)}`);
+        addNote(`error: ${describeError(error)}`);
       }
     } finally {
       setStreaming(false);
@@ -362,7 +381,7 @@ export function App({
               setCurrentProvider(choice.provider);
               setCurrentModel(choice.model);
             } catch (error) {
-              addNote(`error: ${error instanceof Error ? error.message : String(error)}`);
+              addNote(`error: ${describeError(error)}`);
             }
           }
         } else {
