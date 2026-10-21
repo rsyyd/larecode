@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Logger entries redact secrets in messages, context, and error text before handlers receive them.
 - Workspace path checks resolve symlinks, so tools can no longer read or write outside the working directory through a link.
 - `write`, `edit`, and `patch` replace files atomically and keep the existing file mode, so an interrupted write cannot truncate the original.
+- `read` rejects binary files with a clear error instead of returning decoded garbage.
 
 ## [0.1.1] - 2026-10-19
 

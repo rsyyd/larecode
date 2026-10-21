@@ -108,6 +108,13 @@ describe('read', () => {
     expect(out.sha256).toBe(sha256('one\ntwo\nthree\n'));
   });
 
+  it('rejects binary files instead of decoding them as text', async () => {
+    await writeFile(join(dir, 'blob.bin'), Buffer.from([0, 1, 2, 3, 0, 255]));
+    const result = await call('read', { path: 'blob.bin' });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('binary');
+  });
+
   it('supports offset and limit', async () => {
     await writeFile(join(dir, 'a.txt'), '1\n2\n3\n4\n');
     const result = await call('read', { path: 'a.txt', offset: 2, limit: 2 });

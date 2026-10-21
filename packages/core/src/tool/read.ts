@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { LareError } from '../error/error.js';
 import type { Tool } from './tool.js';
-import { MAX_READ_BYTES, resolveInWorkspace, sha256 } from './files.js';
+import { MAX_READ_BYTES, looksBinary, resolveInWorkspace, sha256 } from './files.js';
 
 interface ReadArgs {
   path: string;
@@ -33,6 +33,16 @@ export function readTool(): Tool {
         throw new LareError('TOOL_EXECUTION_FAILED', `file not found: ${input}`, {
           context: { path: input, workingDir: context.workingDir },
         });
+      }
+
+      if (looksBinary(buf)) {
+        throw new LareError(
+          'TOOL_EXECUTION_FAILED',
+          `binary file cannot be read as text: ${input}`,
+          {
+            context: { path: input },
+          }
+        );
       }
 
       const fullText = buf.toString('utf8');
