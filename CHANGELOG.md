@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Provider requests have a per-request timeout (`requestTimeoutMs`, default 120s) alongside the total turn duration budget; timeouts report `PROVIDER_TIMEOUT`.
 - The TUI conversation scrolls back with PgUp and returns with PgDn without dropping messages.
 - TUI errors include the error code and a next action instead of only the message.
+- Chat sessions are saved after every turn and `larecode chat --resume <id>` restores the conversation and provider history.
 
 ### Removed
 

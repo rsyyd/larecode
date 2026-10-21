@@ -74,7 +74,8 @@ program
   .description('Start the interactive terminal UI')
   .option('--provider <name>', 'provider to use')
   .option('--model <name>', 'model to use')
-  .action(async (options: { provider?: string; model?: string }) => {
+  .option('--resume <id>', 'resume a saved session')
+  .action(async (options: { provider?: string; model?: string; resume?: string }) => {
     process.exitCode = await chatCommand(options);
   });
 

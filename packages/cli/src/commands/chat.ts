@@ -1,20 +1,31 @@
-import { randomUUID } from 'node:crypto';
 import {
   ChatSession,
   Permissions,
   Providers,
+  Sessions,
   Tools,
   backendFromConfig,
   coreTools,
   loadEffectiveConfig,
   providersFromConfig,
+  toProviderHistory,
   type ChatPermissionConfirm,
+  type Session,
 } from '@larecode/core';
-import { startTui, type AppProps } from '@larecode/tui';
+import { startTui, type AppProps, type ChatMessage } from '@larecode/tui';
 
 export interface ChatCommandOptions {
   provider?: string;
   model?: string;
+  resume?: string;
+}
+
+export function sessionMessages(session: Session): ChatMessage[] {
+  return session.messages.flatMap((message) =>
+    message.role === 'user' || message.role === 'assistant'
+      ? [{ role: message.role === 'user' ? 'user' : 'agent', text: message.content }]
+      : []
+  );
 }
 
 function toolDetail(args: unknown): string {
@@ -41,6 +52,14 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
   const provider = options.provider ?? config.defaultProvider;
   const model = options.model ?? config.defaultModel;
 
+  const sessions = new Sessions();
+  const resumed = options.resume ? sessions.get(options.resume) : undefined;
+  if (options.resume && !resumed) {
+    process.stderr.write(`larecode: session "${options.resume}" not found\n`);
+    return 1;
+  }
+  const stored = resumed ?? sessions.create();
+
   const providers = new Providers();
   for (const adapter of providersFromConfig(config)) providers.register(adapter);
 
@@ -54,7 +73,8 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     tools,
     permissions: new Permissions(config.permissions),
     workingDir: process.cwd(),
-    sessionId: randomUUID(),
+    sessionId: stored.id,
+    history: toProviderHistory(stored.messages),
   });
 
   const runTurn: AppProps['runTurn'] = async (prompt, onChunk, signal, agent, confirm) => {
@@ -64,26 +84,41 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
       : undefined;
 
     let detail = '';
-    for await (const event of session.run(prompt, {
-      signal,
-      agent,
-      confirm: confirmPermission,
-    })) {
-      if (event.type === 'text') {
-        onChunk(event.text);
-      } else if (event.type === 'tool_start') {
-        detail = toolDetail(event.args);
-        onChunk(`\n⎿ ${event.name}${detail ? ` · ${detail}` : ''}\n`);
-      } else {
-        onChunk(`${event.ok ? '✓' : '✗'} ${event.name}${detail ? ` · ${detail}` : ''}\n`);
-        detail = '';
+    let assistant = '';
+    try {
+      for await (const event of session.run(prompt, {
+        signal,
+        agent,
+        confirm: confirmPermission,
+      })) {
+        if (event.type === 'text') {
+          assistant += event.text;
+          onChunk(event.text);
+        } else if (event.type === 'tool_start') {
+          detail = toolDetail(event.args);
+          onChunk(`\n⎿ ${event.name}${detail ? ` · ${detail}` : ''}\n`);
+        } else {
+          onChunk(`${event.ok ? '✓' : '✗'} ${event.name}${detail ? ` · ${detail}` : ''}\n`);
+          detail = '';
+        }
       }
+    } finally {
+      const now = new Date();
+      stored.messages.push({ role: 'user', content: prompt, timestamp: now });
+      if (assistant !== '') {
+        stored.messages.push({ role: 'assistant', content: assistant, timestamp: now });
+      }
+      const usage = session.getUsage();
+      stored.metadata.tokenUsage = usage.totalTokens.total;
+      stored.metadata.cost = usage.totalCost.totalCost;
+      sessions.save(stored);
     }
   };
 
   await startTui({
     provider,
     model,
+    initialMessages: sessionMessages(stored),
     runTurn,
     catalogs: Object.entries(config.providers).map(([name, entry]) => ({
       provider: name,
