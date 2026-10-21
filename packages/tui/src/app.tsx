@@ -44,7 +44,7 @@ export interface AppProps {
 }
 
 export const HELP_TEXT =
-  'enter send · ctrl+j newline · esc stop · tab agent · @general subagent · / commands · ctrl+c quit';
+  'enter send · ctrl+j newline · esc stop · tab agent · pgup/pgdn scroll · @general subagent · / commands · ctrl+c quit';
 
 const GENERAL_PREFIX = /^@general\b\s*([\s\S]*)$/;
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -130,6 +130,7 @@ export function App({
   const [popup, setPopup] = useState<PopupState | null>(null);
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [streaming, setStreaming] = useState(false);
+  const [scrollOffset, setScrollOffset] = useState(0);
   const [frame, setFrame] = useState(0);
   const [permission, setPermission] = useState<PendingPermission | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -269,6 +270,7 @@ export function App({
   const submit = async (value: string): Promise<void> => {
     const trimmed = value.trim();
     if (trimmed.length === 0) return;
+    setScrollOffset(0);
     updateInput(emptyInput());
     setPaletteIndex(0);
 
@@ -372,6 +374,16 @@ export function App({
       return;
     }
 
+    if (key.pageUp && messages.length > 0) {
+      setScrollOffset((current) => Math.min(current + Math.max(1, rows - 10), messages.length - 1));
+      return;
+    }
+
+    if (key.pageDown) {
+      setScrollOffset((current) => Math.max(0, current - Math.max(1, rows - 10)));
+      return;
+    }
+
     if (key.escape && palette.length > 0) {
       updateInput(emptyInput());
       setPaletteIndex(0);
@@ -455,7 +467,7 @@ export function App({
           </Home>
         ) : (
           <Box flexDirection="column" flexGrow={1} overflow="hidden">
-            {visibleMessages(messages, rows - 8).map((message, index) => (
+            {visibleMessages(messages, rows - 8, scrollOffset).map((message, index) => (
               <MessageRow
                 key={index}
                 message={message}
@@ -1037,11 +1049,12 @@ function messageWeight(message: ChatMessage): number {
   return lines + 2;
 }
 
-function visibleMessages(messages: ChatMessage[], budget: number): ChatMessage[] {
+function visibleMessages(messages: ChatMessage[], budget: number, offset = 0): ChatMessage[] {
   const limit = Math.max(4, budget);
+  const end = Math.max(0, messages.length - Math.max(0, offset));
   const visible: ChatMessage[] = [];
   let used = 0;
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
+  for (let index = end - 1; index >= 0; index -= 1) {
     const message = messages[index];
     if (!message) continue;
     const weight = messageWeight(message);

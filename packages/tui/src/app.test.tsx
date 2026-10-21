@@ -39,6 +39,24 @@ describe('App', () => {
     expect(frame).toContain('Hello world');
   });
 
+  it('scrolls back through the conversation with pgup and pgdn', async () => {
+    const initialMessages = Array.from({ length: 30 }, (_, index) => ({
+      role: 'agent' as const,
+      text: `msg-${index}`,
+    }));
+    const { stdin, lastFrame } = render(<App initialMessages={initialMessages} />);
+    await flush();
+    expect(lastFrame()).toContain('msg-29');
+
+    stdin.write('\x1b[5~');
+    await flush();
+    expect(lastFrame()).not.toContain('msg-29');
+
+    stdin.write('\x1b[6~');
+    await flush();
+    expect(lastFrame()).toContain('msg-29');
+  });
+
   it('shows the slash palette, completes on tab, and opens help', async () => {
     const { stdin, lastFrame } = render(<App />);
     await flush();
