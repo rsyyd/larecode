@@ -90,6 +90,7 @@ describe('tmux smoke test', () => {
 
       const capture = () => tmux(['capture-pane', '-p', '-S', '-200', '-t', name]);
       try {
+        tmux(['set-option', '-g', 'remain-on-exit', 'on']);
         tmux([
           'new-session',
           '-d',
@@ -99,9 +100,8 @@ describe('tmux smoke test', () => {
           '80',
           '-y',
           '24',
-          `LARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat`,
+          `LARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat; status=$?; echo "larecode exited with status $status"; sleep 600`,
         ]);
-        tmux(['set-option', '-t', name, 'remain-on-exit', 'on']);
         await waitFor(capture, 'Ask anything', 30_000);
         tmux(['send-keys', '-l', '-t', name, 'hello from tmux']);
         tmux(['send-keys', '-t', name, 'C-m']);
