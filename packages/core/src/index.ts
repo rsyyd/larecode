@@ -90,9 +90,22 @@ export type {
   PermissionDecision,
   PermissionCheckContext,
 } from './permission/permission.js';
-export { AuditLog, fileAuditSink } from './permission/audit.js';
+export {
+  AuditLog,
+  auditPath,
+  fileAuditSink,
+  hashChainAuditSink,
+  readAuditLog,
+  verifyAuditLog,
+} from './permission/audit.js';
+export type {
+  AuditEntry,
+  AuditSink,
+  AuditInput,
+  AuditVerifyResult,
+  ChainedAuditLine,
+} from './permission/audit.js';
 export { TOOL_PERMISSION_GROUPS, toolPermissionGroup } from './permission/tool-groups.js';
-export type { AuditEntry, AuditSink, AuditInput } from './permission/audit.js';
 export { redactSecrets, redactValue } from './permission/redact.js';
 
 export {
@@ -352,3 +365,18 @@ export {
   type UsageAggregate,
   type UsageRecorder,
 } from './usage/usage.js';
+
+export { Metrics, defaultMetrics } from './metrics/metrics.js';
+export type { MetricsBucket, MetricsSnapshot } from './metrics/metrics.js';
+
+export {
+  createDebugBundle,
+  environmentSummary,
+  formatUsage,
+  installCrashReporter,
+  summarizeUsage,
+  writeCrashReport,
+  writeDebugBundle,
+  writeFeedback,
+} from './diagnostics/diagnostics.js';
+export type { DebugBundle, UsageSummary } from './diagnostics/diagnostics.js';

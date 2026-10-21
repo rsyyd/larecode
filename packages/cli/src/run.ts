@@ -1,5 +1,8 @@
 import {
   AgentRuntimeLoop,
+  AuditLog,
+  auditPath,
+  hashChainAuditSink,
   loadEffectiveConfig,
   type HaltReason,
   type UsageAggregate,
@@ -18,6 +21,7 @@ export interface RunTaskOptions {
   verify?: boolean;
   provider?: string;
   model?: string;
+  json?: boolean;
 }
 
 export interface LoopLike {
@@ -60,6 +64,7 @@ function defaultLoop(options: { provider: string; model: string; workingDir: str
     maxToolCalls: 200,
     tokenBudget: 200_000,
     durationBudget: 600_000,
+    audit: new AuditLog([hashChainAuditSink(auditPath())]),
   });
 }
 
@@ -72,53 +77,79 @@ export async function runTask(
   const config = loadEffectiveConfig(cwd);
   const provider = options.provider ?? config.defaultProvider;
   const model = options.model ?? config.defaultModel;
+  let loop: LoopLike | null = null;
+  let collected = '';
+  const emit = (text: string): void => {
+    if (options.json) collected += text;
+    else write(text);
+  };
+  const finish = (result: RunTaskResult): RunTaskResult => {
+    if (options.json) {
+      write(
+        `${JSON.stringify({
+          provider,
+          model,
+          text: collected.trimEnd(),
+          usage: loop?.getUsage() ?? null,
+          halt: loop?.getHaltReason() ?? null,
+          verify: result.verify ?? null,
+          exitCode: result.exitCode,
+        })}\n`
+      );
+    }
+    return result;
+  };
 
   let command: string | null = null;
   let baseline: TestRun | null = null;
   if (options.verify) {
     command = (deps.detectTests ?? detectTestCommand)(cwd);
     if (!command) {
-      write(`${bad('verify:')} no test script found in ${cwd}\n`);
-      return { exitCode: 1 };
+      emit(`${bad('verify:')} no test script found in ${cwd}\n`);
+      return finish({ exitCode: 1 });
     }
     baseline = (deps.runTests ?? runTestCommand)(command);
     const count = parseFailures(baseline.output).length;
-    write(`${dim('verify:')} baseline ${count} failing (exit ${baseline.exitCode})\n\n`);
+    emit(`${dim('verify:')} baseline ${count} failing (exit ${baseline.exitCode})\n\n`);
   }
 
   const createLoop = deps.createLoop ?? defaultLoop;
-  const loop = createLoop({ provider, model, workingDir: cwd });
+  loop = createLoop({ provider, model, workingDir: cwd });
 
   try {
-    for await (const chunk of loop.run(options.task)) write(chunk);
+    for await (const chunk of loop.run(options.task)) emit(chunk);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    write(`\n${bad('error:')} ${message}\n`);
+    emit(`\n${bad('error:')} ${message}\n`);
     const cancelled = (error as { code?: string }).code === 'CANCELLED';
-    return { exitCode: cancelled ? RUN_EXIT.cancelled : RUN_EXIT.error };
+    return finish({ exitCode: cancelled ? RUN_EXIT.cancelled : RUN_EXIT.error });
   }
 
   const halt = loop.getHaltReason();
-  if (halt) write(`\n${dim(`halted: ${halt}`)}\n`);
+  if (halt && !options.json) emit(`\n${dim(`halted: ${halt}`)}\n`);
 
   const usage = loop.getUsage();
-  write(
-    `\n${dim(`${model} · ${usage.totalTokens.total} tokens · $${usage.totalCost.totalCost.toFixed(4)}`)}\n`
-  );
-  if (halt) return { exitCode: RUN_EXIT.halted };
+  if (!options.json) {
+    emit(
+      `\n${dim(`${model} · ${usage.totalTokens.total} tokens · $${usage.totalCost.totalCost.toFixed(4)}`)}\n`
+    );
+  }
+  if (halt) return finish({ exitCode: RUN_EXIT.halted });
 
-  if (!options.verify || !command || !baseline) return { exitCode: 0 };
+  if (!options.verify || !command || !baseline) return finish({ exitCode: 0 });
 
   const after = (deps.runTests ?? runTestCommand)(command);
   const report = compareRuns(baseline, after);
-  write('\n');
-  for (const name of report.newFailures) write(`${bad('×')} ${name}\n`);
-  for (const name of report.fixedFailures) write(`${ok('✓')} ${dim(name)}\n`);
-  if (report.newFailures.length > 0) {
-    write(`${bad(`verify: ${report.newFailures.length} new failing`)}\n`);
-  } else if (report.fixedFailures.length > 0) {
-    write(`${ok(`verify: ${report.fixedFailures.length} fixed`)}\n`);
+  if (!options.json) {
+    emit('\n');
+    for (const name of report.newFailures) emit(`${bad('×')} ${name}\n`);
+    for (const name of report.fixedFailures) emit(`${ok('✓')} ${dim(name)}\n`);
+    if (report.newFailures.length > 0) {
+      emit(`${bad(`verify: ${report.newFailures.length} new failing`)}\n`);
+    } else if (report.fixedFailures.length > 0) {
+      emit(`${ok(`verify: ${report.fixedFailures.length} fixed`)}\n`);
+    }
+    emit(report.passed ? `${ok('verify: pass')}\n` : `${bad('verify: fail')}\n`);
   }
-  write(report.passed ? `${ok('verify: pass')}\n` : `${bad('verify: fail')}\n`);
-  return { exitCode: report.passed ? 0 : 1, verify: report };
+  return finish({ exitCode: report.passed ? 0 : 1, verify: report });
 }

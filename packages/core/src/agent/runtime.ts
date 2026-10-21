@@ -8,6 +8,8 @@ import { Skills } from '../skill/skill.js';
 import { LareError } from '../error/error.js';
 import type { LareErrorJSON } from '../error/error.js';
 import { defaultLogger } from '../logger/logger.js';
+import { Metrics, defaultMetrics } from '../metrics/metrics.js';
+import type { AuditLog } from '../permission/audit.js';
 import { Permissions, type PermissionGroup } from '../permission/permission.js';
 import { toolPermissionGroup } from '../permission/tool-groups.js';
 import { Providers, providersFromConfig } from '../provider/provider.js';
@@ -105,6 +107,8 @@ export interface AgentRuntimeOptions {
   compactKeepRecent?: number;
   context?: boolean;
   usageRecorder?: UsageRecorder;
+  metrics?: Metrics;
+  audit?: AuditLog;
   fallbacks?: FallbackTarget[];
 }
 
@@ -250,6 +254,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly checkpoints?: AgentCheckpointSink;
   private readonly unattended: boolean;
   private readonly usage: UsageRecorder;
+  private readonly metrics: Metrics;
+  private readonly audit: AuditLog | undefined;
   private readonly maxIterations: number;
   private readonly maxToolCalls: number;
   private readonly maxRetries: number;
@@ -290,6 +296,8 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.contextBuilder = ContextBuilder.fromConfig(cwd, config, options.context);
     this.fallbacks = options.fallbacks ?? config.fallbacks ?? [];
     this.usage = options.usageRecorder ?? createUsageRecorder(this.sessionId);
+    this.metrics = options.metrics ?? defaultMetrics;
+    this.audit = options.audit;
     this.agent = options.agent ?? 'plan';
 
     if (options.providers) {
@@ -468,6 +476,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
     await this.applyContext(input.prompt);
     await this.compactHistory(input.signal);
     this.messages.push({ role: 'user', content: input.prompt });
+    this.metrics.recordTurn();
 
     let iterations = 0;
     let toolCalls = 0;
@@ -612,11 +621,64 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
         let exhausted = false;
         const resolved = new Set<string>();
+        const PARALLEL_SAFE = new Set([
+          'read',
+          'glob',
+          'grep',
+          'ast_grep',
+          'lsp',
+          'session_search',
+        ]);
+        const batch: Array<{ call: ProviderToolCall; args: unknown }> = [];
+        const flushBatch = async (): Promise<AgentRuntimeEvent[]> => {
+          const events: AgentRuntimeEvent[] = [];
+          for (const item of batch) {
+            events.push({
+              type: 'tool_start',
+              callId: item.call.id,
+              name: item.call.name,
+              args: item.args,
+            });
+          }
+          const outcomes = await Promise.all(
+            batch.map((item) => this.executeTool(item.call, item.args, input.confirm, input.signal))
+          );
+          for (let position = 0; position < batch.length; position += 1) {
+            const item = batch[position];
+            const outcome = outcomes[position];
+            resolved.add(item.call.id);
+            this.messages.push({
+              role: 'tool',
+              content: outcome.content,
+              toolCallId: item.call.id,
+            });
+            events.push({
+              type: 'tool_end',
+              callId: item.call.id,
+              name: item.call.name,
+              ok: outcome.ok,
+              output: outcome.content,
+            });
+          }
+          batch.length = 0;
+          return events;
+        };
         try {
           for (const call of calls) {
             if (input.signal.aborted) {
               yield { type: 'halt', reason: 'cancelled' };
               return;
+            }
+            if (PARALLEL_SAFE.has(call.name) && toolCalls < this.maxToolCalls) {
+              const parsed = parseArguments(call.arguments);
+              if (!parsed.error) {
+                batch.push({ call, args: parsed.args });
+                toolCalls += 1;
+                continue;
+              }
+            }
+            if (batch.length > 0) {
+              for (const event of await flushBatch()) yield event;
             }
             if (toolCalls >= this.maxToolCalls) {
               exhausted = true;
@@ -664,6 +726,9 @@ export class DefaultAgentRuntime implements AgentRuntime {
               toolCallId: call.id,
             });
           }
+          if (batch.length > 0) {
+            for (const event of await flushBatch()) yield event;
+          }
         } catch (error) {
           for (const call of calls) {
             if (resolved.has(call.id)) continue;
@@ -701,13 +766,16 @@ export class DefaultAgentRuntime implements AgentRuntime {
   ): AsyncGenerator<T> {
     for (let attempt = 0; ; attempt += 1) {
       let emitted = false;
+      const startedAt = Date.now();
       try {
         for await (const item of open()) {
           emitted = true;
           yield item;
         }
+        this.metrics.recordProvider(this.provider, Date.now() - startedAt, true);
         return;
       } catch (error) {
+        this.metrics.recordProvider(this.provider, Date.now() - startedAt, false);
         if (deadline.timedOut() && !signal.aborted) {
           throw new LareError(
             'PROVIDER_TIMEOUT',
@@ -717,6 +785,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
         if (emitted || signal.aborted || attempt >= this.maxRetries || !isRetryable(error)) {
           throw error;
         }
+        this.metrics.recordRetry();
         const baseDelay = Math.min(30_000, this.retryDelayMs * 2 ** attempt);
         await waitForRetry(Math.floor(baseDelay / 2 + (Math.random() * baseDelay) / 2), signal);
       }
@@ -725,6 +794,22 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
   private systemPrompt(): string {
     return `${BUILTIN_AGENTS[this.agent].systemPrompt}\n\nWorking directory: ${this.workingDir}`;
+  }
+
+  private recordAudit(
+    tool: string,
+    group: PermissionGroup,
+    allowed: boolean,
+    requiresConfirmation: boolean
+  ): void {
+    this.audit?.record({
+      group,
+      allowed,
+      requiresConfirmation,
+      unattended: this.unattended,
+      confirmedByUser: allowed,
+      source: `tool:${tool}`,
+    });
   }
 
   private async executeTool(
@@ -770,12 +855,14 @@ export class DefaultAgentRuntime implements AgentRuntime {
         const approved = await confirm({ tool: call.name, group, args });
         if (signal.aborted) throw new LareError('CANCELLED', 'chat session cancelled');
         if (!approved) {
+          this.recordAudit(call.name, group, false, true);
           return {
             ok: false,
             content: `PERMISSION_DENIED: ${decision.reason ?? group}`,
           };
         }
       } else {
+        this.recordAudit(call.name, group, false, decision.requiresConfirmation === true);
         return {
           ok: false,
           content: `PERMISSION_DENIED: ${decision.reason ?? group}`,
@@ -785,16 +872,24 @@ export class DefaultAgentRuntime implements AgentRuntime {
 
     const toolCall: ToolCall = { id: call.id, name: call.name, arguments: args };
     await this.checkpoint(`pre-tool ${call.name}`);
-    const result = await this.tools.execute(toolCall, {
-      sessionId: this.sessionId,
-      workingDir: this.workingDir,
-      permissions: this.permissions,
-      abortSignal: signal,
-    });
-    await this.checkpoint(`post-tool ${call.name}`);
-    return result.success
-      ? { ok: true, content: renderOutput(result.output) }
-      : { ok: false, content: `ERROR: ${result.error ?? 'tool failed'}` };
+    const startedAt = Date.now();
+    try {
+      const result = await this.tools.execute(toolCall, {
+        sessionId: this.sessionId,
+        workingDir: this.workingDir,
+        permissions: this.permissions,
+        abortSignal: signal,
+      });
+      this.metrics.recordTool(call.name, Date.now() - startedAt, result.success);
+      this.recordAudit(call.name, group, true, false);
+      await this.checkpoint(`post-tool ${call.name}`);
+      return result.success
+        ? { ok: true, content: renderOutput(result.output) }
+        : { ok: false, content: `ERROR: ${result.error ?? 'tool failed'}` };
+    } catch (error) {
+      this.metrics.recordTool(call.name, Date.now() - startedAt, false);
+      throw error;
+    }
   }
 
   private async checkpoint(label: string): Promise<void> {

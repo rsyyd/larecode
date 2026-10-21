@@ -119,6 +119,7 @@ export interface TelegramGatewayOptions {
 const HELP = [
   'send me a task and I run it on the host, unattended',
   '/new start a fresh conversation',
+  '/status show session and model details',
   '/help show this message',
 ].join('\n');
 
@@ -210,6 +211,22 @@ export class TelegramGateway {
     if (text === '/new' || text === '/reset') {
       this.chatSessions.reset(chatId);
       await this.sendMessage(chatId, 'started a fresh conversation');
+      return;
+    }
+    if (text === '/status') {
+      const config = this.loadConfig();
+      const sessionId = this.chatSessions.getOrCreate(chatId);
+      const session = this.sessions.get(sessionId);
+      await this.sendMessage(
+        chatId,
+        [
+          `session: ${sessionId}`,
+          `provider: ${config.defaultProvider}`,
+          `model: ${config.defaultModel}`,
+          `messages: ${session?.messages.length ?? 0}`,
+          `allowed groups: ${this.policy.join(', ') || 'none'}`,
+        ].join('\n')
+      );
       return;
     }
 

@@ -1,12 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import {
   chmodSync,
+  closeSync,
   existsSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
@@ -69,6 +72,38 @@ interface StoredSession {
 }
 
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const LOCK_RETRY_MS = 10;
+const LOCK_TIMEOUT_MS = 2000;
+const LOCK_STALE_MS = 10_000;
+
+function sleepSync(ms: number): void {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function acquireLock(file: string): () => void {
+  const lock = `${file}.lock`;
+  const deadline = Date.now() + LOCK_TIMEOUT_MS;
+  while (true) {
+    try {
+      closeSync(openSync(lock, 'wx', 0o600));
+      return () => rmSync(lock, { force: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS) {
+          rmSync(lock, { force: true });
+          continue;
+        }
+      } catch {
+        continue;
+      }
+      if (Date.now() >= deadline) {
+        throw new LareError('SESSION_LOCKED', `session is locked by another process: ${file}`);
+      }
+      sleepSync(LOCK_RETRY_MS);
+    }
+  }
+}
 
 export function sessionsDir(): string {
   return join(larecodeHome(), 'sessions');
@@ -274,12 +309,14 @@ export class Sessions {
     mkdirSync(this.dir, { recursive: true });
     const redacted = redactValue(toStored(session)) as StoredSession;
     const temp = `${file}.${process.pid}.${randomUUID()}.tmp`;
+    const release = acquireLock(file);
     try {
       writeFileSync(temp, JSON.stringify(redacted, null, 2) + '\n', { mode: 0o600 });
       chmodSync(temp, 0o600);
       renameSync(temp, file);
     } finally {
       rmSync(temp, { force: true });
+      release();
     }
   }
 

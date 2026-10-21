@@ -14,6 +14,7 @@ export type ErrorCode =
   | 'SESSION_NOT_FOUND'
   | 'SESSION_CORRUPTED'
   | 'SESSION_INVALID'
+  | 'SESSION_LOCKED'
   | 'MEMORY_QUOTA_EXCEEDED'
   | 'CONTEXT_OVERFLOW'
   | 'MCP_CONNECTION_FAILED'
@@ -62,6 +63,7 @@ export const ERROR_CATEGORIES: Record<
   SESSION_NOT_FOUND: 'session',
   SESSION_CORRUPTED: 'session',
   SESSION_INVALID: 'session',
+  SESSION_LOCKED: 'session',
   MEMORY_QUOTA_EXCEEDED: 'memory',
   CONTEXT_OVERFLOW: 'context',
   MCP_CONNECTION_FAILED: 'mcp',

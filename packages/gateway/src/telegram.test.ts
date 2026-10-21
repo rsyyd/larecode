@@ -163,6 +163,17 @@ describe('handleUpdate', () => {
     expect(chatSessions.getOrCreate(ALLOWED)).not.toBe(first);
   });
 
+  it('reports session and model details on /status', async () => {
+    const { instance, api } = gateway({ policy: ['read'] });
+    await instance.handleUpdate(update(1, ALLOWED, 'first'));
+    await instance.handleUpdate(update(2, ALLOWED, '/status'));
+    const reply = api.sends.at(-1)?.text ?? '';
+    expect(reply).toContain('provider: openai');
+    expect(reply).toContain('model: gpt-4o-mini');
+    expect(reply).toContain('messages: 2');
+    expect(reply).toContain('allowed groups: read');
+  });
+
   it('reports turn failures in the chat and in the session', async () => {
     const failing = {
       async *run() {

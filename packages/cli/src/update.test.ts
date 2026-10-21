@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { REGISTRY_URL, compareVersions, updateCommand } from './commands/update.js';
+import { REGISTRY_URL, compareVersions, installHints, updateCommand } from './commands/update.js';
 
 function harness(response: unknown, options: { fail?: Error } = {}) {
   const out: string[] = [];
@@ -23,6 +23,17 @@ describe('compareVersions', () => {
     expect(compareVersions('0.0.0', '0.0.0')).toBe(0);
     expect(compareVersions('v0.0.1', '0.0.0')).toBe(1);
     expect(compareVersions('0.0.0', '0.1.0')).toBe(-1);
+  });
+});
+
+describe('installHints', () => {
+  it('picks the hint by install method', () => {
+    expect(installHints('/opt/homebrew/bin/larecode', '1.0.0')).toEqual(['brew upgrade larecode']);
+    expect(installHints('C:\\Users\\x\\scoop\\shims\\larecode.exe', '1.0.0')).toEqual([
+      'scoop update larecode',
+    ]);
+    expect(installHints('/usr/local/bin/node', '1.0.0')[0]).toContain('npm install');
+    expect(installHints('/tmp/larecode-bin', '1.0.0')[0]).toContain('release binary');
   });
 });
 
