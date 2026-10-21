@@ -91,11 +91,17 @@ const BLOCKED_HOSTNAMES = new Set([
 ]);
 
 export function isPrivateAddress(address: string): boolean {
-  const value = address.toLowerCase().replace(/^\[|\]$/g, '').split('%')[0];
+  const value = address
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .split('%')[0];
   const family = isIP(value);
   if (family === 4) {
     const parts = value.split('.').map((part) => Number(part));
-    if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    if (
+      parts.length !== 4 ||
+      parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)
+    ) {
       return true;
     }
     const [a, b] = parts;
@@ -113,7 +119,12 @@ export function isPrivateAddress(address: string): boolean {
   }
   if (family === 6) {
     if (value === '::' || value === '::1') return true;
-    if (value.startsWith('fe8') || value.startsWith('fe9') || value.startsWith('fea') || value.startsWith('feb')) {
+    if (
+      value.startsWith('fe8') ||
+      value.startsWith('fe9') ||
+      value.startsWith('fea') ||
+      value.startsWith('feb')
+    ) {
       return true;
     }
     if (value.startsWith('fc') || value.startsWith('fd') || value.startsWith('ff')) return true;
@@ -127,7 +138,11 @@ export function isPrivateAddress(address: string): boolean {
 export async function assertPublicHttpUrl(input: string | URL): Promise<URL> {
   const parsed = input instanceof URL ? input : parseHttpUrl(input);
   const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith('.local') || hostname.endsWith('.internal')) {
+  if (
+    BLOCKED_HOSTNAMES.has(hostname) ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal')
+  ) {
     throw new LareError('TOOL_EXECUTION_FAILED', `blocked private network address: ${hostname}`);
   }
   if (isIP(hostname)) {

@@ -56,7 +56,12 @@ describe('patch', () => {
     const content = 'first\r\nsecond\r\nthird\r\n';
     writeFileSync(file, content);
     await patchTool().execute(
-      { path: 'crlf.txt', sha256: sha256(content), find: 'first\nsecond', replace: 'first\nchanged' },
+      {
+        path: 'crlf.txt',
+        sha256: sha256(content),
+        find: 'first\nsecond',
+        replace: 'first\nchanged',
+      },
       ctx()
     );
     expect(readFileSync(file, 'utf8')).toBe('first\r\nchanged\r\nthird\r\n');

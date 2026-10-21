@@ -209,7 +209,11 @@ export class Sessions {
   rewind(id: string, messageCount: number): Session | undefined {
     const session = this.get(id);
     if (!session) return undefined;
-    if (!Number.isInteger(messageCount) || messageCount < 0 || messageCount > session.messages.length) {
+    if (
+      !Number.isInteger(messageCount) ||
+      messageCount < 0 ||
+      messageCount > session.messages.length
+    ) {
       throw new LareError(
         'SESSION_INVALID',
         `cannot rewind to ${messageCount}; session has ${session.messages.length} messages`

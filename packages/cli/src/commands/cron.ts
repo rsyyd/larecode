@@ -148,7 +148,9 @@ export function cronLogs(id: string, deps: CronDeps & { json?: boolean } = {}): 
     return 0;
   }
   write(`${summarize(job.lastResult)}\n`);
-  write(`${dim(`attempts ${job.lastResult.attempts ?? 1} · ${job.lastResult.durationMs ?? 0}ms`)}\n`);
+  write(
+    `${dim(`attempts ${job.lastResult.attempts ?? 1} · ${job.lastResult.durationMs ?? 0}ms`)}\n`
+  );
   if (job.lastResult.error) write(`${bad(job.lastResult.error)}\n`);
   write(`${job.lastResult.output}\n`);
   return 0;

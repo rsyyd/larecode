@@ -77,10 +77,7 @@ export function sessionsSearchCommand(
   return 0;
 }
 
-export function sessionsExportCommand(
-  id: string,
-  options: { format?: string } = {}
-): number {
+export function sessionsExportCommand(id: string, options: { format?: string } = {}): number {
   const format = options.format === 'markdown' ? 'markdown' : 'json';
   const content = new Sessions().export(id, format);
   if (content === undefined) return fail(`session "${id}" not found`);
@@ -97,20 +94,20 @@ export function sessionsRewindCommand(id: string, count: string, yes = false): n
     return fail(`message count must be between 0 and ${session.messages.length}`);
   }
   if (!yes && target < session.messages.length) {
-    return fail(
-      `refusing to drop ${session.messages.length - target} messages without --yes`
-    );
+    return fail(`refusing to drop ${session.messages.length - target} messages without --yes`);
   }
   sessions.rewind(id, target);
   write(`rewound ${id} to ${target} messages`);
   return 0;
 }
 
-export function sessionsPruneCommand(options: {
-  olderThan?: string;
-  keep?: string;
-  json?: boolean;
-} = {}): number {
+export function sessionsPruneCommand(
+  options: {
+    olderThan?: string;
+    keep?: string;
+    json?: boolean;
+  } = {}
+): number {
   if (options.olderThan === undefined && options.keep === undefined) {
     return fail('specify --older-than <days> and/or --keep <count>');
   }

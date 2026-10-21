@@ -166,8 +166,7 @@ export class Server {
     this.sessions = options.sessions ?? new Sessions();
     this.shares = options.shares ?? new Shares();
     this.maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
-    this.rateLimitMax =
-      options.rateLimit === false ? 0 : (options.rateLimit?.maxRequests ?? 120);
+    this.rateLimitMax = options.rateLimit === false ? 0 : (options.rateLimit?.maxRequests ?? 120);
     this.rateLimitWindowMs =
       options.rateLimit === false ? 60_000 : (options.rateLimit?.windowMs ?? 60_000);
     this.tokens = [...(options.tokens ?? [])];
@@ -328,7 +327,8 @@ export class Server {
     sendJson(res, 200, { deleted: true, checkpoints, shares });
   }
 
-  private getSession(res: ServerResponse, id: string): void {    const session = this.sessions.get(id);
+  private getSession(res: ServerResponse, id: string): void {
+    const session = this.sessions.get(id);
     if (!session) {
       sendJson(res, 404, { error: 'session not found' });
       return;
