@@ -90,7 +90,6 @@ describe('tmux smoke test', () => {
 
       const capture = () => tmux(['capture-pane', '-p', '-S', '-200', '-t', name]);
       try {
-        tmux(['set-option', '-g', 'remain-on-exit', 'on']);
         tmux([
           'new-session',
           '-d',
