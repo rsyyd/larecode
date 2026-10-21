@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Checkpoints, Worktrees } from './checkpoint.js';
+import { Checkpoints, Worktrees, checkpointsDir, removeSessionCheckpoints } from './checkpoint.js';
 
 let home: string;
 
@@ -17,6 +17,16 @@ afterEach(() => {
 });
 
 describe('checkpoints', () => {
+  it('removes only the checkpoints of the deleted session', () => {
+    mkdirSync(join(checkpointsDir(), 'scope-session-a.git'), { recursive: true });
+    mkdirSync(join(checkpointsDir(), 'scope-session-b.git'), { recursive: true });
+
+    expect(removeSessionCheckpoints('session-a')).toBe(1);
+    expect(existsSync(join(checkpointsDir(), 'scope-session-a.git'))).toBe(false);
+    expect(existsSync(join(checkpointsDir(), 'scope-session-b.git'))).toBe(true);
+    expect(removeSessionCheckpoints('../escape')).toBe(0);
+  });
+
   it('rewinds the workspace to a checkpoint and forward again', async () => {
     const root = mkdtempSync(join(tmpdir(), 'lare-ws-'));
     writeFileSync(join(root, 'keep.ts'), 'v1');

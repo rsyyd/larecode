@@ -133,7 +133,13 @@ export type {
   HistorySummary,
 } from './session/search.js';
 
-export { Checkpoints, Worktrees, checkpointsDir, worktreesDir } from './checkpoint/checkpoint.js';
+export {
+  Checkpoints,
+  Worktrees,
+  checkpointsDir,
+  removeSessionCheckpoints,
+  worktreesDir,
+} from './checkpoint/checkpoint.js';
 export type {
   CheckpointInfo,
   CheckpointOptions,

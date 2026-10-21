@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import { larecodeHome } from '../config/config.js';
@@ -24,6 +24,19 @@ const SHADOW_EXCLUDES = [
 
 export function checkpointsDir(): string {
   return join(larecodeHome(), 'checkpoints');
+}
+
+export function removeSessionCheckpoints(sessionId: string): number {
+  if (!SAFE_SESSION.test(sessionId)) return 0;
+  const dir = checkpointsDir();
+  if (!existsSync(dir)) return 0;
+  let removed = 0;
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith(`-${sessionId}.git`)) continue;
+    rmSync(join(dir, name), { recursive: true, force: true });
+    removed += 1;
+  }
+  return removed;
 }
 
 export interface CheckpointInfo {

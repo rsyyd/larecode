@@ -86,6 +86,14 @@ export class Shares {
     this.write(remaining);
     return true;
   }
+
+  removeForSession(sessionId: string): number {
+    const links = this.read();
+    const remaining = links.filter((link) => link.sessionId !== sessionId);
+    if (remaining.length === links.length) return 0;
+    this.write(remaining);
+    return links.length - remaining.length;
+  }
 }
 
 export function escapeHtml(text: string): string {

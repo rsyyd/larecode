@@ -12,6 +12,7 @@ import { updateCommand } from './commands/update.js';
 import { setupCommand } from './commands/setup.js';
 import { acpCommand } from './commands/acp.js';
 import { chatCommand } from './commands/chat.js';
+import { sessionsRmCommand } from './commands/sessions.js';
 
 const program = new Command();
 
@@ -77,6 +78,16 @@ program
   .option('--resume <id>', 'resume a saved session')
   .action(async (options: { provider?: string; model?: string; resume?: string }) => {
     process.exitCode = await chatCommand(options);
+  });
+
+const sessions = program.command('sessions').description('Manage saved chat sessions');
+
+sessions
+  .command('rm')
+  .description('Delete a session and its checkpoints and share links')
+  .argument('<id>', 'session id')
+  .action((id: string) => {
+    process.exitCode = sessionsRmCommand(id);
   });
 
 program

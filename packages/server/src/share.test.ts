@@ -33,6 +33,17 @@ describe('Shares', () => {
     expect(reloaded.remove(link.token)).toBe(false);
   });
 
+  it('removes every link that belongs to a session', () => {
+    const shares = new Shares(file);
+    shares.create('session-1');
+    shares.create('session-2');
+    shares.create('session-1');
+
+    expect(shares.removeForSession('session-1')).toBe(2);
+    expect(shares.list().map((link) => link.sessionId)).toEqual(['session-2']);
+    expect(shares.removeForSession('missing')).toBe(0);
+  });
+
   it('writes the share file owner-only', async () => {
     new Shares(file).create('session-1');
     const mode = (await stat(file)).mode & 0o777;

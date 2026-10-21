@@ -22,6 +22,16 @@ larecode chat [options]
 
 Each turn is saved to the session store under `~/.larecode/sessions`, and `--resume <id>` restores the conversation and its provider history. Inside the UI, Enter sends, Ctrl+J adds a newline, Esc stops a reply, Tab switches between plan and build, PgUp/PgDn scrolls the conversation, `/clear` resets the conversation, and Ctrl+C exits. Tools that need approval show a `y/n` prompt.
 
+## larecode sessions
+
+Manage saved chat sessions.
+
+```text
+larecode sessions rm <id>
+```
+
+`rm` deletes the session, its checkpoints, and any share links that point at it. Session ids are the file names under `~/.larecode/sessions`.
+
 ## larecode setup
 
 Write an initial config for your provider.
