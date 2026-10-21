@@ -27,6 +27,19 @@ export interface SetupDeps {
   exists?: (path: string) => boolean;
 }
 
+function validBaseUrl(value: string): string {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`invalid base URL "${value}"`);
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`base URL must use http or https: "${value}"`);
+  }
+  return value.replace(/\/+$/, '');
+}
+
 export function buildConfig(
   base: Config,
   options: SetupOptions
@@ -34,14 +47,15 @@ export function buildConfig(
   const name = options.provider ?? base.defaultProvider;
   const existing = base.providers[name];
   const type = options.type ?? existing?.type ?? 'openai-compatible';
-  const models =
-    options.model !== undefined
-      ? [options.model, ...(existing?.models ?? []).filter((m) => m !== options.model)]
-      : (existing?.models ?? [base.defaultModel]);
+  const requestedModel = options.model?.trim();
+  if (options.model !== undefined && !requestedModel) throw new Error('model cannot be empty');
+  const models = requestedModel
+    ? [requestedModel, ...(existing?.models ?? []).filter((m) => m !== requestedModel)]
+    : (existing?.models ?? [base.defaultModel]);
 
   const provider: ProviderConfig = {
     type,
-    baseUrl: options.baseUrl ?? existing?.baseUrl ?? 'http://localhost:20128/v1',
+    baseUrl: validBaseUrl(options.baseUrl ?? existing?.baseUrl ?? 'http://localhost:20128/v1'),
     models,
     ...(options.apiKey !== undefined
       ? { apiKey: options.apiKey }
@@ -50,7 +64,7 @@ export function buildConfig(
         : {}),
   };
 
-  const model = options.model ?? provider.models[0] ?? base.defaultModel;
+  const model = requestedModel ?? provider.models[0] ?? base.defaultModel;
   return {
     config: {
       ...base,
@@ -74,16 +88,27 @@ export async function setupCommand(options: SetupOptions, deps: SetupDeps = {}):
     return;
   }
 
-  const { config, provider, model } = buildConfig(loadConfig(path), options);
+  let built: ReturnType<typeof buildConfig>;
+  try {
+    built = buildConfig(loadConfig(path), options);
+  } catch (error) {
+    write(`${bad('setup:')} ${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+    return;
+  }
+  const { config, provider, model } = built;
+  const problems = validateConfig(config);
+  if (problems.length > 0) {
+    write(`${bad('setup:')} invalid configuration\n`);
+    for (const problem of problems) write(`  ${bad('×')} ${problem}\n`);
+    process.exitCode = 1;
+    return;
+  }
   saveConfig(config, path);
 
-  const problems = validateConfig(config);
   write(`${ok('✓')} wrote ${path}\n`);
   write(`  provider        ${provider} (${config.providers[provider].type})\n`);
   write(`  base url        ${config.providers[provider].baseUrl}\n`);
   write(`  model           ${model}\n`);
-  if (problems.length > 0) {
-    for (const problem of problems) write(`  ${bad('×')} ${problem}\n`);
-  }
   write(`\n${dim('next: larecode doctor && larecode run "explain this repository"')}\n`);
 }

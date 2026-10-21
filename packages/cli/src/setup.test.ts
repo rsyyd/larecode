@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -83,6 +84,26 @@ describe('setupCommand', () => {
     expect(written.defaultProvider).toBe('openai-compatible');
     expect(out.join('')).toContain('wrote');
     expect(out.join('')).toContain('next:');
+  });
+
+  it('rejects an invalid base URL without writing a config', async () => {
+    const path = join(dir, 'config.json');
+    const { out, write } = harness();
+    await setupCommand({ baseUrl: 'not a url' }, { path, write });
+
+    expect(out.join('')).toContain('invalid base URL');
+    expect(existsSync(path)).toBe(false);
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('rejects an empty model', async () => {
+    const path = join(dir, 'config.json');
+    const { out, write } = harness();
+    await setupCommand({ model: '   ' }, { path, write });
+
+    expect(out.join('')).toContain('model cannot be empty');
+    expect(existsSync(path)).toBe(false);
+    expect(process.exitCode).toBe(1);
   });
 
   it('refuses to overwrite without --force', async () => {
