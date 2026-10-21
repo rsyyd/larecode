@@ -27,8 +27,19 @@ describe('Logger', () => {
       level: 'error',
       message: 'fail',
       context: { key: 'value' },
-      error: err,
+      error: { message: 'boom' },
     });
+  });
+
+  it('redacts secrets in message, context, and error', () => {
+    logger.error(
+      'token sk-abcdef1234567890 leaked',
+      { apiKey: 'ghp_abcdefghijklmnopqrstuvwx' },
+      new Error('Bearer abcdefghijklmnop')
+    );
+    expect(captured[0].message).toBe('token [REDACTED] leaked');
+    expect(captured[0].context).toEqual({ apiKey: '[REDACTED]' });
+    expect(captured[0].error?.message).toBe('Bearer [REDACTED]');
   });
 
   it('child logger inherits level and handlers and merges context', () => {

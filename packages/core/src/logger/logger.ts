@@ -1,3 +1,5 @@
+import { redactSecrets, redactValue } from '../permission/redact.js';
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface LogEntry {
@@ -9,6 +11,13 @@ export interface LogEntry {
 }
 
 export type LogHandler = (entry: LogEntry) => void;
+
+function redactError(error: Error): Error {
+  const clone = new Error(redactSecrets(error.message));
+  clone.name = error.name;
+  if (error.stack) clone.stack = redactSecrets(error.stack);
+  return clone;
+}
 
 const LEVEL_ORDER: Record<LogLevel, number> = {
   debug: 0,
@@ -52,9 +61,9 @@ export class Logger {
     const entry: LogEntry = {
       timestamp: Date.now(),
       level,
-      message,
-      context,
-      error,
+      message: redactSecrets(message),
+      ...(context ? { context: redactValue(context) as Record<string, unknown> } : {}),
+      ...(error ? { error: redactError(error) } : {}),
     };
     for (const h of this.handlers) {
       try {

@@ -22,6 +22,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `AgentLoop` is no longer exported from the public core API; the tool-less completion path is no longer a supported surface.
 
+### Fixed
+
+- Logger entries redact secrets in messages, context, and error text before handlers receive them.
+
 ## [0.1.1] - 2026-10-19
 
 ### Fixed
