@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { LareError } from '../error/error.js';
 import { Permissions } from '../permission/permission.js';
@@ -53,6 +56,18 @@ class TextAdapter implements ProviderAdapter {
 
   async *streamChat(messages: ProviderMessage[]): AsyncGenerator<ProviderStreamEvent> {
     this.seen.push(messages.map((message) => ({ ...message })));
+    yield { type: 'text', text: 'hi' };
+  }
+}
+
+class SpecAdapter extends TextAdapter {
+  seenSpecs: string[] = [];
+
+  override async *streamChat(
+    messages: ProviderMessage[],
+    options?: CompletionOptions
+  ): AsyncGenerator<ProviderStreamEvent> {
+    this.seenSpecs = (options?.tools ?? []).map((tool) => tool.name);
     yield { type: 'text', text: 'hi' };
   }
 }
@@ -118,6 +133,29 @@ function runtime(events: AgentRuntimeEvent[], seen: AgentRuntimeTurnInput[] = []
 }
 
 describe('AgentRuntime contract', () => {
+  it('registers lsp, task, and skill tools by default', async () => {
+    const adapter = new SpecAdapter();
+    const providers = new Providers();
+    providers.register(adapter);
+    const cwd = mkdtempSync(join(tmpdir(), 'lare-runtime-tools-'));
+    const runtime = new DefaultAgentRuntime({
+      provider: 'fake',
+      model: 'test-model',
+      providers,
+      agent: 'plan',
+      workingDir: cwd,
+    });
+
+    const controller = new AbortController();
+    for await (const _event of runtime.run({ prompt: 'hi', signal: controller.signal })) {
+      // drain
+    }
+
+    expect(adapter.seenSpecs).toEqual(expect.arrayContaining(['read', 'lsp', 'task', 'skill']));
+    expect(adapter.seenSpecs).not.toContain('write');
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
   it('streams events and forwards the turn signal', async () => {
     const controller = new AbortController();
     const seen: AgentRuntimeTurnInput[] = [];

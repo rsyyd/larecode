@@ -10,7 +10,7 @@ export type {
   ChatRunOptions,
   ChatSessionOptions,
 } from './agent/chat.js';
-export { DefaultAgentRuntime, isAgentRuntimeStopEvent } from './agent/runtime.js';
+export { DefaultAgentRuntime, createSubagents, isAgentRuntimeStopEvent } from './agent/runtime.js';
 export { AgentRuntimeLoop } from './agent/runtime-loop.js';
 export type { AgentRuntimeLoopOptions } from './agent/runtime-loop.js';
 export type {
@@ -72,6 +72,7 @@ export {
 export { Tools } from './tool/tool.js';
 export type { Tool, ToolCall, ToolResult, ToolContext, ToolSchema } from './tool/tool.js';
 export { coreTools } from './tool/core.js';
+export type { CoreToolOptions } from './tool/core.js';
 export { taskTool } from './tool/task.js';
 export type { TaskToolOptions } from './tool/task.js';
 

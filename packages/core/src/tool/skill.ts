@@ -17,6 +17,7 @@ export function skillTool(skills: Skills): Tool {
     },
     async execute(args, context) {
       const input = (args ?? {}) as { action?: string; name?: string };
+      skills.refresh();
       if (input.action === 'list') {
         return { skills: skills.list() };
       }

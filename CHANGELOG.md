@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Chat sessions are saved after every turn and `larecode chat --resume <id>` restores the conversation and provider history. The user message is saved before the turn runs, so a crash keeps the last prompt.
 - Opt-in `checkpoints` config records a git snapshot before and after each tool call.
 - `larecode sessions rm <id>` deletes a session together with its checkpoints and share links.
+- Default runtimes register the `lsp`, `task`, and `skill` tools, and `@general` subagent turns work in chat.
 
 ### Removed
 

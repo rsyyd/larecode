@@ -20,7 +20,7 @@ larecode chat [options]
 --resume <id>      resume a saved session
 ```
 
-Each turn is saved to the session store under `~/.larecode/sessions`, and `--resume <id>` restores the conversation and its provider history. Inside the UI, Enter sends, Ctrl+J adds a newline, Esc stops a reply, Tab switches between plan and build, PgUp/PgDn scrolls the conversation, `/clear` resets the conversation, and Ctrl+C exits. Tools that need approval show a `y/n` prompt.
+Each turn is saved to the session store under `~/.larecode/sessions`, and `--resume <id>` restores the conversation and its provider history. Inside the UI, Enter sends, Ctrl+J adds a newline, Esc stops a reply, Tab switches between plan and build, PgUp/PgDn scrolls the conversation, `/clear` resets the conversation, and Ctrl+C exits. Tools that need approval show a `y/n` prompt. Prefix a message with `@general ` to delegate read-only research to the general subagent.
 
 ## larecode sessions
 

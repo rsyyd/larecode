@@ -4,9 +4,7 @@ import {
   Permissions,
   Providers,
   Sessions,
-  Tools,
-  backendFromConfig,
-  coreTools,
+  createSubagents,
   loadEffectiveConfig,
   providersFromConfig,
   toProviderHistory,
@@ -84,15 +82,13 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
   const providers = new Providers();
   for (const adapter of providersFromConfig(config)) providers.register(adapter);
 
-  const tools = new Tools();
-  for (const tool of coreTools({ backend: backendFromConfig(config) })) tools.register(tool);
+  const permissions = new Permissions(config.permissions);
 
   const session = new ChatSession({
     provider,
     model,
     providers,
-    tools,
-    permissions: new Permissions(config.permissions),
+    permissions,
     workingDir: process.cwd(),
     sessionId: stored.id,
     history: toProviderHistory(stored.messages),
@@ -132,11 +128,24 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     }
   };
 
+  const subagents = createSubagents({ providers, permissions, workingDir: process.cwd() });
+  const runSubagentTurn: AppProps['runSubagentTurn'] = async (prompt, onChunk, signal) => {
+    const result = await subagents.run({
+      prompt,
+      agent: 'general',
+      provider: session.getProvider(),
+      model: session.getModel(),
+      signal,
+    });
+    onChunk(result.text);
+  };
+
   await startTui({
     provider,
     model,
     initialMessages: sessionMessages(stored),
     runTurn,
+    runSubagentTurn,
     catalogs: Object.entries(config.providers).map(([name, entry]) => ({
       provider: name,
       models: entry.models,

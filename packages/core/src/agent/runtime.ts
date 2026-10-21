@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { loadEffectiveConfig } from '../config/config.js';
+import { backendFromConfig } from '../exec/backend.js';
+import { LSP } from '../lsp/lsp.js';
+import { Skills } from '../skill/skill.js';
 import { LareError } from '../error/error.js';
 import type { LareErrorJSON } from '../error/error.js';
 import { defaultLogger } from '../logger/logger.js';
@@ -24,8 +27,10 @@ import {
   type UsageRecorder,
 } from '../usage/usage.js';
 import { BUILTIN_AGENTS } from './agents.js';
+import { AgentRuntimeLoop } from './runtime-loop.js';
+import { Subagents } from './subagent.js';
 
-export type AgentRuntimeAgentName = 'plan' | 'build';
+export type AgentRuntimeAgentName = 'plan' | 'build' | 'general';
 
 export interface AgentRuntimePermissionRequest {
   tool: string;
@@ -97,6 +102,30 @@ export interface AgentRuntime {
   selectModel(provider: string, model: string): void;
   reset(): void;
   run(input: AgentRuntimeTurnInput): AsyncIterable<AgentRuntimeEvent>;
+}
+
+export function createSubagents(options: {
+  providers: Providers;
+  permissions: Permissions;
+  workingDir: string;
+}): Subagents {
+  return new Subagents({
+    providers: options.providers,
+    createLoop: (run) =>
+      new AgentRuntimeLoop({
+        provider: run.provider,
+        model: run.model,
+        workingDir: options.workingDir,
+        providers: options.providers,
+        permissions: options.permissions,
+        agent: 'general',
+        abortSignal: run.signal,
+        maxIterations: run.maxIterations,
+        maxToolCalls: (run.maxIterations ?? 12) * 4,
+        tokenBudget: run.tokenBudget,
+        durationBudget: run.durationBudget,
+      }),
+  });
 }
 
 const TOOL_OUTPUT_LIMIT = 16_000;
@@ -246,7 +275,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
       this.tools = options.tools;
     } else {
       this.tools = new Tools();
-      for (const tool of coreTools()) this.tools.register(tool);
+      for (const tool of this.defaultTools(config)) this.tools.register(tool);
     }
 
     this.messages = [
@@ -255,6 +284,22 @@ export class DefaultAgentRuntime implements AgentRuntime {
         .filter((message) => message.role !== 'system')
         .map((message) => ({ ...message })),
     ];
+  }
+
+  private defaultTools(config: ReturnType<typeof loadEffectiveConfig>): Tool[] {
+    const skills = new Skills({ projectDir: this.workingDir });
+    skills.refresh();
+    return coreTools({
+      backend: backendFromConfig(config),
+      lsp: new LSP({ rootDir: this.workingDir }),
+      skills,
+      subagents: createSubagents({
+        providers: this.providers,
+        permissions: this.permissions,
+        workingDir: this.workingDir,
+      }),
+      agent: { provider: this.provider, model: this.model },
+    });
   }
 
   getProvider(): string {
