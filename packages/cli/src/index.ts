@@ -32,7 +32,7 @@ program
   .command('setup')
   .description('Write an initial config for your provider')
   .option('--provider <name>', 'provider name')
-  .option('--type <type>', 'openai-compatible, anthropic, or ollama')
+  .option('--type <type>', 'openai-compatible, anthropic, ollama, openrouter, zai, or custom')
   .option('--base-url <url>', 'provider base url')
   .option('--api-key <key>', 'api key for the provider')
   .option('--model <model>', 'default model')

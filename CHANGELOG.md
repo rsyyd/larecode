@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - MCP tools now map to the `external-services` permission group, with adversarial tests for Docker/SSH argument quoting and provider streaming.
 - `larecode doctor` now checks provider auth, model catalog, and a streaming probe instead of only reachability.
 - Configs written by 0.1 are normalized on load: missing `allowedGroups`, `mcpServers`, and `execution` fields are filled in and the version is upgraded.
-- `larecode setup` rejects an invalid base URL or empty model before writing a config, and refuses to save a config that fails validation.
+- `larecode setup` prompts for a provider, base URL, model, and API key in a terminal; flags still support scripted setup. It rejects an invalid base URL or empty model before writing a config, and refuses to save a config that fails validation.
 - Regression coverage proves that client disconnects abort server turns, MCP servers reconnect cleanly, and every package version matches the CLI.
 - A real tmux smoke test drives the TUI, streams a turn, and resizes the window; CI now also verifies reproducible build hashes and pins Bun 1.3.9.
 - A single session now continues across server, SDK, and ACP surfaces with full history.

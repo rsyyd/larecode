@@ -34,11 +34,11 @@ larecode sessions rm <id>
 
 ## larecode setup
 
-Write an initial config for your provider.
+Write an initial config for your provider. With no options in a terminal, it asks for the provider, base URL, model, and API key, then saves the result. Passing any option skips the prompts for scripted setup.
 
 ```text
 --provider <name>  provider name
---type <type>      openai-compatible, anthropic, or ollama
+--type <type>      openai-compatible, anthropic, ollama, openrouter, zai, or custom
 --base-url <url>   provider base url
 --api-key <key>    api key for the provider
 --model <model>    default model

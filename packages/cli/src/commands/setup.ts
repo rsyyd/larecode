@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { createInterface } from 'node:readline/promises';
 import {
   configPath,
   loadConfig,
@@ -25,6 +26,85 @@ export interface SetupDeps {
   path?: string;
   write?: (text: string) => void;
   exists?: (path: string) => boolean;
+  ask?: (question: string, fallback?: string) => Promise<string>;
+}
+
+const SETUP_PRESETS = [
+  {
+    type: 'openai-compatible',
+    label: 'OpenAI-compatible',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4o-mini',
+  },
+  {
+    type: 'anthropic',
+    label: 'Anthropic',
+    baseUrl: 'https://api.anthropic.com',
+    model: 'claude-3-5-sonnet-latest',
+  },
+  {
+    type: 'ollama',
+    label: 'Ollama',
+    baseUrl: 'http://localhost:11434',
+    model: 'qwen2.5-coder:14b',
+  },
+  {
+    type: 'openrouter',
+    label: 'OpenRouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'openai/gpt-4o-mini',
+  },
+  {
+    type: 'zai',
+    label: 'Z.ai',
+    baseUrl: 'https://api.z.ai/api/paas/v4',
+    model: 'glm-4.5',
+  },
+  {
+    type: 'custom',
+    label: 'Custom OpenAI-compatible',
+    baseUrl: 'http://localhost:8000/v1',
+    model: 'my-model',
+  },
+] as const;
+
+async function runPrompts(
+  ask: (question: string, fallback?: string) => Promise<string>
+): Promise<SetupOptions> {
+  const askValue = async (label: string, fallback = ''): Promise<string> => {
+    const answer = (await ask(label, fallback)).trim();
+    return answer || fallback;
+  };
+  const options = SETUP_PRESETS.map((preset, index) => `[${index + 1}] ${preset.label}`).join(', ');
+  const choice = (await askValue(`Provider ${options}`, '1')).toLowerCase();
+  const preset =
+    SETUP_PRESETS.find(
+      (candidate, index) => String(index + 1) === choice || candidate.type === choice
+    ) ?? SETUP_PRESETS[0];
+  const baseUrl = await askValue('Base URL', preset.baseUrl);
+  const model = await askValue('Model', preset.model);
+  const apiKey =
+    preset.type === 'ollama' ? '' : await askValue('API key (leave empty to set later)');
+  return {
+    provider: preset.type,
+    type: preset.type,
+    baseUrl,
+    model,
+    ...(apiKey ? { apiKey } : {}),
+  };
+}
+
+async function interactiveSetup(deps: SetupDeps): Promise<SetupOptions> {
+  if (deps.ask) return runPrompts(deps.ask);
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    return await runPrompts((question, fallback = '') => {
+      const suffix = fallback ? ` [${fallback}]` : '';
+      return rl.question(`${question}${suffix}: `).then((answer) => answer.trim() || fallback);
+    });
+  } finally {
+    rl.close();
+  }
 }
 
 function validBaseUrl(value: string): string {
@@ -88,9 +168,20 @@ export async function setupCommand(options: SetupOptions, deps: SetupDeps = {}):
     return;
   }
 
+  const hasChoices =
+    options.provider !== undefined ||
+    options.type !== undefined ||
+    options.baseUrl !== undefined ||
+    options.apiKey !== undefined ||
+    options.model !== undefined;
+  const canPrompt =
+    deps.ask !== undefined ||
+    (!process.env.VITEST && process.stdin.isTTY === true && process.stdout.isTTY === true);
+  const effective = !hasChoices && canPrompt ? await interactiveSetup(deps) : options;
+
   let built: ReturnType<typeof buildConfig>;
   try {
-    built = buildConfig(loadConfig(path), options);
+    built = buildConfig(loadConfig(path), effective);
   } catch (error) {
     write(`${bad('setup:')} ${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;

@@ -28,7 +28,7 @@ See [install options](install.md) for Scoop, PKGBUILD, and manual binary install
 ## First run
 
 ```bash
-larecode setup          # writes ~/.larecode/config.json
+larecode setup          # asks for a provider and writes ~/.larecode/config.json
 larecode doctor         # verifies config, provider reachability, permissions
 larecode run "explain this repository"
 ```

@@ -106,6 +106,25 @@ describe('setupCommand', () => {
     expect(process.exitCode).toBe(1);
   });
 
+  it('prompts for a provider when run interactively', async () => {
+    const path = join(dir, 'config.json');
+    const { out, write } = harness();
+    const answers = ['2', 'https://api.anthropic.com', 'claude-3-5-sonnet-latest', 'sk-ant-test'];
+    const ask = async (): Promise<string> => answers.shift() ?? '';
+    await setupCommand({}, { path, write, ask });
+
+    const written = JSON.parse(await readFile(path, 'utf8')) as Config;
+    expect(written.defaultProvider).toBe('anthropic');
+    expect(written.defaultModel).toBe('claude-3-5-sonnet-latest');
+    expect(written.providers['anthropic']).toMatchObject({
+      type: 'anthropic',
+      baseUrl: 'https://api.anthropic.com',
+      models: ['claude-3-5-sonnet-latest'],
+      apiKey: 'sk-ant-test',
+    });
+    expect(out.join('')).toContain('wrote');
+  });
+
   it('refuses to overwrite without --force', async () => {
     const path = join(dir, 'config.json');
     await writeFile(path, '{}');
