@@ -222,7 +222,9 @@ export function suggestionFor(problem: string): string {
     return 'verify apiKey and baseUrl for this provider';
   }
   if (problem.includes('reachability')) {
-    return 'check that the provider is running and baseUrl is reachable';
+    return /localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])|\.local/i.test(problem)
+      ? 'start the local provider server and check its port and baseUrl'
+      : 'the upstream provider may be down or blocked; test manually with: curl <baseUrl>';
   }
   if (problem.includes('streaming')) {
     return 'confirm the provider supports streaming and the selected model exists';

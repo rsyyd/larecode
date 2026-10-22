@@ -1,0 +1,22 @@
+{
+  "defaultProvider": "ollama",
+  "defaultModel": "qwen2.5-coder",
+  "providers": {
+    "ollama": {
+      "type": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "models": ["qwen2.5-coder", "llama3"]
+    }
+  },
+  "permissions": {
+    "mode": "ask",
+    "allowedGroups": ["read"]
+  },
+  "context": {
+    "enabled": true,
+    "repoMap": true,
+    "retrieval": true,
+    "memory": true,
+    "budgetTokens": 8000
+  }
+}

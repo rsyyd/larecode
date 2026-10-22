@@ -1,0 +1,18 @@
+{
+  "defaultProvider": "openai",
+  "defaultModel": "gpt-4o-mini",
+  "providers": {
+    "openai": {
+      "type": "openai-compatible",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKey": "your-key",
+      "models": ["gpt-4o-mini", "gpt-4o"]
+    },
+    "ollama": {
+      "type": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "models": ["qwen2.5-coder"]
+    }
+  },
+  "fallbacks": [{ "provider": "ollama", "model": "qwen2.5-coder" }]
+}

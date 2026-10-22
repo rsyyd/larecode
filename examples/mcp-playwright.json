@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "name": "playwright",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["--yes", "@playwright/mcp@latest"],
+      "env": {
+        "PLAYWRIGHT_HEADLESS": "true"
+      }
+    }
+  },
+  "permissions": {
+    "mode": "ask",
+    "allowedGroups": ["read"]
+  }
+}
