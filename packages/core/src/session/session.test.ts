@@ -178,6 +178,22 @@ describe('Sessions persistence', () => {
     expect(readdirSync(dir).some((name) => name.endsWith('.tmp'))).toBe(false);
   });
 
+  it('persists and recovers a pending turn marker', () => {
+    const sessions = new Sessions(dir);
+    const session = sessions.create('pending?');
+    session.metadata.pendingTurn = {
+      prompt: 'pending?',
+      startedAt: new Date('2026-10-20T00:00:00Z'),
+    };
+    sessions.save(session);
+
+    const reloaded = new Sessions(dir).get(session.id)!;
+    expect(reloaded.metadata.pendingTurn?.prompt).toBe('pending?');
+    expect(reloaded.metadata.pendingTurn?.startedAt.toISOString()).toBe('2026-10-20T00:00:00.000Z');
+    expect(new Sessions(dir).recoverPending(reloaded)).toBe('pending?');
+    expect(new Sessions(dir).get(session.id)?.metadata.pendingTurn).toBeUndefined();
+  });
+
   it('acquires a lock per session file and times out on a fresh lock', () => {
     const sessions = new Sessions(dir);
     const session = sessions.create('one');

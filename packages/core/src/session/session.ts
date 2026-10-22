@@ -26,6 +26,7 @@ export interface SessionMetadata {
   messageCount: number;
   tokenUsage: number;
   cost: number;
+  pendingTurn?: { prompt: string; startedAt: Date };
   provider?: string;
   model?: string;
   workingDir?: string;
@@ -63,6 +64,7 @@ interface StoredSession {
     messageCount?: number;
     tokenUsage?: number;
     cost?: number;
+    pendingTurn?: { prompt?: string; startedAt?: string };
     provider?: string;
     model?: string;
     workingDir?: string;
@@ -122,12 +124,21 @@ export function toProviderHistory(messages: SessionMessage[]): ProviderMessage[]
 }
 
 function toStored(session: Session): StoredSession {
+  const { pendingTurn, ...metadata } = session.metadata;
   return {
     id: session.id,
     metadata: {
-      ...session.metadata,
+      ...metadata,
       createdAt: session.metadata.createdAt.toISOString(),
       updatedAt: session.metadata.updatedAt.toISOString(),
+      ...(pendingTurn
+        ? {
+            pendingTurn: {
+              prompt: pendingTurn.prompt,
+              startedAt: pendingTurn.startedAt.toISOString(),
+            },
+          }
+        : {}),
     },
     messages: session.messages.map((message) => ({
       ...message,
@@ -151,6 +162,14 @@ function fromStored(stored: StoredSession): Session {
         typeof metadata.messageCount === 'number' ? metadata.messageCount : messages.length,
       tokenUsage: typeof metadata.tokenUsage === 'number' ? metadata.tokenUsage : 0,
       cost: typeof metadata.cost === 'number' ? metadata.cost : 0,
+      ...(metadata.pendingTurn?.prompt
+        ? {
+            pendingTurn: {
+              prompt: metadata.pendingTurn.prompt,
+              startedAt: new Date(metadata.pendingTurn.startedAt ?? 0),
+            },
+          }
+        : {}),
       provider: metadata.provider,
       model: metadata.model,
       workingDir: metadata.workingDir,
@@ -230,6 +249,20 @@ export class Sessions {
     session.metadata.messageCount = session.messages.length;
     this.sessions.set(session.id, session);
     this.persist(session);
+  }
+
+  recoverPending(session: Session): string | null {
+    const pending = session.metadata.pendingTurn;
+    if (!pending) return null;
+    session.messages.push({
+      role: 'assistant',
+      content:
+        'turn interrupted before completion; tools may have run, so re-run only if the action is safe to repeat.',
+      timestamp: new Date(),
+    });
+    delete session.metadata.pendingTurn;
+    this.save(session);
+    return pending.prompt;
   }
 
   delete(id: string): boolean {

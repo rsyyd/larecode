@@ -263,6 +263,8 @@ export type {
 } from './plugin/plugin.js';
 
 export { Context, CONTEXT_BUDGET_TOKENS, CONTEXT_MAX_FILES } from './context/context.js';
+export { evaluateRetrieval } from './context/eval.js';
+export type { RetrievalCase, RetrievalCaseResult, RetrievalReport } from './context/eval.js';
 export { CONTEXT_ALLOCATION, assembleContext } from './context/assembler.js';
 export type {
   AssembledContext,
