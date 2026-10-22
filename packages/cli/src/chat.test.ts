@@ -42,6 +42,12 @@ describe('turn persistence', () => {
 
     const restarted = new Sessions(dir).get(stored.id)!;
     expect(restarted.messages.map((message) => message.content)).toEqual(['say hi']);
+    expect(restarted.metadata.pendingTurn?.prompt).toBe('say hi');
+
+    expect(sessions.recoverPending(restarted)).toBe('say hi');
+    expect(restarted.metadata.pendingTurn).toBeUndefined();
+    expect(restarted.messages.at(-1)?.content).toContain('interrupted before completion');
+    expect(sessions.recoverPending(restarted)).toBeNull();
   });
 
   it('records the assistant reply and usage after the turn', () => {
@@ -63,5 +69,6 @@ describe('turn persistence', () => {
       { role: 'agent', text: 'hello' },
     ]);
     expect(restarted.metadata.tokenUsage).toBe(5);
+    expect(restarted.metadata.pendingTurn).toBeUndefined();
   });
 });

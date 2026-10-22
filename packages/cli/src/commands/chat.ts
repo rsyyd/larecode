@@ -23,6 +23,7 @@ export interface ChatCommandOptions {
 
 export function startTurn(sessions: Sessions, stored: Session, prompt: string): void {
   if (!stored.metadata.title) stored.metadata.title = prompt.trim().slice(0, 80);
+  stored.metadata.pendingTurn = { prompt, startedAt: new Date() };
   stored.messages.push({ role: 'user', content: prompt, timestamp: new Date() });
   sessions.save(stored);
 }
@@ -38,6 +39,7 @@ export function finishTurn(
   }
   stored.metadata.tokenUsage = usage.totalTokens.total;
   stored.metadata.cost = usage.totalCost.totalCost;
+  delete stored.metadata.pendingTurn;
   sessions.save(stored);
 }
 
@@ -78,6 +80,14 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
   if (options.resume && !resumed) {
     process.stderr.write(`larecode: session "${options.resume}" not found\n`);
     return 1;
+  }
+  if (resumed) {
+    const interrupted = sessions.recoverPending(resumed);
+    if (interrupted) {
+      process.stderr.write(
+        `larecode: recovered an interrupted turn (${interrupted.slice(0, 60)})\n`
+      );
+    }
   }
   let stored =
     resumed ??
