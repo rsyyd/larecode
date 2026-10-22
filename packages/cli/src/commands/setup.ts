@@ -13,6 +13,23 @@ const ok = (text: string) => `\x1b[32m${text}\x1b[0m`;
 const bad = (text: string) => `\x1b[31m${text}\x1b[0m`;
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
 
+export function firstRunHint(
+  options: {
+    path?: string;
+    exists?: (path: string) => boolean;
+    write?: (text: string) => void;
+  } = {}
+): boolean {
+  const path = options.path ?? configPath();
+  const exists = options.exists ?? existsSync;
+  const write = options.write ?? ((text: string) => process.stderr.write(text));
+  if (exists(path)) return false;
+  write(
+    `larecode: no config at ${path}; using built-in defaults. Run \`larecode setup\` to choose a provider.\n`
+  );
+  return true;
+}
+
 export interface SetupOptions {
   provider?: string;
   type?: ProviderConfig['type'];
