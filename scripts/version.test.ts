@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -15,8 +15,10 @@ describe('release version', () => {
     expect(version).toBeTruthy();
 
     expect(readJson('package.json').version).toBe(version);
-    expect(readJson('packages/cli/package.json').version).toBe(version);
     expect(readJson('npm/package.json').version).toBe(version);
+    for (const entry of readdirSync(join(ROOT, 'packages'))) {
+      expect(readJson(`packages/${entry}/package.json`).version, entry).toBe(version);
+    }
   });
 
   it('ships the npm wrapper with a CLI entry point', () => {

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/rsyyd/larecode/security/advisories/new
+    about: Report exploitable bugs privately. Do not open a public issue for security problems.
+  - name: Read the security policy
+    url: https://github.com/rsyyd/larecode/blob/main/SECURITY.md
+    about: Supported versions, scope, and response targets.

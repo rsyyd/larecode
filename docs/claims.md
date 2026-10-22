@@ -8,28 +8,34 @@ description: Each public claim and the test or workflow that proves it
 
 This matrix keeps the README honest. A claim is either backed by a test that runs in CI or marked as not shipped.
 
-| Claim                                     | Evidence                                                                                     |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Provider neutral, six provider types      | `packages/core/src/provider/provider-contract.test.ts`, adapter tests, `doctor` model checks |
-| Explicit provider fallback                | `runtime.test.ts` fallback test, config validation tests                                     |
-| Every tool call passes a permission check | `packages/core/src/permission/permission.test.ts`, `tool-groups.test.ts`, security suite     |
-| Default deny and explicit confirmation    | Runtime tests, `packages/gateway/src/telegram.test.ts`, `packages/cli/src/cron.test.ts`      |
-| One agent loop across surfaces            | `packages/cli/src/surface-matrix.test.ts`, `packages/core/src/agent/runtime.test.ts`         |
-| Plan mode is read-only                    | `packages/core/src/agent/agents.test.ts`                                                     |
-| Subagents and skills                      | `subagent.test.ts`, `skill.test.ts`, TUI `@general` test                                     |
-| Checkpoints and session search            | `checkpoint.test.ts`, `session/search.test.ts`, chat persistence tests                       |
-| Session files survive concurrent writers  | `session.test.ts` lock and stale-lock tests                                                  |
-| Structural search and LSP                 | `astgrep.test.ts`, `lsp` tool tests                                                          |
-| MCP client and server                     | `packages/core/src/mcp/mcp.test.ts`, MCP server mode tests                                   |
-| HTTP server, shares, cron, gateway        | `server.test.ts`, `share` tests, `cron.test.ts`, `telegram.test.ts`                          |
-| Context is sanitized and budgeted         | `context/inject.test.ts`, `context/compact.test.ts`, `/context` report tests                 |
-| Read-only tools run in parallel           | `runtime.test.ts` concurrency and serial-fallback test                                       |
-| Local metrics, usage, and diagnostics     | `metrics.test.ts`, `diagnostics.test.ts`, `diagnostics.test.ts` CLI tests                    |
-| Tamper-evident audit log                  | `permission/audit.test.ts` chain, tamper, and ordering tests                                 |
-| Install paths and binaries                | `scripts/packaging.test.ts`, `install.test.ts`, `.github/workflows/release.yml`              |
-| Node 20+                                  | `npm/package.json` engines and the `node` CI job                                             |
-| Reproducible builds                       | `scripts/version.test.ts` and the Ubuntu reproducible-build step                             |
-| TUI works in a real terminal              | `packages/tui/src/*.test.tsx`, `scripts/tmux.test.ts` in CI                                  |
+| Claim                                      | Evidence                                                                                       |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Provider neutral, six provider types       | `packages/core/src/provider/provider-contract.test.ts`, adapter tests, `doctor` model checks   |
+| Explicit provider fallback                 | `runtime.test.ts` fallback test, config validation tests                                       |
+| Every tool call passes a permission check  | `packages/core/src/permission/permission.test.ts`, `tool-groups.test.ts`, security suite       |
+| Default deny and explicit confirmation     | Runtime tests, `packages/gateway/src/telegram.test.ts`, `packages/cli/src/cron.test.ts`        |
+| One agent loop across surfaces             | `packages/cli/src/surface-matrix.test.ts`, `packages/core/src/agent/runtime.test.ts`           |
+| Plan mode is read-only                     | `packages/core/src/agent/agents.test.ts`                                                       |
+| Subagents and skills                       | `subagent.test.ts`, `skill.test.ts`, TUI `@general` test                                       |
+| Checkpoints and session search             | `checkpoint.test.ts`, `session/search.test.ts`, chat persistence tests                         |
+| Session files survive concurrent writers   | `session.test.ts` lock and stale-lock tests                                                    |
+| Structural search and LSP                  | `astgrep.test.ts`, `lsp` tool tests                                                            |
+| MCP client and server                      | `packages/core/src/mcp/mcp.test.ts`, MCP server mode tests                                     |
+| HTTP server, shares, cron, gateway         | `server.test.ts`, `share` tests, `cron.test.ts`, `telegram.test.ts`                            |
+| Context is sanitized and budgeted          | `context/inject.test.ts`, `context/compact.test.ts`, `/context` report tests                   |
+| Retrieval quality is measured              | `evaluateRetrieval` fixture recall test in `context/eval.test.ts`                              |
+| Read-only tools run in parallel            | `runtime.test.ts` concurrency and serial-fallback test                                         |
+| Local metrics, usage, and diagnostics      | `metrics.test.ts`, `diagnostics.test.ts`, `diagnostics.test.ts` CLI tests                      |
+| Tamper-evident audit log                   | `permission/audit.test.ts` chain, tamper, and ordering tests                                   |
+| MCP servers run only after explicit trust  | `mcp/trust.test.ts`, `mcp/mcp.test.ts`, `packages/cli/src/mcp.test.ts` consent and drift tests |
+| MCP HTTP blocks private networks           | `mcp/mcp.test.ts` private, loopback, and link-local rejection tests                            |
+| Indexing stays within a time/memory budget | `scripts/perf.test.ts` and the CI `perf` job                                                   |
+| Coverage has an enforced floor             | `vitest.config.ts` thresholds and the CI `node` coverage job                                   |
+| Release artifacts are signed               | keyless cosign signatures in `.github/workflows/release.yml`, verified in `docs/release.md`    |
+| Install paths and binaries                 | `scripts/packaging.test.ts`, `install.test.ts`, `.github/workflows/release.yml`                |
+| Node 20+                                   | `npm/package.json` engines and the `node` CI job                                               |
+| Reproducible builds                        | `scripts/version.test.ts` and the Ubuntu reproducible-build step                               |
+| TUI works in a real terminal               | `packages/tui/src/*.test.tsx`, `scripts/tmux.test.ts` in CI                                    |
 
 ## Not shipped yet
 

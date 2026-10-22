@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-22
+
+### Added
+
+- Smart context assembly: workspace index, repository map, lexical/structural retrieval, multi-tier memory, token budgeting, and secret sanitization. `larecode context` and `/context` show what was injected.
+- `evaluateRetrieval` and a fixture corpus measure retrieval recall, so context quality is tested rather than assumed.
+- Compaction preserves recent tool calls and reports what it dropped.
+- Read-only tool calls run in parallel with a serial fallback when a call needs an exclusive lock.
+- Explicit provider fallback chains, `contextWindow` capability metadata, and token calibration per model.
+- `larecode doctor` now checks each configured model, supports `--json`, and suggests a fix for common failures.
+- TUI prompt queue, `/status`, `/sessions`, `/new`, a model picker that marks unavailable models, and restored history on resume.
+- Runtime metrics, local usage summary, redacted debug bundles, crash reports, and `larecode feedback` with secret redaction.
+- Hash-chained tool audit log with `larecode audit --verify`, session file locking, gateway status, `run --json`, and update hints.
+- MCP configuration trust: a SHA-256 fingerprint over transport, command, arguments, URL, headers, environment, and private-network permission. Servers run only after an explicit `larecode mcp trust`; `mcp remove` revokes trust and `mcp list` shows drift.
+- MCP HTTP transport rejects private, loopback, and link-local addresses unless the server is trusted with `--allow-private`.
+- First-run hint that points a fresh install at `larecode setup`.
+- Performance test with a 300-file workspace budget, third-party notice check, and a dependency-graph test that rejects dangling imports and unreachable modules.
+- Coverage thresholds enforced in CI, with a retry only on CI for known-flaky timing tests.
+
+### Changed
+
+- Upgraded to Vitest 4.1, Vite 8, and `@vitest/coverage-v8` 4.1; the coverage gate excludes the npm launcher.
+- CI now runs coverage, performance, Windows smoke, security tests, `bun audit`, and the tmux TUI test as separate jobs.
+- Releases sign artifacts with keyless cosign and publish prereleases under the npm `next` tag.
+
+### Security
+
+- MCP servers require a pinned fingerprint; configuration drift blocks startup until trusted again.
+- MCP HTTP connections cannot reach private networks without an explicit per-server opt-in.
+- Documented supported versions, response targets, MCP trust boundaries, and the dependency audit cadence in `SECURITY.md`.
+
+### Documentation
+
+- New guides for extensions, observability, dependencies, and TUI usage; a rewritten release guide covering signature verification, canaries, and rollback drills.
+- `docs/audit-0.3.0.md` records the P0/P1 review and sign-off for this release.
+
 ## [0.2.0] - 2026-10-21
 
 ### Added
