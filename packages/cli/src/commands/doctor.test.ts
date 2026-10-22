@@ -92,6 +92,12 @@ describe('doctor provider checks', () => {
       'provider models list'
     );
     expect(suggestionFor('home directory /x is not writable')).toContain('LARECODE_HOME');
+    expect(
+      suggestionFor('provider "x" model "y": reachability — http://localhost:11434')
+    ).toContain('local provider server');
+    expect(
+      suggestionFor('provider "x" model "y": reachability — https://api.example.com/v1')
+    ).toContain('upstream provider');
     expect(suggestionFor('something unknown')).toContain('larecode doctor');
   });
 });
