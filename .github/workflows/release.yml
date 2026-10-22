@@ -44,7 +44,7 @@ jobs:
       - run: bun install --frozen-lockfile --os=${{ matrix.os }} --cpu=${{ matrix.cpu }}
       - name: Build ${{ matrix.asset }}
         run: bun build --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.asset }} packages/cli/src/index.ts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.asset }}
           path: dist/${{ matrix.asset }}
