@@ -1,6 +1,6 @@
 {
   "name": "larecode",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "node ./node_modules/vitest/vitest.mjs run --coverage",
     "test:tmux": "LARECODE_TMUX=1 vitest run scripts/tmux.test.ts",
+    "test:perf": "vitest run scripts/perf.test.ts",
     "test:security": "vitest run packages/core/src/permission packages/core/src/exec/backend.test.ts packages/core/src/mcp packages/core/src/context/instructions.test.ts packages/core/src/skill packages/core/src/tool/files.test.ts packages/server/src/server.test.ts packages/gateway/src/telegram.test.ts packages/cli/src/cron.test.ts packages/cli/src/verify.test.ts packages/cli/src/install.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
@@ -23,11 +24,12 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "@vitest/coverage-v8": "2.1.9",
+    "@vitest/coverage-v8": "4.1.12",
     "oxlint": "^0.15.0",
     "prettier": "^3.3.0",
     "typescript": "^5.5.0",
-    "vitest": "2.1.9"
+    "vite": "^8.3.5",
+    "vitest": "4.1.12"
   },
   "engines": {
     "bun": ">=1.1"

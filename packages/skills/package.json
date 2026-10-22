@@ -1,6 +1,6 @@
 {
   "name": "@larecode/skills",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "main": "src/index.ts",
   "exports": {
@@ -14,7 +14,7 @@
     "@larecode/core": "*"
   },
   "devDependencies": {
-    "vitest": "^2.0.0",
+    "vitest": "^4.1.12",
     "typescript": "^5.5.0",
     "@types/node": "^20.14.0"
   }

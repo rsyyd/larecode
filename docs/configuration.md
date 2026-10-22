@@ -20,7 +20,7 @@ Set `LARECODE_HOME` to move the global directory (used by tests and sandboxes).
 
 ```json
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "defaultProvider": "openai-compatible",
   "defaultModel": "gpt-4o",
   "permissions": { "mode": "ask", "allowedGroups": ["read"] },

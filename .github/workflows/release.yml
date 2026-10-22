@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   build:
@@ -64,7 +65,12 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" artifacts/* --title "$GITHUB_REF_NAME" --generate-notes
+        run: |
+          prerelease=""
+          case "$GITHUB_REF_NAME" in
+            *-*) prerelease="--prerelease" ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" artifacts/* --title "$GITHUB_REF_NAME" --generate-notes $prerelease
       - name: Generate packaging manifests
         run: bun run scripts/packaging.ts --version "${GITHUB_REF_NAME#v}" --binaries artifacts --out packaging/out
       - name: Generate checksums
@@ -73,6 +79,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" packaging/out/*
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for artifact in artifacts/*; do
+            case "$artifact" in
+              *.sig|*.pem) continue ;;
+            esac
+            cosign sign-blob --yes \
+              --output-signature "$artifact.sig" \
+              --output-certificate "$artifact.pem" \
+              "$artifact"
+          done
+          gh release upload "$GITHUB_REF_NAME" artifacts/*.sig artifacts/*.pem
 
   npm:
     needs: publish
@@ -101,7 +122,11 @@ jobs:
           if npm view "larecode@$version" version >/dev/null 2>&1; then
             echo "larecode@$version is already published; skipping."
           else
-            npm publish
+            tag=latest
+            case "$version" in
+              *-*) tag=next ;;
+            esac
+            npm publish --tag "$tag"
           fi
         working-directory: npm
         env:

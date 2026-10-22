@@ -31,9 +31,11 @@ Other install options, including Homebrew, Scoop, and a curl installer, are on t
 **Guides**
 
 - [Providers](providers.md): OpenAI-compatible, Anthropic, Ollama, OpenRouter, custom
+- [TUI](tui.md): keys, slash commands, terminal support
 - [Permissions](permissions.md): groups, modes, unattended flows, audit log
 - [Tools](tools.md): built-in tools and their permission groups
 - [MCP](mcp.md): client and server modes
+- [Extensions](extensions.md): skills, subagents, and plugins
 - [Automation](automation.md): HTTP server, share links, cron, Telegram gateway
 - [SDK and editors](sdk.md): `@larecode/sdk` and the ACP adapter
 
@@ -41,8 +43,11 @@ Other install options, including Homebrew, Scoop, and a curl installer, are on t
 
 - [CLI reference](cli.md): every command and option
 - [Testing](testing.md): test layers, commands, and CI gates
+- [Observability](observability.md): usage, metrics, debug bundles, audit log
+- [Dependency policy](dependencies.md): cadence, audits, and advisories
 - [Troubleshooting](troubleshooting.md): fix provider, permission, and session errors
 - [Release checklist](release.md): version bump, smoke test, tag, and rollback
+- [0.3.0 audit](audit-0.3.0.md): P0/P1 review and sign-off for this release
 - [README claims](claims.md): every public claim and the test behind it
 - [Surface contract](architecture/surfaces.md): start, stream, cancel, stop, and status per surface
 - [ADR-0001: Desktop app deferred](architecture/adr/0001-desktop-app-deferred.md): why v1 ends at the CLI

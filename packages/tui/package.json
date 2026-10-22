@@ -1,6 +1,6 @@
 {
   "name": "@larecode/tui",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "main": "src/index.ts",
   "exports": {
@@ -21,6 +21,6 @@
     "ink-testing-library": "4",
     "react-devtools-core": "^8.0.0",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^4.1.12"
   }
 }

@@ -11,22 +11,15 @@ No release dates are promised. Each version ships when its exit criteria pass.
 ## Released
 
 - **0.2.0** — provider-neutral agent loop, permissions, sessions, tools, CLI/TUI, server, gateway, cron, MCP, skills, subagents, checkpoints.
+- **0.3.0** — smart context with repo map, retrieval, memory, compaction, and sanitization; provider fallback and per-model `doctor`; parallel read-only tools; MCP trust fingerprints and private-network blocking; TUI queue and session controls; metrics, usage, debug bundle, crash reports, and the hash-chained audit log.
 
-## In progress — 0.3.0 "Smart context"
-
-- Context assembly with repo map, retrieval, memory, budget, and sanitization.
-- Compaction that keeps recent tool calls intact.
-- Parallel read-only tool execution with serial fallback.
-- Runtime metrics, local usage summary, debug bundle, crash report.
-- Hash-chained audit log and `larecode audit --verify`.
-- Session locking across surfaces; explicit provider fallbacks; per-model `doctor`.
-- TUI prompt queue, session picker, status bar, model health.
-
-Exit criteria: context retrieval, repo map, memory, and compaction tests pass; provider and tool P1 tests pass; automation and extension P1 tests pass; no permission or session regressions.
+0.3.0 meets its exit criteria: context retrieval, repo map, memory, and compaction tests pass; provider and tool P1 tests pass; automation and extension P1 tests pass; and the permission and session suites show no regressions.
 
 ## Planned — 0.4.0
 
 Rendering and interaction depth: safe markdown/code rendering, diff view, compact tool panels, in-conversation search, copy/export, `@` file mentions.
+
+0.4.0 cannot ship before 0.3.0 has been stable for 14 days (not before 2026-11-05).
 
 ## Planned — 0.5.0
 
