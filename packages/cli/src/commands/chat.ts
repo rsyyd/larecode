@@ -7,6 +7,7 @@ import {
   connectMcpTools,
   createSubagents,
   loadEffectiveConfig,
+  McpTrust,
   providersFromConfig,
   toProviderHistory,
   type ChatPermissionConfirm,
@@ -14,6 +15,7 @@ import {
   type UsageAggregate,
 } from '@larecode/core';
 import { startTui, type AppProps, type ChatMessage } from '@larecode/tui';
+import { firstRunHint } from './setup.js';
 
 export interface ChatCommandOptions {
   provider?: string;
@@ -72,6 +74,7 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
   }
 
   const config = loadEffectiveConfig();
+  firstRunHint();
   const provider = options.provider ?? config.defaultProvider;
   const model = options.model ?? config.defaultModel;
 
@@ -101,7 +104,7 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
   for (const adapter of providersFromConfig(config)) providers.register(adapter);
 
   const permissions = new Permissions(config.permissions);
-  const mcp = await connectMcpTools(config.mcpServers);
+  const mcp = await connectMcpTools(config.mcpServers, { trust: new McpTrust() });
 
   const session = new ChatSession({
     provider,

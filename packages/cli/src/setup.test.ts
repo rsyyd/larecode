@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Config } from '@larecode/core';
-import { buildConfig, setupCommand } from './commands/setup.js';
+import { buildConfig, firstRunHint, setupCommand } from './commands/setup.js';
 
 let dir: string;
 
@@ -67,6 +67,29 @@ describe('buildConfig', () => {
       models: ['claude-3-5-sonnet'],
     });
     expect(config.defaultModel).toBe('claude-3-5-sonnet');
+  });
+});
+
+describe('first run', () => {
+  it('points an unconfigured user at setup without blocking the first turn', () => {
+    const out: string[] = [];
+    const shown = firstRunHint({
+      path: join(dir, 'missing.json'),
+      write: (text) => out.push(text),
+    });
+    expect(shown).toBe(true);
+    expect(out.join('')).toContain('larecode setup');
+  });
+
+  it('stays quiet once a config exists', () => {
+    const out: string[] = [];
+    const shown = firstRunHint({
+      path: join(dir, 'config.json'),
+      exists: () => true,
+      write: (text) => out.push(text),
+    });
+    expect(shown).toBe(false);
+    expect(out).toEqual([]);
   });
 });
 
