@@ -5,7 +5,7 @@ import { runCommand } from './commands/run.js';
 import { serveCommand } from './commands/serve.js';
 import { serveMcp } from '@larecode/server';
 import type { PermissionGroup } from '@larecode/core';
-import { mcpAdd, mcpCall, mcpList, mcpRemove } from './commands/mcp.js';
+import { mcpAdd, mcpCall, mcpList, mcpRemove, mcpTrust, mcpUntrust } from './commands/mcp.js';
 import { cronAdd, cronList, cronLogs, cronRemove, cronRun, cronStart } from './commands/cron.js';
 import { gatewayCommand } from './commands/gateway.js';
 import { updateCommand } from './commands/update.js';
@@ -241,8 +241,25 @@ mcp
   .option('--env <key=value...>', 'stdio: environment variables')
   .option('--url <url>', 'http: server URL')
   .option('--header <key=value...>', 'http: request headers')
+  .option('--allow-private', 'http: allow a private or loopback address')
   .action(async (name: string | undefined, options: Parameters<typeof mcpAdd>[1]) => {
     process.exitCode = await mcpAdd(name, options);
+  });
+
+mcp
+  .command('trust')
+  .description('Trust the current command/URL/headers/env of an MCP server')
+  .argument('<name>', 'server name')
+  .action(async (name: string) => {
+    process.exitCode = await mcpTrust(name);
+  });
+
+mcp
+  .command('untrust')
+  .description('Revoke trust for an MCP server')
+  .argument('<name>', 'server name')
+  .action(async (name: string) => {
+    process.exitCode = await mcpUntrust(name);
   });
 
 mcp

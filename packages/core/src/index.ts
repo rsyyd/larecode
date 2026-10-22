@@ -212,6 +212,8 @@ export { MCP } from './mcp/mcp.js';
 export type { MCPServerConfig, MCPTool } from './mcp/mcp.js';
 export { connectMcpTools, mcpTools } from './mcp/tools.js';
 export type { McpToolset } from './mcp/tools.js';
+export { McpTrust, mcpFingerprint, mcpTrustPath } from './mcp/trust.js';
+export type { McpTrustData, McpTrustEntry } from './mcp/trust.js';
 export { MCP_PRESETS, MCP_PRESET_NAMES } from './mcp/presets.js';
 
 export {

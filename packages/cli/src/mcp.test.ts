@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { defaultConfig, type Config, type MCPServerConfig, type MCPTool } from '@larecode/core';
+import {
+  defaultConfig,
+  type Config,
+  type MCPServerConfig,
+  type MCPTool,
+  type McpTrust,
+} from '@larecode/core';
 import {
   mcpAdd,
   mcpCall,
   mcpList,
   mcpRemove,
+  mcpTrust,
+  mcpUntrust,
   parsePairs,
   type McpConnectionLike,
   type McpDeps,
@@ -20,6 +28,7 @@ function harness(config: Config, options: { policy?: Partial<Config['permissions
   const connected: MCPServerConfig[] = [];
   const disconnected: string[] = [];
   const calls: Array<{ server: string; tool: string; args: unknown }> = [];
+  const trusted = new Set<string>();
   if (options.policy)
     config = { ...config, permissions: { ...config.permissions, ...options.policy } };
   let saved: Config | null = null;
@@ -39,6 +48,12 @@ function harness(config: Config, options: { policy?: Partial<Config['permissions
     saveConfig: (next) => {
       saved = next;
     },
+    trust: {
+      isTrusted: (server: MCPServerConfig) => trusted.has(server.name),
+      trust: (server: MCPServerConfig) => trusted.add(server.name),
+      revoke: (name: string) => trusted.delete(name),
+      read: () => ({}),
+    } as unknown as McpTrust,
     connect: async (server) => {
       connected.push(server);
       return connection;
@@ -53,6 +68,7 @@ function harness(config: Config, options: { policy?: Partial<Config['permissions
     connected,
     disconnected,
     calls,
+    trusted,
     get saved() {
       return saved;
     },
@@ -100,6 +116,15 @@ describe('mcp add/remove/list', () => {
       url: 'https://example.com/mcp',
       headers: { Authorization: 'Bearer x' },
     });
+    expect(ui.out.join('')).toContain('next: larecode mcp trust remote');
+  });
+
+  it('records an explicit private-address allowance', async () => {
+    const ui = harness(configOf());
+    expect(
+      await mcpAdd('local', { url: 'http://127.0.0.1:3000/mcp', allowPrivate: true }, ui.deps)
+    ).toBe(0);
+    expect(ui.saved?.mcpServers.local?.allowPrivate).toBe(true);
   });
 
   it('rejects invalid combinations', async () => {
@@ -136,9 +161,27 @@ describe('mcp add/remove/list', () => {
 
   it('removes a configured server and rejects unknown names', async () => {
     const ui = harness(configOf({ fake: { name: 'fake', transport: 'stdio', command: 'node' } }));
+    ui.trusted.add('fake');
     expect(await mcpRemove('ghost', ui.deps)).toBe(1);
     expect(await mcpRemove('fake', ui.deps)).toBe(0);
     expect(ui.saved?.mcpServers).toEqual({});
+    expect(ui.trusted.size).toBe(0);
+  });
+
+  it('trusts and untrusts the current server fingerprint', async () => {
+    const ui = harness(
+      configOf({
+        fake: { name: 'fake', transport: 'stdio', command: 'node', env: { TOKEN: 'x' } },
+      })
+    );
+    expect(await mcpTrust('ghost', ui.deps)).toBe(1);
+    expect(ui.err.join('')).toContain('unknown mcp server: ghost');
+    expect(await mcpTrust('fake', ui.deps)).toBe(0);
+    expect(ui.trusted.has('fake')).toBe(true);
+    expect(await mcpUntrust('fake', ui.deps)).toBe(0);
+    expect(ui.trusted.has('fake')).toBe(false);
+    expect(await mcpUntrust('fake', ui.deps)).toBe(0);
+    expect(ui.out.join('')).toContain('was not trusted');
   });
 
   it('lists configured servers', async () => {

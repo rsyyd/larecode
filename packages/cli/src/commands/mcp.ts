@@ -3,6 +3,7 @@ import {
   MCP,
   MCP_PRESETS,
   MCP_PRESET_NAMES,
+  McpTrust,
   Permissions,
   configPath,
   loadConfig,
@@ -25,6 +26,7 @@ export interface McpDeps {
   saveConfig?: (config: Config) => void;
   permissions?: (config: Config) => Permissions;
   connect?: (server: MCPServerConfig) => Promise<McpConnectionLike>;
+  trust?: McpTrust;
   write?: (text: string) => void;
   writeError?: (text: string) => void;
 }
@@ -36,6 +38,7 @@ export interface McpAddOptions {
   url?: string;
   header?: string[];
   preset?: string;
+  allowPrivate?: boolean;
 }
 
 export interface McpCallOptions {
@@ -59,6 +62,7 @@ function resolveDeps(deps: McpDeps) {
     effectiveConfig: deps.effectiveConfig ?? (() => loadEffectiveConfig()),
     saveConfig: deps.saveConfig ?? ((config: Config) => saveConfigFile(config, configPath())),
     permissions: deps.permissions ?? ((config: Config) => new Permissions(config.permissions)),
+    trust: deps.trust ?? new McpTrust(),
     connect:
       deps.connect ??
       (async (server: MCPServerConfig) => {
@@ -88,7 +92,10 @@ export async function mcpList(deps: McpDeps = {}): Promise<number> {
   for (const name of names) {
     const server = config.mcpServers[name];
     const transport = server.transport ?? (server.url ? 'http' : 'stdio');
-    resolved.write(`${name.padEnd(20)} ${transport.padEnd(6)} ${transportTarget(server)}\n`);
+    const trusted = resolved.trust.isTrusted(server) ? 'trusted' : 'untrusted';
+    resolved.write(
+      `${name.padEnd(20)} ${transport.padEnd(6)} ${trusted.padEnd(9)} ${transportTarget(server)}\n`
+    );
   }
   return 0;
 }
@@ -116,6 +123,7 @@ export async function mcpAdd(
     config.mcpServers = { ...config.mcpServers, [serverName]: { name: serverName, ...preset } };
     resolved.saveConfig(config);
     resolved.write(`added mcp server "${serverName}" (${options.preset} preset)\n`);
+    resolved.write(`next: larecode mcp trust ${serverName}\n`);
     return 0;
   }
   if (!name) {
@@ -141,6 +149,7 @@ export async function mcpAdd(
         name,
         transport: 'http',
         url: options.url,
+        ...(options.allowPrivate ? { allowPrivate: true } : {}),
         ...(Object.keys(headers).length > 0 ? { headers } : {}),
       }
     : {
@@ -154,6 +163,7 @@ export async function mcpAdd(
   config.mcpServers = { ...config.mcpServers, [name]: server };
   resolved.saveConfig(config);
   resolved.write(`added mcp server "${name}"\n`);
+  resolved.write(`next: larecode mcp trust ${name}\n`);
   return 0;
 }
 
@@ -168,7 +178,30 @@ export async function mcpRemove(name: string, deps: McpDeps = {}): Promise<numbe
   delete remaining[name];
   config.mcpServers = remaining;
   resolved.saveConfig(config);
+  resolved.trust.revoke(name);
   resolved.write(`removed mcp server "${name}"\n`);
+  return 0;
+}
+
+export async function mcpTrust(name: string, deps: McpDeps = {}): Promise<number> {
+  const resolved = resolveDeps(deps);
+  const entry = resolved.effectiveConfig().mcpServers?.[name];
+  if (!entry) {
+    resolved.writeError(`unknown mcp server: ${name}\n`);
+    return 1;
+  }
+  resolved.trust.trust({ ...entry, name });
+  resolved.write(`trusted mcp server "${name}"\n`);
+  return 0;
+}
+
+export async function mcpUntrust(name: string, deps: McpDeps = {}): Promise<number> {
+  const resolved = resolveDeps(deps);
+  if (!resolved.trust.revoke(name)) {
+    resolved.write(`mcp server "${name}" was not trusted\n`);
+    return 0;
+  }
+  resolved.write(`revoked trust for mcp server "${name}"\n`);
   return 0;
 }
 

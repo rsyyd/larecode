@@ -1,17 +1,20 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MCP } from './mcp.js';
 import { connectMcpTools, mcpTools } from './tools.js';
+import { McpTrust } from './trust.js';
 import { Tools, type ToolContext } from '../tool/tool.js';
 import { Logger } from '../logger/logger.js';
 import { Permissions, type PermissionPolicy } from '../permission/permission.js';
 
 const FAKE_SERVER = `
 const { stdin, stdout } = process;
+if (process.env.MCP_MARKER) require('node:fs').writeFileSync(process.env.MCP_MARKER, 'started');
 let buffer = '';
 function send(message) {
   stdout.write(JSON.stringify(message) + '\\n');
@@ -260,7 +263,7 @@ describe('mcp client (http)', () => {
     const port = (server.address() as AddressInfo).port;
     url = `http://127.0.0.1:${port}/mcp`;
     mcp = new MCP({ logger: quiet() });
-    await mcp.connect({ name: 'fake-http', transport: 'http', url });
+    await mcp.connect({ name: 'fake-http', transport: 'http', url, allowPrivate: true });
   });
 
   afterEach(async () => {
@@ -286,6 +289,15 @@ describe('mcp client (http)', () => {
       code: 'MCP_TOOL_FAILED',
       message: expect.stringContaining('tool blew up'),
     });
+  });
+});
+
+describe('mcp http address policy', () => {
+  it('blocks private addresses unless the server explicitly allows them', async () => {
+    const mcp = new MCP({ logger: quiet() });
+    await expect(
+      mcp.connect({ name: 'local', transport: 'http', url: 'http://127.0.0.1:9/mcp' })
+    ).rejects.toThrow(/private network/);
   });
 });
 
@@ -392,5 +404,33 @@ describe('connectMcpTools', () => {
     expect(set.connected).toEqual(['fake']);
     expect(set.tools.map((tool) => tool.name)).toEqual(['mcp_fake_echo']);
     await set.close();
+  });
+
+  it('does not spawn a server until its exact config is trusted', async () => {
+    const trust = new McpTrust(join(dir, 'trust.json'));
+    const config = {
+      name: 'fake',
+      transport: 'stdio' as const,
+      command: process.execPath,
+      args: [join(dir, 'server.cjs')],
+      env: { MCP_MARKER: join(dir, 'untrusted.marker') },
+    };
+    const skipped = await connectMcpTools({ fake: config }, { logger: quiet(), trust });
+    expect(skipped.connected).toEqual([]);
+    expect(existsSync(join(dir, 'untrusted.marker'))).toBe(false);
+    await skipped.close();
+
+    trust.trust(config);
+    config.env.MCP_MARKER = join(dir, 'trusted.marker');
+    const stillSkipped = await connectMcpTools({ fake: config }, { logger: quiet(), trust });
+    expect(stillSkipped.connected).toEqual([]);
+    expect(existsSync(join(dir, 'trusted.marker'))).toBe(false);
+    await stillSkipped.close();
+
+    trust.trust(config);
+    const connected = await connectMcpTools({ fake: config }, { logger: quiet(), trust });
+    expect(connected.connected).toEqual(['fake']);
+    expect(existsSync(join(dir, 'trusted.marker'))).toBe(true);
+    await connected.close();
   });
 });
