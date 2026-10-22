@@ -2,6 +2,7 @@ import { LareError } from '../error/error.js';
 import { defaultLogger, type Logger } from '../logger/logger.js';
 import type { Tool, ToolSchema } from '../tool/tool.js';
 import { MCP, type MCPTool, type MCPServerConfig } from './mcp.js';
+import type { McpTrust } from './trust.js';
 
 function toToolSchema(schema: Record<string, unknown>): ToolSchema {
   const properties: ToolSchema['properties'] = {};
@@ -54,7 +55,7 @@ export interface McpToolset {
 
 export async function connectMcpTools(
   servers: Record<string, MCPServerConfig> | undefined,
-  options: { logger?: Logger } = {}
+  options: { logger?: Logger; trust?: McpTrust } = {}
 ): Promise<McpToolset> {
   const logger = options.logger ?? defaultLogger;
   const mcp = new MCP({ logger });
@@ -62,8 +63,15 @@ export async function connectMcpTools(
   const tools: Tool[] = [];
 
   for (const [name, server] of Object.entries(servers ?? {})) {
+    const config = { ...server, name };
+    if (options.trust && !options.trust.isTrusted(config)) {
+      logger.warn('mcp server not trusted; run `larecode mcp trust ' + name + '`', {
+        server: name,
+      });
+      continue;
+    }
     try {
-      await mcp.connect({ ...server, name });
+      await mcp.connect(config);
       connected.push(name);
       tools.push(...(await mcpTools(mcp, name)));
     } catch (error) {

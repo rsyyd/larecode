@@ -3,6 +3,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { LareError, type ErrorCode } from '../error/error.js';
 import { defaultLogger, type Logger } from '../logger/logger.js';
+import { assertPublicHttpUrl } from '../tool/web.js';
 import { VERSION } from '../version.js';
 
 export interface MCPServerConfig {
@@ -13,6 +14,7 @@ export interface MCPServerConfig {
   env?: Record<string, string>;
   url?: string;
   headers?: Record<string, string>;
+  allowPrivate?: boolean;
 }
 
 export interface MCPTool {
@@ -73,7 +75,7 @@ export class MCP {
     this.servers.set(config.name, config);
     const client = new Client(CLIENT_INFO, { capabilities: {} });
     try {
-      await client.connect(this.createTransport(config));
+      await client.connect(await this.createTransport(config));
     } catch (error) {
       await client.close().catch(() => {});
       throw wrapMcpError('MCP_CONNECTION_FAILED', error, { server: config.name });
@@ -132,14 +134,15 @@ export class MCP {
     return text;
   }
 
-  private createTransport(
+  private async createTransport(
     config: MCPServerConfig
-  ): StdioClientTransport | StreamableHTTPClientTransport {
+  ): Promise<StdioClientTransport | StreamableHTTPClientTransport> {
     if (transportOf(config) === 'http') {
       if (!config.url) {
         throw new LareError('MCP_CONNECTION_FAILED', `server "${config.name}" has no url`);
       }
-      return new StreamableHTTPClientTransport(new URL(config.url), {
+      const url = config.allowPrivate ? new URL(config.url) : await assertPublicHttpUrl(config.url);
+      return new StreamableHTTPClientTransport(url, {
         requestInit: config.headers ? { headers: config.headers } : undefined,
       });
     }

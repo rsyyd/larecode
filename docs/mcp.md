@@ -10,16 +10,30 @@ Lare Code speaks the Model Context Protocol in both directions.
 
 ## As a client
 
-Add servers with commands or URLs and call their tools with an explicit permission check:
+Add servers with commands or URLs, trust the exact configuration, then call their tools with an explicit permission check:
 
 ```bash
 larecode mcp add context7 --preset context7
 larecode mcp add local-tools --command npx --arg -y --arg my-mcp-server
+larecode mcp trust local-tools
 larecode mcp list
 larecode mcp call context7 resolve-library-id --args '{"libraryName":"express"}'
 ```
 
 Presets cover `context7`, `playwright`, and `serena`. Calls check the `external-services` group; if your policy requires confirmation, re-run with `--yes`.
+
+### Trust model
+
+Adding a server writes configuration; it does not execute anything. The first time a server would start, `chat` checks a SHA-256 fingerprint of its name, transport, command, arguments, URL, headers, environment, and private-address allowance against `~/.larecode/mcp-trust.json` (0600).
+
+- No matching fingerprint: the server is skipped with a warning. Run `larecode mcp trust <name>` after reading the config.
+- Any later change to that configuration invalidates the fingerprint, including a changed header or environment value. Trust it again explicitly.
+- `larecode mcp untrust <name>` revokes trust; `mcp remove` revokes it too.
+- `mcp list` marks each server `trusted` or `untrusted`.
+
+HTTP servers must use a public address. A loopback, link-local, or private address (including `169.254.169.254`) is rejected unless the server sets `"allowPrivate": true`; `mcp add --url ... --allow-private` records that explicitly. Prefer stdio for local servers.
+
+Environment values and headers are never copied into the trust file, only their hash. Keep secrets in the config file, which is written `0600`.
 
 ## As a server
 
