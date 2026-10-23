@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config } from '@larecode/core';
 import { buildConfig, firstRunHint, setupCommand } from './commands/setup.js';
 
@@ -166,5 +166,29 @@ describe('setupCommand', () => {
     const written = JSON.parse(await readFile(path, 'utf8')) as Config;
     expect(written.defaultProvider).toBe('ollama');
     expect(out.join('')).toContain('ollama');
+  });
+
+  it('runs the interactive prompts in Indonesian with locale id', async () => {
+    const path = join(dir, 'config.json');
+    const { out, write } = harness();
+    const questions: string[] = [];
+    const answers = ['', '', ''];
+    const ask = async (question: string, fallback?: string): Promise<string> => {
+      questions.push(`${question}${fallback ? `[${fallback}]` : ''}`);
+      return answers.shift() ?? '';
+    };
+    await setupCommand({}, { path, write, ask, locale: 'id' });
+    expect(questions[0]).toContain('Provider [1] OpenAI-compatible');
+    expect(questions.join('')).toContain('API key (kosongkan untuk diisi nanti)');
+    expect(out.join('')).toContain('menulis');
+    expect(out.join('')).toContain('lanjut: larecode doctor');
+  });
+
+  it('honors LARECODE_LOCALE for the first-run hint', () => {
+    vi.stubEnv('LARECODE_LOCALE', 'id');
+    const out: string[] = [];
+    firstRunHint({ path: join(dir, 'missing.json'), write: (text) => out.push(text) });
+    expect(out.join('')).toContain('tidak ada konfigurasi');
+    expect(out.join('')).toContain('`larecode setup`');
   });
 });

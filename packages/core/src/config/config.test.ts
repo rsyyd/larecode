@@ -8,6 +8,7 @@ import {
   loadEffectiveConfig,
   saveConfig,
   validateConfig,
+  type Config,
 } from './config.js';
 
 let home: string;
@@ -95,6 +96,14 @@ describe('config', () => {
 
   it('passes validation for a healthy config', () => {
     expect(validateConfig(defaultConfig())).toEqual([]);
+  });
+
+  it('accepts only en and id locales', () => {
+    const config = defaultConfig();
+    config.locale = 'id';
+    expect(validateConfig(config)).toEqual([]);
+    config.locale = 'fr' as Config['locale'];
+    expect(validateConfig(config)).toEqual([`locale "fr" is not one of en, id`]);
   });
 
   it('flags incomplete execution backends', () => {

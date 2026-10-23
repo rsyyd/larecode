@@ -34,7 +34,8 @@ Set `LARECODE_HOME` to move the global directory (used by tests and sandboxes).
   },
   "mcpServers": {},
   "execution": { "backend": "local" },
-  "checkpoints": false
+  "checkpoints": false,
+  "locale": "en"
 }
 ```
 
@@ -43,6 +44,8 @@ The `version` field tracks the CLI that wrote the file. The config file is writt
 ```bash
 larecode setup --provider openai --base-url https://api.openai.com/v1 --api-key sk-... --model gpt-4o
 ```
+
+`locale` sets the interface language for first-run and setup messages, `en` (default) or `id` for Indonesian. `LARECODE_LOCALE` overrides it for one command. The agent's tools and the TUI chat surface stay in English.
 
 It refuses to overwrite an existing config unless you pass `--force`.
 

@@ -1,4 +1,6 @@
 export { VERSION } from './version.js';
+export { LOCALES, resolveLocale, t } from './i18n.js';
+export type { Locale, MessageKey } from './i18n.js';
 
 export type { HaltReason } from './agent/loop.js';
 export { ChatSession } from './agent/chat.js';
