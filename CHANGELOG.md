@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- TUI markdown and fenced code rendering with ANSI stripping; unified diffs are colored and long tool panels compact with a hidden-line count.
+- TUI `/search`, `/copy`, and `/export` commands, plus an `@` file picker that skips generated directories.
+- TUI `/sessions <query>` filters the session browser by title or id.
+- `larecode completion bash|zsh|fish` shell completion.
+
 ## [0.3.0] - 2026-10-22
 
 ### Added
