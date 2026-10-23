@@ -3,9 +3,12 @@ import { createInterface } from 'node:readline/promises';
 import {
   configPath,
   loadConfig,
+  resolveLocale,
   saveConfig,
+  t,
   validateConfig,
   type Config,
+  type Locale,
   type ProviderConfig,
 } from '@larecode/core';
 
@@ -18,15 +21,15 @@ export function firstRunHint(
     path?: string;
     exists?: (path: string) => boolean;
     write?: (text: string) => void;
+    locale?: Locale;
   } = {}
 ): boolean {
   const path = options.path ?? configPath();
   const exists = options.exists ?? existsSync;
   const write = options.write ?? ((text: string) => process.stderr.write(text));
   if (exists(path)) return false;
-  write(
-    `larecode: no config at ${path}; using built-in defaults. Run \`larecode setup\` to choose a provider.\n`
-  );
+  const locale = options.locale ?? resolveLocale();
+  write(`${t(locale, 'firstRun.noConfig', { path })}\n`);
   return true;
 }
 
@@ -44,6 +47,7 @@ export interface SetupDeps {
   write?: (text: string) => void;
   exists?: (path: string) => boolean;
   ask?: (question: string, fallback?: string) => Promise<string>;
+  locale?: Locale;
 }
 
 const SETUP_PRESETS = [
@@ -86,22 +90,22 @@ const SETUP_PRESETS = [
 ] as const;
 
 async function runPrompts(
-  ask: (question: string, fallback?: string) => Promise<string>
+  ask: (question: string, fallback?: string) => Promise<string>,
+  locale: Locale
 ): Promise<SetupOptions> {
   const askValue = async (label: string, fallback = ''): Promise<string> => {
     const answer = (await ask(label, fallback)).trim();
     return answer || fallback;
   };
   const options = SETUP_PRESETS.map((preset, index) => `[${index + 1}] ${preset.label}`).join(', ');
-  const choice = (await askValue(`Provider ${options}`, '1')).toLowerCase();
+  const choice = (await askValue(t(locale, 'setup.provider', { options }), '1')).toLowerCase();
   const preset =
     SETUP_PRESETS.find(
       (candidate, index) => String(index + 1) === choice || candidate.type === choice
     ) ?? SETUP_PRESETS[0];
-  const baseUrl = await askValue('Base URL', preset.baseUrl);
-  const model = await askValue('Model', preset.model);
-  const apiKey =
-    preset.type === 'ollama' ? '' : await askValue('API key (leave empty to set later)');
+  const baseUrl = await askValue(t(locale, 'setup.baseUrl'), preset.baseUrl);
+  const model = await askValue(t(locale, 'setup.model'), preset.model);
+  const apiKey = preset.type === 'ollama' ? '' : await askValue(t(locale, 'setup.apiKey'));
   return {
     provider: preset.type,
     type: preset.type,
@@ -111,14 +115,14 @@ async function runPrompts(
   };
 }
 
-async function interactiveSetup(deps: SetupDeps): Promise<SetupOptions> {
-  if (deps.ask) return runPrompts(deps.ask);
+async function interactiveSetup(deps: SetupDeps, locale: Locale): Promise<SetupOptions> {
+  if (deps.ask) return runPrompts(deps.ask, locale);
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
     return await runPrompts((question, fallback = '') => {
       const suffix = fallback ? ` [${fallback}]` : '';
       return rl.question(`${question}${suffix}: `).then((answer) => answer.trim() || fallback);
-    });
+    }, locale);
   } finally {
     rl.close();
   }
@@ -178,9 +182,11 @@ export async function setupCommand(options: SetupOptions, deps: SetupDeps = {}):
   const path = deps.path ?? configPath();
   const write = deps.write ?? ((text: string) => process.stdout.write(text));
   const exists = deps.exists ?? existsSync;
+  const loaded = loadConfig(path);
+  const locale = deps.locale ?? resolveLocale(loaded.locale);
 
   if (exists(path) && !options.force) {
-    write(`${bad('setup:')} ${path} already exists (use --force to overwrite)\n`);
+    write(`${bad('setup:')} ${t(locale, 'setup.exists', { path })}\n`);
     process.exitCode = 1;
     return;
   }
@@ -194,9 +200,8 @@ export async function setupCommand(options: SetupOptions, deps: SetupDeps = {}):
   const canPrompt =
     deps.ask !== undefined ||
     (!process.env.VITEST && process.stdin.isTTY === true && process.stdout.isTTY === true);
-  const effective = !hasChoices && canPrompt ? await interactiveSetup(deps) : options;
+  const effective = !hasChoices && canPrompt ? await interactiveSetup(deps, locale) : options;
 
-  const loaded = loadConfig(path);
   const base = exists(path) ? loaded : { ...loaded, providers: {} };
 
   let built: ReturnType<typeof buildConfig>;
@@ -210,16 +215,18 @@ export async function setupCommand(options: SetupOptions, deps: SetupDeps = {}):
   const { config, provider, model } = built;
   const problems = validateConfig(config);
   if (problems.length > 0) {
-    write(`${bad('setup:')} invalid configuration\n`);
+    write(`${bad('setup:')} ${t(locale, 'setup.invalid')}\n`);
     for (const problem of problems) write(`  ${bad('×')} ${problem}\n`);
     process.exitCode = 1;
     return;
   }
   saveConfig(config, path);
 
-  write(`${ok('✓')} wrote ${path}\n`);
-  write(`  provider        ${provider} (${config.providers[provider].type})\n`);
-  write(`  base url        ${config.providers[provider].baseUrl}\n`);
-  write(`  model           ${model}\n`);
-  write(`\n${dim('next: larecode doctor && larecode run "explain this repository"')}\n`);
+  write(`${ok('✓')} ${t(locale, 'setup.wrote', { path })}\n`);
+  write(
+    `  ${t(locale, 'setup.providerLabel')}        ${provider} (${config.providers[provider].type})\n`
+  );
+  write(`  ${t(locale, 'setup.baseUrlLabel')}        ${config.providers[provider].baseUrl}\n`);
+  write(`  ${t(locale, 'setup.modelLabel')}           ${model}\n`);
+  write(`\n${dim(t(locale, 'setup.next'))}\n`);
 }

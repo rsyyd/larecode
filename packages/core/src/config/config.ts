@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync, chmodSync, existsSync } from 'n
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { VERSION } from '../version.js';
+import { LOCALES, type Locale } from '../i18n.js';
 import type { PermissionPolicy } from '../permission/permission.js';
 import type { MCPServerConfig } from '../mcp/mcp.js';
 import type { ExecutionConfig } from '../exec/backend.js';
@@ -45,6 +46,7 @@ export interface Config {
   execution?: ExecutionConfig;
   context?: ContextConfig;
   webSearch?: WebSearchConfig;
+  locale?: Locale;
   fallbacks?: FallbackTarget[];
   checkpoints?: boolean;
 }
@@ -140,6 +142,9 @@ export function validateConfig(config: Config): string[] {
   }
   if (!['ask', 'allow', 'deny'].includes(config.permissions.mode)) {
     problems.push(`permission mode "${config.permissions.mode}" is not one of ask, allow, deny`);
+  }
+  if (config.locale !== undefined && !LOCALES.includes(config.locale)) {
+    problems.push(`locale "${config.locale}" is not one of en, id`);
   }
   for (const [name, entry] of Object.entries(config.providers)) {
     if (!entry.baseUrl) problems.push(`provider "${name}" has no baseUrl`);
