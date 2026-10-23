@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -241,4 +242,38 @@ describe('lsp tool', () => {
     expect(output.unavailable).toBe(true);
     expect(output.reason).toContain('no language server configured');
   });
+});
+
+const CLANGD =
+  process.env.LARECODE_LSP_SMOKE === '1' &&
+  spawnSync('clangd', ['--version'], { timeout: 5000 }).status === 0;
+
+describe.skipIf(!CLANGD)('clangd integration', () => {
+  let clangdDir: string;
+  let clangd: LSP;
+
+  beforeEach(async () => {
+    clangdDir = await mkdtemp(join(tmpdir(), 'lare-clangd-'));
+    await writeFile(join(clangdDir, 'main.c'), 'int add(int a, int b) {\n  return a + b;\n}\n');
+    clangd = new LSP({
+      command: 'clangd',
+      args: ['--background-index=false'],
+      rootDir: clangdDir,
+      logger: quiet(),
+      requestTimeoutMs: 30_000,
+    });
+  });
+
+  afterEach(async () => {
+    await clangd.stop();
+    await rm(clangdDir, { recursive: true, force: true });
+  });
+
+  it('returns document symbols from a real clangd', async () => {
+    const symbols = await clangd.symbols('main.c');
+    const add = symbols.find((symbol) => symbol.name === 'add');
+    expect(add?.kind).toBe('function');
+    expect(add?.file).toBe('main.c');
+    expect(add?.line).toBe(1);
+  }, 60_000);
 });
