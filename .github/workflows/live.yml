@@ -1,0 +1,28 @@
+name: Live smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: OpenAI-compatible base URL
+        required: false
+      model:
+        description: Model id
+        required: false
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+      - run: bun install --frozen-lockfile
+      - name: Complete one real provider request
+        run: bun run test:live
+        env:
+          LARECODE_LIVE_SMOKE: '1'
+          LARECODE_LIVE_BASE_URL: ${{ inputs.base_url || secrets.LIVE_BASE_URL }}
+          LARECODE_LIVE_MODEL: ${{ inputs.model || secrets.LIVE_MODEL }}
+          LARECODE_LIVE_API_KEY: ${{ secrets.LIVE_API_KEY }}

@@ -12,6 +12,7 @@
     "test:coverage": "node ./node_modules/vitest/vitest.mjs run --coverage",
     "test:tmux": "LARECODE_TMUX=1 vitest run scripts/tmux.test.ts",
     "test:perf": "vitest run scripts/perf.test.ts",
+    "test:live": "vitest run scripts/live-smoke.test.ts",
     "test:security": "vitest run packages/core/src/permission packages/core/src/exec/backend.test.ts packages/core/src/mcp packages/core/src/context/instructions.test.ts packages/core/src/skill packages/core/src/tool/files.test.ts packages/server/src/server.test.ts packages/gateway/src/telegram.test.ts packages/cli/src/cron.test.ts packages/cli/src/verify.test.ts packages/cli/src/install.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",

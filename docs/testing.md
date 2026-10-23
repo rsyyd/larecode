@@ -80,11 +80,13 @@ The Vitest 4 V8 provider counts implicit branches and functions more granularly 
 
 `bun run test:perf` indexes 300 generated TypeScript files and fails above 15 seconds or 256 MB of heap growth. The budget is intentionally loose so shared CI runners do not flake; it catches order-of-magnitude regressions, not small ones. Run it locally before changing the context indexer.
 
+`bun run test:live` makes one real OpenAI-compatible request. It skips unless `LARECODE_LIVE_SMOKE=1`, `LARECODE_LIVE_BASE_URL`, `LARECODE_LIVE_MODEL`, and `LARECODE_LIVE_API_KEY` are set. The **Live smoke** GitHub workflow is manual and reads `LIVE_BASE_URL`, `LIVE_MODEL`, and `LIVE_API_KEY` from repository secrets, so the default CI never needs a provider key.
+
 ## Manual checks
 
 These are not in CI:
 
-- A live provider turn with your own key (`larecode doctor`, then `larecode run "say hi"`).
+- A streaming TUI turn against a real provider; `test:live` covers the non-streaming provider boundary only.
 - Termux on Android; the tmux smoke test runs on Ubuntu CI but not inside Termux. Repeat `--version`, `doctor`, and one turn manually before a release.
 - Windows through the npm package. CI runs a typecheck and CLI smoke test on `windows-latest`, but not the full suite; the TUI target is WSL.
 
