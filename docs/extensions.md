@@ -30,6 +30,16 @@ Searched in order:
 
 Project skills are untrusted input. They start as `pending`; the first load asks for consent and records the file hash in `~/.larecode/skill-consent.json`. Editing the file revokes consent, and loading asks again. The catalog is capped at 1,200 characters; a loaded body is capped at 8,000. The model can only load a skill body through the `skill` tool, which checks the `skills` permission group.
 
+### Authoring from a session
+
+After a session with at least four turns and three tool calls, turn it into a starting point:
+
+```bash
+larecode skill author <session-id>
+```
+
+The selected model drafts a name, description, and body from the transcript, and the command writes `.larecode/skills/<name>/SKILL.md` with `state: draft`. The draft is not trusted or loaded automatically until you review it and mark it active; the normal skill consent flow still applies.
+
 ## Subagents
 
 The `task` tool runs an isolated agent loop with its own budget:

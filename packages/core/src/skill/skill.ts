@@ -37,6 +37,7 @@ export interface DiscoveredSkill {
   name: string;
   description: string;
   version: string;
+  state: SkillState;
   dir: string;
   path: string;
   hash: string;
@@ -114,7 +115,10 @@ export function discoverSkills(
       const parsed = parseSkillFile(content);
       const name = parsed?.frontmatter.name;
       const description = parsed?.frontmatter.description;
-      if (!parsed || !name || !description) continue;
+      const rawState = parsed?.frontmatter.state;
+      const state: SkillState =
+        rawState === 'draft' || rawState === 'disabled' ? rawState : 'active';
+      if (!parsed || !name || !description || state === 'disabled') continue;
       if (byName.has(name)) continue;
       const hash = createHash('sha256').update(content).digest('hex');
       const known = consent[resolve(path)];
@@ -129,6 +133,7 @@ export function discoverSkills(
         name,
         description,
         version: parsed.frontmatter.version ?? '0.0.0',
+        state,
         dir: join(dir, entry.name),
         path,
         hash,
@@ -167,7 +172,9 @@ export class Skills {
     });
     this.skills.clear();
     for (const skill of this.discovered) {
-      if (skill.status === 'active') this.skills.set(skill.name, skill);
+      if (skill.status === 'active' && skill.state === 'active') {
+        this.skills.set(skill.name, skill);
+      }
     }
     return this.discovered;
   }
@@ -220,9 +227,11 @@ export class Skills {
       const stale = this.discovered.find((entry) => entry.name === name);
       const reason = !stale
         ? `skill "${name}" not found`
-        : stale.status === 'pending'
-          ? `skill "${name}" is pending approval`
-          : `skill "${name}" changed on disk; re-approval required`;
+        : stale.state === 'draft'
+          ? `skill "${name}" is a draft; review it and set state: active`
+          : stale.status === 'pending'
+            ? `skill "${name}" is pending approval`
+            : `skill "${name}" changed on disk; re-approval required`;
       throw new LareError('SKILL_LOAD_FAILED', reason, { context: { skill: name } });
     }
     const content = readFileSync(skill.path, 'utf8');
@@ -242,7 +251,7 @@ export class Skills {
 
   approve(name: string): boolean {
     const skill = this.discovered.find((entry) => entry.name === name);
-    if (!skill || skill.bundled) return false;
+    if (!skill || skill.bundled || skill.state !== 'active') return false;
     consentToSkill(skill.path, this.consentFile);
     this.refresh();
     return this.skills.has(name);

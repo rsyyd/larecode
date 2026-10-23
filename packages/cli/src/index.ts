@@ -14,6 +14,7 @@ import { acpCommand } from './commands/acp.js';
 import { chatCommand } from './commands/chat.js';
 import { debugCommand, feedbackCommand, usageCommand } from './commands/diagnostics.js';
 import { completionCommand } from './commands/completion.js';
+import { skillAuthorCommand } from './commands/skill.js';
 import { auditLogCommand, auditVerifyCommand } from './commands/audit.js';
 import {
   sessionsExportCommand,
@@ -206,6 +207,19 @@ sessions
   .argument('<id>', 'session id')
   .action((id: string) => {
     process.exitCode = sessionsRmCommand(id);
+  });
+
+const skill = program.command('skill').description('Author reusable skills from saved sessions');
+
+skill
+  .command('author')
+  .description('Turn a complex session into a draft skill')
+  .argument('<session-id>', 'session id')
+  .option('--provider <name>', 'provider to use for the summary')
+  .option('--model <name>', 'model to use for the summary')
+  .option('--json', 'print the skill name and path as JSON')
+  .action(async (id: string, options: { provider?: string; model?: string; json?: boolean }) => {
+    process.exitCode = await skillAuthorCommand(id, options);
   });
 
 program

@@ -13,6 +13,7 @@ const COMMANDS = [
   'serve',
   'sessions',
   'setup',
+  'skill',
   'update',
   'usage',
 ];
