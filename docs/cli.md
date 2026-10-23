@@ -20,17 +20,23 @@ larecode chat [options]
 --resume <id>      resume a saved session
 ```
 
-Each turn is saved to the session store under `~/.larecode/sessions`, and `--resume <id>` restores the conversation and its provider history. Inside the UI, Enter sends, Ctrl+J adds a newline, Esc stops a reply, Tab switches between plan and build, PgUp/PgDn scrolls the conversation, `/clear` resets the conversation, and Ctrl+C exits. Tools that need approval show a `y/n` prompt. Prefix a message with `@general ` to delegate read-only research to the general subagent.
+Each turn is saved to the session store under `~/.larecode/sessions`, and `--resume <id>` restores the conversation and its provider history. Inside the UI, Enter sends, Ctrl+J adds a newline, Esc stops a reply, Tab switches between plan and build, PgUp/PgDn scrolls the conversation, `/clear` resets the conversation, and Ctrl+C exits. Tools that need approval show a `y/n` prompt. Prefix a message with `@general ` to delegate read-only research to the general subagent. Type `@` and part of a filename to pick a project file. `/search <text>` jumps to a match, `/copy` copies the last answer, and `/export [file]` writes the transcript as markdown.
 
 ## larecode sessions
 
 Manage saved chat sessions.
 
 ```text
+larecode sessions list [--json]
+larecode sessions show <id> [--json]
+larecode sessions search <query> [--json] [--limit <n>]
+larecode sessions export <id> [--format json|markdown]
+larecode sessions rewind <id> <count> [--yes]
+larecode sessions prune [--older-than <days>] [--keep <n>] [--json]
 larecode sessions rm <id>
 ```
 
-`rm` deletes the session, its checkpoints, and any share links that point at it. Session ids are the file names under `~/.larecode/sessions`.
+`show` prints a transcript, `search` matches across saved transcripts, and `export` writes a redacted copy. `rewind` truncates to an earlier message count and requires `--yes` before dropping messages. `prune` deletes by age or keeps only the newest count. `rm` deletes the session, its checkpoints, and any share links that point at it. Session ids are the file names under `~/.larecode/sessions`.
 
 ## larecode setup
 
@@ -147,6 +153,18 @@ Check for a newer larecode release.
 ```text
 --check  report without upgrade instructions
 ```
+
+## larecode completion
+
+Print a completion script for your shell. Add it to your shell profile or source it directly.
+
+```bash
+larecode completion bash >> ~/.bashrc
+larecode completion zsh > "${fpath[1]}/_larecode"
+larecode completion fish > ~/.config/fish/completions/larecode.fish
+```
+
+Supported shells: `bash`, `zsh`, and `fish`. The script completes top-level commands and the `sessions`, `mcp`, and `cron` subcommands.
 
 ## larecode acp
 

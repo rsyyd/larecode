@@ -32,6 +32,9 @@ describe('filterCommands', () => {
       '/theme',
       '/model',
       '/context',
+      '/search',
+      '/copy',
+      '/export',
       '/exit',
     ]);
   });

@@ -1,0 +1,56 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`markdown rendering > marks unified diff lines and leaves prose alone 1`] = `
+[
+  {
+    "code": false,
+    "diff": "meta",
+    "spans": [
+      {
+        "kind": "text",
+        "text": "--- a/file.ts",
+      },
+    ],
+  },
+  {
+    "code": false,
+    "diff": "meta",
+    "spans": [
+      {
+        "kind": "text",
+        "text": "+++ b/file.ts",
+      },
+    ],
+  },
+  {
+    "code": false,
+    "diff": "meta",
+    "spans": [
+      {
+        "kind": "text",
+        "text": "@@ -1 +1 @@",
+      },
+    ],
+  },
+  {
+    "code": false,
+    "diff": "remove",
+    "spans": [
+      {
+        "kind": "text",
+        "text": "-old",
+      },
+    ],
+  },
+  {
+    "code": false,
+    "diff": "add",
+    "spans": [
+      {
+        "kind": "text",
+        "text": "+new",
+      },
+    ],
+  },
+]
+`;

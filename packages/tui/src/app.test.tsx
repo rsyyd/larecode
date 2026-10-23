@@ -1,4 +1,7 @@
 import { render } from 'ink-testing-library';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import type { UsageAggregate } from '@larecode/core';
 import { App } from './app.js';
@@ -14,6 +17,96 @@ describe('App', () => {
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Ask anything');
     expect(frame).toContain('Plan · test-model');
+  });
+
+  it('renders markdown safely without terminal escapes', () => {
+    const { lastFrame } = render(
+      <App
+        initialMessages={[
+          {
+            role: 'agent',
+            text: '# Title\nUse `code`, **bold**, and [docs](https://example.com)\n\x1b[31mred\x1b[0m',
+          },
+        ]}
+      />
+    );
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('Title');
+    expect(frame).toContain('code');
+    expect(frame).toContain('bold');
+    expect(frame).toContain('docs');
+    expect(frame).not.toContain('\x1b[31m');
+    expect(frame).not.toContain('https://example.com');
+  });
+
+  it('compacts a long tool output panel', () => {
+    const text = Array.from({ length: 40 }, (_, index) => `row ${index}`).join('\n');
+    const { lastFrame } = render(<App initialMessages={[{ role: 'tool', text }]} />);
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('row 0');
+    expect(frame).toContain('more lines');
+    expect(frame).not.toContain('row 39');
+  });
+
+  it('finds text in the conversation and jumps to the latest match', async () => {
+    const { stdin, lastFrame } = render(
+      <App
+        initialMessages={[
+          { role: 'user', text: 'where is the retry?' },
+          { role: 'agent', text: 'the retry lives in runtime.ts' },
+          { role: 'user', text: 'thanks' },
+        ]}
+      />
+    );
+    await flush();
+    stdin.write('/search retry');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('2 matches');
+    expect(frame).toContain('runtime.ts');
+  });
+
+  it('exports the conversation to a markdown file', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'larecode-tui-export-'));
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(dir);
+    try {
+      const { stdin, lastFrame } = render(
+        <App initialMessages={[{ role: 'user', text: 'export me' }]} />
+      );
+      await flush();
+      stdin.write('/export chat.md');
+      await flush();
+      stdin.write('\r');
+      await flush();
+      expect(lastFrame() ?? '').toContain('exported');
+      expect(readFileSync(join(dir, 'chat.md'), 'utf8')).toContain('export me');
+    } finally {
+      cwd.mockRestore();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('inserts a file mention from the picker', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'larecode-tui-files-'));
+    mkdirSync(join(dir, 'src'));
+    writeFileSync(join(dir, 'app.ts'), '');
+    writeFileSync(join(dir, 'src', 'app.test.ts'), '');
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(dir);
+    try {
+      const { stdin, lastFrame } = render(<App />);
+      await flush();
+      stdin.write('@app');
+      await flush();
+      expect(lastFrame() ?? '').toContain('files · @app');
+      stdin.write('\r');
+      await flush();
+      expect(lastFrame() ?? '').toContain('@app.ts');
+    } finally {
+      cwd.mockRestore();
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('restores a saved conversation and continues it', async () => {
@@ -465,6 +558,30 @@ describe('App', () => {
     await flush();
     expect(lastFrame()).toContain('docs conversation');
     expect(lastFrame()).toContain('resumed s2');
+  });
+
+  it('filters the session browser by title or id', async () => {
+    const { stdin, lastFrame } = render(
+      <App
+        sessions={[
+          { id: 's1', title: 'fix parser', provider: '9router', model: 'Combo' },
+          { id: 's2', title: 'docs pass' },
+        ]}
+        onResumeSession={(id) =>
+          id === 's2' ? [{ role: 'user', text: 'docs conversation' }] : undefined
+        }
+      />
+    );
+    await flush();
+    stdin.write('/sessions docs');
+    await flush();
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame() ?? '').toContain('sessions · docs · 1/1');
+    expect(lastFrame() ?? '').not.toContain('fix parser · Combo');
+    stdin.write('\r');
+    await flush();
+    expect(lastFrame() ?? '').toContain('docs conversation');
   });
 
   it('shows unavailable models in the picker and blocks selecting them', async () => {

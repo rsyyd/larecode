@@ -10,7 +10,11 @@ import {
 import { getTheme, type Theme, type ThemeName } from './theme.js';
 import { emptyInput, handleInput, type InputState, type KeyEvent } from './input.js';
 import { COMMANDS, filterCommands } from './palette.js';
+import { copyToClipboard, exportConversation } from './export.js';
+import { discoverFiles, insertMention, matchFiles, mentionQuery } from './mentions.js';
 import { appendChunk, type ChatMessage } from './messages.js';
+import { compactToolText, looksLikeDiff, markdownLines, type SpanKind } from './markdown.js';
+import { searchMessages } from './search.js';
 
 export interface PermissionPrompt {
   tool: string;
@@ -194,6 +198,11 @@ export function App({
   });
   const [frame, setFrame] = useState(0);
   const [permission, setPermission] = useState<PendingPermission | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [files, setFiles] = useState<string[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [sessionFilter, setSessionFilter] = useState('');
+  const filesLoaded = useRef(false);
   const [queue, setQueue] = useState<string[]>([]);
   const queueRef = useRef<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -232,6 +241,12 @@ export function App({
     };
   }, [stdout]);
 
+  useEffect(() => {
+    if (filesLoaded.current || !input.text.includes('@')) return;
+    filesLoaded.current = true;
+    setFiles(discoverFiles(process.cwd()));
+  }, [input.text]);
+
   const theme = getTheme(themeName);
   const home = messages.length === 0;
   const agentLabel = agent === 'plan' ? 'Plan' : 'Build';
@@ -242,6 +257,14 @@ export function App({
   const popupLimit = Math.max(1, Math.min(10, rows - 6));
   const palette = !popup && paletteOpen(input.text) ? filterCommands(input.text) : [];
   const selected = Math.min(paletteIndex, Math.max(0, palette.length - 1));
+  const mention = mentionQuery(input.text, input.cursor);
+  const mentionMatches = !popup && !streaming && mention !== null ? matchFiles(files, mention) : [];
+  const selectedMention = Math.min(mentionIndex, Math.max(0, mentionMatches.length - 1));
+  const listedSessions = sessionFilter
+    ? sessions.filter((session) =>
+        `${sessionTitle(session)} ${session.id}`.toLowerCase().includes(sessionFilter)
+      )
+    : sessions;
   const { choices: modelChoices, rows: modelRows } = modelListing(catalogs);
   const usageLabel =
     usage && usage.totalTokens.total > 0
@@ -270,14 +293,21 @@ export function App({
         setScrollOffset(0);
         break;
       case '/sessions': {
-        if (sessions.length === 0) {
-          addNote('no saved sessions');
+        const filter = args.join(' ').trim().toLowerCase();
+        const listed = filter
+          ? sessions.filter((session) =>
+              `${sessionTitle(session)} ${session.id}`.toLowerCase().includes(filter)
+            )
+          : sessions;
+        if (listed.length === 0) {
+          addNote(filter ? `no sessions matching "${filter}"` : 'no saved sessions');
           break;
         }
         const index = Math.max(
           0,
-          sessions.findIndex((session) => session.id === currentSessionId)
+          listed.findIndex((session) => session.id === currentSessionId)
         );
+        setSessionFilter(filter);
         setPopup({ kind: 'sessions', index });
         break;
       }
@@ -338,6 +368,46 @@ export function App({
           addNote(`model → ${nextProvider}/${nextModel}`);
         } catch (error) {
           addNote(`error: ${describeError(error)}`);
+        }
+        break;
+      }
+      case '/copy': {
+        const last = [...messages].reverse().find((message) => message.role === 'agent');
+        if (!last) {
+          addNote('no answer to copy');
+          break;
+        }
+        addNote(
+          copyToClipboard(last.text)
+            ? 'copied the last answer'
+            : 'clipboard unavailable · use /export <file>'
+        );
+        break;
+      }
+      case '/export': {
+        const path = args[0] ?? `larecode-${new Date().toISOString().replace(/[:.]/g, '-')}.md`;
+        try {
+          addNote(`exported ${exportConversation(messages, path)}`);
+        } catch (error) {
+          addNote(`export failed: ${describeError(error)}`);
+        }
+        break;
+      }
+      case '/search': {
+        const query = args.join(' ').trim();
+        if (query.length === 0) {
+          addNote('usage: /search <text>');
+          break;
+        }
+        const hits = searchMessages(messages, query);
+        if (hits.length === 0) {
+          addNote(`no matches for "${query}"`);
+          break;
+        }
+        const hit = hits[hits.length - 1];
+        if (hit) {
+          setScrollOffset(messages.length - 1 - hit.index);
+          setNotice(`${hits.length} match${hits.length === 1 ? '' : 'es'} · ${hit.preview}`);
         }
         break;
       }
@@ -406,6 +476,7 @@ export function App({
   };
 
   const submit = async (value: string): Promise<void> => {
+    setNotice(null);
     const trimmed = value.trim();
     if (trimmed.length === 0) return;
     setScrollOffset(0);
@@ -491,7 +562,7 @@ export function App({
         popup.kind === 'model'
           ? modelChoices.length
           : popup.kind === 'sessions'
-            ? sessions.length
+            ? listedSessions.length
             : THEME_CHOICES.length;
       if (key.upArrow) {
         setPopup({ ...popup, index: Math.max(0, popup.index - 1) });
@@ -514,7 +585,7 @@ export function App({
             }
           }
         } else if (popup.kind === 'sessions') {
-          const session = sessions[popup.index];
+          const session = listedSessions[popup.index];
           if (session) {
             const restored = onResumeSession?.(session.id);
             if (!restored) {
@@ -533,6 +604,25 @@ export function App({
         return;
       }
       return;
+    }
+
+    if (mentionMatches.length > 0) {
+      if (key.upArrow) {
+        setMentionIndex(Math.max(0, selectedMention - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setMentionIndex(Math.min(mentionMatches.length - 1, selectedMention + 1));
+        return;
+      }
+      if (key.tab || key.return) {
+        const path = mentionMatches[selectedMention];
+        if (path) {
+          updateInput(insertMention(inputRef.current.text, inputRef.current.cursor, path));
+          setMentionIndex(0);
+        }
+        return;
+      }
     }
 
     if (key.pageUp && messages.length > 0) {
@@ -596,6 +686,7 @@ export function App({
     }
     if (outcome.type === 'changed') {
       setPaletteIndex(0);
+      setMentionIndex(0);
       updateInput(outcome.state);
     }
   };
@@ -644,6 +735,14 @@ export function App({
         )}
       </Box>
 
+      {notice ? (
+        <Box paddingX={2} flexShrink={0}>
+          <Text color={theme.muted} wrap="truncate-end">
+            {notice}
+          </Text>
+        </Box>
+      ) : null}
+
       {permission ? (
         <PermissionPanel permission={permission.request} theme={theme} width={columns} />
       ) : home ? null : (
@@ -674,7 +773,7 @@ export function App({
         </Box>
       )}
 
-      {popup || palette.length > 0 ? (
+      {popup || palette.length > 0 || mentionMatches.length > 0 ? (
         <Box
           position="absolute"
           width={columns}
@@ -704,8 +803,8 @@ export function App({
             />
           ) : popup?.kind === 'sessions' ? (
             <ListPopup
-              title={`sessions · ${popup.index + 1}/${sessions.length}`}
-              items={sessions.map((session) => sessionTitle(session))}
+              title={`sessions${sessionFilter ? ` · ${sessionFilter}` : ''} · ${popup.index + 1}/${listedSessions.length}`}
+              items={listedSessions.map((session) => sessionTitle(session))}
               selected={popup.index}
               footer={listFooter(popupWidth)}
               theme={theme}
@@ -719,6 +818,16 @@ export function App({
               footer="esc close"
               theme={theme}
               width={popupWidth}
+            />
+          ) : mentionMatches.length > 0 ? (
+            <ListPopup
+              title={`files · @${mention ?? ''} · ${selectedMention + 1}/${mentionMatches.length}`}
+              items={mentionMatches}
+              selected={selectedMention}
+              footer="tab or enter insert · ↑↓ choose"
+              theme={theme}
+              width={popupWidth}
+              limit={popupLimit}
             />
           ) : (
             <ListPopup
@@ -1094,6 +1203,8 @@ function MessageRow({
     );
   }
   if (message.role === 'tool') {
+    const compact = compactToolText(message.text);
+    const diff = looksLikeDiff(message.text);
     return (
       <Panel
         width={width}
@@ -1102,8 +1213,10 @@ function MessageRow({
         paddingTop={1}
         paddingBottom={1}
         marginBottom={1}
-        lines={wrapLine(message.text, Math.max(1, width - 5)).map((line) => ({
-          content: <Text color={theme.muted}>{line}</Text>,
+        lines={wrapLine(compact.text, Math.max(1, width - 5)).map((line) => ({
+          content: (
+            <Text color={(diff ? diffColor(line, theme) : undefined) ?? theme.muted}>{line}</Text>
+          ),
           length: line.length,
         }))}
       />
@@ -1122,11 +1235,30 @@ function MessageRow({
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Box paddingLeft={3} flexDirection="column">
-        {message.text.split('\n').map((line, index) => (
-          <Text key={index} color={isToolLine(line) ? theme.muted : theme.text} wrap="wrap">
-            {line.length > 0 ? line : ' '}
-          </Text>
-        ))}
+        {markdownLines(message.text).map((line, index) => {
+          const plain = line.spans.map((span) => span.text).join('');
+          return (
+            <Text key={index} color={isToolLine(plain) ? theme.muted : theme.text} wrap="wrap">
+              {line.diff ? (
+                <Text color={diffColor(plain, theme)}>{plain.length > 0 ? plain : ' '}</Text>
+              ) : plain.length === 0 ? (
+                ' '
+              ) : (
+                line.spans.map((span, position) => (
+                  <Text
+                    key={position}
+                    color={spanColor(span.kind, theme)}
+                    bold={span.kind === 'bold' || span.kind === 'heading'}
+                    italic={span.kind === 'italic'}
+                    underline={span.kind === 'link'}
+                  >
+                    {span.text}
+                  </Text>
+                ))
+              )}
+            </Text>
+          );
+        })}
       </Box>
       <Box paddingLeft={3} paddingTop={1} flexDirection="row" gap={1}>
         <Text color={theme.accent}>▣</Text>
@@ -1136,6 +1268,21 @@ function MessageRow({
       </Box>
     </Box>
   );
+}
+
+function spanColor(kind: SpanKind, theme: Theme): string {
+  if (kind === 'heading' || kind === 'link') return theme.accent;
+  if (kind === 'code') return theme.warning;
+  if (kind === 'italic') return theme.muted;
+  return theme.text;
+}
+
+function diffColor(line: string, theme: Theme): string | undefined {
+  if (line.startsWith('@@') || line.startsWith('+++') || line.startsWith('---'))
+    return theme.accent;
+  if (line.startsWith('+')) return theme.success;
+  if (line.startsWith('-')) return theme.error;
+  return undefined;
 }
 
 function isToolLine(line: string): boolean {
@@ -1220,7 +1367,8 @@ function paletteOpen(text: string): boolean {
 }
 
 function messageWeight(message: ChatMessage): number {
-  const lines = Math.max(1, message.text.split('\n').length);
+  const text = message.role === 'tool' ? compactToolText(message.text).text : message.text;
+  const lines = Math.max(1, text.split('\n').length);
   if (message.role === 'user' || message.role === 'tool') return lines + 3;
   if (message.role === 'note') return 2;
   return lines + 2;
@@ -1241,9 +1389,10 @@ function visibleMessages(messages: ChatMessage[], budget: number, offset = 0): C
   }
   const first = visible[0];
   if (first && messageWeight(first) > limit) {
+    const text = first.role === 'tool' ? compactToolText(first.text).text : first.text;
     visible[0] = {
       ...first,
-      text: first.text
+      text: text
         .split('\n')
         .slice(-Math.max(1, limit - 3))
         .join('\n'),

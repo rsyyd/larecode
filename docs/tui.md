@@ -39,15 +39,28 @@ Messages sent while a turn is streaming are queued and run in order. The prompt 
 | -------------------- | --------------------------------------------------------- |
 | `/help`              | Show keybindings and commands                             |
 | `/new`               | Start a fresh session                                     |
-| `/sessions`          | Pick a saved session and resume it                        |
+| `/sessions [query]`  | Pick a saved session; the query filters title and id      |
 | `/status`            | Show agent, provider/model, tokens, cost, and queue depth |
 | `/model`             | Pick a model, or `/model <provider> <model>`              |
 | `/theme dark\|light` | Switch theme; light theme meets WCAG AA contrast          |
 | `/context`           | Show the context budget and its sources                   |
+| `/search <text>`     | Find text in the conversation and jump to the latest hit  |
+| `/copy`              | Copy the last answer with the platform clipboard command  |
+| `/export [file]`     | Write the transcript to a markdown file                   |
 | `/clear`             | Clear the visible transcript                              |
 | `/exit`              | Quit                                                      |
 
 The command palette opens as soon as the input starts with `/`. `Tab` completes the highlighted command.
+
+## Rendering
+
+Agent output renders headings, fenced code, inline code, bold, italic, and links. The renderer strips ANSI escapes and control characters before anything reaches the terminal, and malformed markdown stays visible as literal text instead of breaking the layout. Unified diffs in tool output are colored per line: additions green, removals red, and hunk headers blue.
+
+Tool panels keep the first 11 lines and append `… N more lines` for longer output so one command cannot fill the screen. The transcript keeps the full text; only the panel is compacted.
+
+Type `@` followed by part of a path to open the file picker. `Up/Down` moves, and `Tab` or `Enter` inserts the relative path. The picker skips `node_modules`, `.git`, `dist`, `coverage`, and `.larecode`.
+
+`/copy` uses `pbcopy` on macOS, `clip` on Windows, and `wl-copy` or `xclip` on Linux. When none is available it points at `/export` instead. `/export` writes mode `0600` and prints the absolute path.
 
 ## Terminal support
 
