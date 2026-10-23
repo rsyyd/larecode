@@ -93,6 +93,40 @@ export function transcriptOf(messages: SessionMessage[]): string {
     .slice(-AUTHOR_TRANSCRIPT_MAX_CHARS);
 }
 
+export function parseSkillDraft(text: string): SkillDraft {
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
+  const source = (fenced?.[1] ?? text).trim();
+  const start = source.indexOf('{');
+  const end = source.lastIndexOf('}');
+  if (start < 0 || end <= start) {
+    throw new LareError('SKILL_WRITE_FAILED', 'model response did not contain a JSON object');
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source.slice(start, end + 1));
+  } catch (error) {
+    throw new LareError('SKILL_WRITE_FAILED', 'model response was not valid JSON', {
+      cause: error instanceof Error ? error : undefined,
+    });
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new LareError('SKILL_WRITE_FAILED', 'skill draft must be a JSON object');
+  }
+  const record = parsed as Record<string, unknown>;
+  const fields: Array<keyof SkillDraft> = ['name', 'description', 'body'];
+  for (const field of fields) {
+    const value = record[field];
+    if (typeof value !== 'string' || value.trim() === '') {
+      throw new LareError('SKILL_WRITE_FAILED', `skill draft is missing "${field}"`);
+    }
+  }
+  return {
+    name: String(record.name).trim(),
+    description: String(record.description).trim(),
+    body: String(record.body).trim(),
+  };
+}
+
 export async function authorSkill(
   options: AuthorSkillOptions
 ): Promise<{ path: string; name: string } | null> {

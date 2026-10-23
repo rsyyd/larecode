@@ -238,6 +238,7 @@ export { skillTool } from './tool/skill.js';
 export {
   authorSkill,
   isComplexTask,
+  parseSkillDraft,
   renderSkillDraft,
   skillDraftPath,
   slugifySkillName,

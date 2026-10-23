@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +7,7 @@ import { Skills, parseSkillFile, SKILL_BODY_MAX_CHARS } from './skill.js';
 import {
   authorSkill,
   isComplexTask,
+  parseSkillDraft,
   renderSkillDraft,
   skillDraftPath,
   slugifySkillName,
@@ -106,6 +107,23 @@ describe('writeSkillDraft', () => {
   });
 });
 
+describe('parseSkillDraft', () => {
+  it('parses plain and fenced JSON responses', () => {
+    const draft = { name: 'Deploy', description: 'Use when deploying', body: 'Step one' };
+    expect(parseSkillDraft(JSON.stringify(draft))).toEqual(draft);
+    expect(parseSkillDraft('Here you go:\n```json\n' + JSON.stringify(draft) + '\n```')).toEqual(
+      draft
+    );
+  });
+
+  it('rejects responses without a complete draft', () => {
+    expect(() => parseSkillDraft('no json here')).toThrow(/JSON object/);
+    expect(() => parseSkillDraft('{bad json}')).toThrow(/not valid JSON/);
+    expect(() => parseSkillDraft('{"name":"x"}')).toThrow(/missing "description"/);
+    expect(() => parseSkillDraft('[]')).toThrow(/JSON object/);
+  });
+});
+
 describe('authorSkill', () => {
   it('does nothing for simple tasks without calling the model', async () => {
     const summarize = vi.fn();
@@ -136,8 +154,14 @@ describe('authorSkill', () => {
     const skills = new Skills({ projectDir, consentPath: join(projectDir, 'consent.json') });
     const discovered = skills.refresh().find((skill) => skill.name === 'fix-deploy-pipeline');
     expect(discovered?.status).toBe('pending');
+    expect(discovered?.state).toBe('draft');
     expect(skills.get('fix-deploy-pipeline')).toBeUndefined();
+    expect(skills.approve('fix-deploy-pipeline')).toBe(false);
+    expect(() => skills.load('fix-deploy-pipeline')).toThrow(/draft/);
 
+    const path = skillDraftPath('fix-deploy-pipeline', projectDir);
+    await writeFile(path, (await readFile(path, 'utf8')).replace('state: draft', 'state: active'));
+    skills.refresh();
     expect(skills.approve('fix-deploy-pipeline')).toBe(true);
     expect(skills.get('fix-deploy-pipeline')?.prompt).toContain('Add a smoke test');
   });

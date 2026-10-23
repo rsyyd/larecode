@@ -19,14 +19,14 @@ const quiet = () => new Logger({ level: 'error', handlers: [() => {}] });
 function writeSkill(
   dir: string,
   name: string,
-  options: { description?: string; body?: string } = {}
+  options: { description?: string; body?: string; state?: 'draft' | 'active' | 'disabled' } = {}
 ): string {
   const skillDir = join(dir, name);
   mkdirSync(skillDir, { recursive: true });
   const path = join(skillDir, 'SKILL.md');
   writeFileSync(
     path,
-    `---\nname: ${name}\ndescription: ${options.description ?? `Use ${name} when testing`}\nversion: 1.0.0\n---\n\n${options.body ?? `# ${name}\n\nSteps for ${name}.`}\n`
+    `---\nname: ${name}\ndescription: ${options.description ?? `Use ${name} when testing`}\nversion: 1.0.0\nstate: ${options.state ?? 'active'}\n---\n\n${options.body ?? `# ${name}\n\nSteps for ${name}.`}\n`
   );
   return path;
 }
@@ -137,6 +137,19 @@ describe('skills consent and integrity', () => {
         .sort()
     ).toEqual(['alpha', 'delta']);
     expect(skills.load('alpha')).toContain('Alpha instructions.');
+  });
+
+  it('keeps drafts out of the catalog until activated and skips disabled skills', () => {
+    const { project, bundled } = setupProject();
+    writeSkill(join(project, '.larecode', 'skills'), 'drafting', { state: 'draft' });
+    writeSkill(join(project, '.larecode', 'skills'), 'disabled-skill', { state: 'disabled' });
+    const skills = new Skills(options(project, bundled));
+    const found = skills.refresh();
+    expect(found.map((skill) => skill.name)).not.toContain('disabled-skill');
+    expect(found.find((skill) => skill.name === 'drafting')?.state).toBe('draft');
+    expect(skills.list().map((skill) => skill.name)).toEqual(['delta']);
+    expect(() => skills.load('drafting')).toThrowError(/draft/);
+    expect(skills.approve('drafting')).toBe(false);
   });
 
   it('rejects a skill whose hash changed after approval', () => {
