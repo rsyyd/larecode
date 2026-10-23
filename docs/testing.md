@@ -82,6 +82,8 @@ The Vitest 4 V8 provider counts implicit branches and functions more granularly 
 
 `bun run test:live` makes one real OpenAI-compatible request. It skips unless `LARECODE_LIVE_SMOKE=1`, `LARECODE_LIVE_BASE_URL`, `LARECODE_LIVE_MODEL`, and `LARECODE_LIVE_API_KEY` are set. The **Live smoke** GitHub workflow is manual and reads `LIVE_BASE_URL`, `LIVE_MODEL`, and `LIVE_API_KEY` from repository secrets, so the default CI never needs a provider key.
 
+`bun run test:lsp` runs the LSP integration test against a real `clangd`. It skips unless `LARECODE_LSP_SMOKE=1` is set and `clangd` is on the `PATH`, so it stays out of the default suite and can run on any machine with a language server installed.
+
 ## Manual checks
 
 These are not in CI:
