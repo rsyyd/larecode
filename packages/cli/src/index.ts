@@ -14,7 +14,7 @@ import { acpCommand } from './commands/acp.js';
 import { chatCommand } from './commands/chat.js';
 import { debugCommand, feedbackCommand, usageCommand } from './commands/diagnostics.js';
 import { completionCommand } from './commands/completion.js';
-import { skillAuthorCommand } from './commands/skill.js';
+import { skillAuthorCommand, skillInstallCommand, skillListCommand } from './commands/skill.js';
 import { auditLogCommand, auditVerifyCommand } from './commands/audit.js';
 import {
   sessionsExportCommand,
@@ -220,6 +220,23 @@ skill
   .option('--json', 'print the skill name and path as JSON')
   .action(async (id: string, options: { provider?: string; model?: string; json?: boolean }) => {
     process.exitCode = await skillAuthorCommand(id, options);
+  });
+
+skill
+  .command('install')
+  .description('Install skills from a git URL or a local directory')
+  .argument('<source>', 'git URL or directory containing SKILL.md files')
+  .option('--json', 'print the installed skills as JSON')
+  .action(async (source: string, options: { json?: boolean }) => {
+    process.exitCode = await skillInstallCommand(source, options);
+  });
+
+skill
+  .command('list')
+  .description('List discovered skills with their state and approval status')
+  .option('--json', 'print the catalog as JSON')
+  .action((options: { json?: boolean }) => {
+    process.exitCode = skillListCommand(options);
   });
 
 program

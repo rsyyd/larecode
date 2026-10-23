@@ -40,6 +40,16 @@ larecode skill author <session-id>
 
 The selected model drafts a name, description, and body from the transcript, and the command writes `.larecode/skills/<name>/SKILL.md` with `state: draft`. The draft is not trusted or loaded automatically until you review it and mark it active; the normal skill consent flow still applies.
 
+### Community skills
+
+A community skills collection is just a git repository: either the repository root holds one `SKILL.md`, or each subdirectory holds its own. Install one with:
+
+```bash
+larecode skill install https://github.com/someone/larecode-skills
+```
+
+Skills land in `~/.larecode/skills/` under their frontmatter name. Installing does not trust anything: the first load still goes through the same consent prompt as any project skill, and a hash change on disk revokes approval. `larecode skill list` shows what is discovered, its draft/active state, and whether it is still pending approval.
+
 ## Subagents
 
 The `task` tool runs an isolated agent loop with its own budget:
