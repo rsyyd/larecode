@@ -13,6 +13,7 @@ import { setupCommand } from './commands/setup.js';
 import { acpCommand } from './commands/acp.js';
 import { chatCommand } from './commands/chat.js';
 import { debugCommand, feedbackCommand, usageCommand } from './commands/diagnostics.js';
+import { completionCommand } from './commands/completion.js';
 import { auditLogCommand, auditVerifyCommand } from './commands/audit.js';
 import {
   sessionsExportCommand,
@@ -97,6 +98,14 @@ program
   .option('--check', 'report without upgrade instructions')
   .action(async (options: { check?: boolean }) => {
     await updateCommand(options);
+  });
+
+program
+  .command('completion')
+  .description('Print shell completion for bash, zsh, or fish')
+  .argument('<shell>', 'bash, zsh, or fish')
+  .action((shell: string) => {
+    process.exitCode = completionCommand(shell);
   });
 
 program
