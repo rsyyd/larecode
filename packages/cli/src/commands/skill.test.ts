@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { execSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config, Session, SessionMessage, SkillDraft } from '@larecode/core';
-import { skillAuthorCommand } from './skill.js';
+import { Skills } from '@larecode/core';
+import { skillAuthorCommand, skillInstallCommand, skillListCommand } from './skill.js';
 
 const now = new Date('2026-10-23T00:00:00Z');
 
@@ -151,6 +156,125 @@ describe('skill author command', () => {
       expect(code).toBe(1);
       expect(write).not.toHaveBeenCalled();
       expect(output.err.join('')).toContain('JSON object');
+    } finally {
+      output.restore();
+    }
+  });
+});
+
+describe('skill install and list commands', () => {
+  let work: string;
+  let skillsDir: string;
+
+  beforeEach(() => {
+    work = mkdtempSync(join(tmpdir(), 'lare-skill-cli-'));
+    skillsDir = mkdtempSync(join(tmpdir(), 'lare-skill-home-'));
+  });
+
+  afterEach(() => {
+    rmSync(work, { recursive: true, force: true });
+    rmSync(skillsDir, { recursive: true, force: true });
+  });
+
+  function makeSkill(root: string, name: string, state = 'active'): string {
+    const dir = join(root, name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, 'SKILL.md'),
+      `---\nname: ${name}\ndescription: Use ${name} when testing\nversion: 1.0.0\nstate: ${state}\n---\n\n# ${name}\n\nSteps.\n`
+    );
+    return dir;
+  }
+
+  it('installs a skill from a local directory', async () => {
+    const output = capture();
+    try {
+      const source = makeSkill(work, 'alpha');
+      const code = await skillInstallCommand(source, {}, { skillsDir });
+      expect(code).toBe(0);
+      expect(existsSync(join(skillsDir, 'alpha', 'SKILL.md'))).toBe(true);
+      expect(output.out.join('')).toContain('installed alpha');
+      expect(output.out.join('')).toContain('asks for consent');
+    } finally {
+      output.restore();
+    }
+  });
+
+  it('installs every skill in a community directory and reports JSON', async () => {
+    const output = capture();
+    try {
+      makeSkill(work, 'one');
+      makeSkill(work, 'two', 'draft');
+      const code = await skillInstallCommand(work, { json: true }, { skillsDir });
+      expect(code).toBe(0);
+      const installed = JSON.parse(output.out.join('')) as Array<{ name: string }>;
+      expect(installed.map((skill) => skill.name).sort()).toEqual(['one', 'two']);
+    } finally {
+      output.restore();
+    }
+  });
+
+  it('refuses to overwrite an installed skill and rejects empty sources', async () => {
+    const output = capture();
+    try {
+      const source = makeSkill(work, 'alpha');
+      expect(await skillInstallCommand(source, {}, { skillsDir })).toBe(0);
+      expect(await skillInstallCommand(source, {}, { skillsDir })).toBe(1);
+
+      const empty = join(work, 'empty');
+      mkdirSync(empty);
+      expect(await skillInstallCommand(empty, {}, { skillsDir })).toBe(1);
+      expect(await skillInstallCommand(join(work, 'missing'), {}, { skillsDir })).toBe(1);
+      expect(output.err.join('')).toMatch(/nothing installed|no SKILL\.md found|not a readable/);
+      expect(readFileSync(join(skillsDir, 'alpha', 'SKILL.md'), 'utf8')).toContain('alpha');
+    } finally {
+      output.restore();
+    }
+  });
+
+  it('installs from a git URL without copying git metadata', async () => {
+    const output = capture();
+    try {
+      const repo = join(work, 'repo');
+      makeSkill(repo, 'beta');
+      execSync(
+        'git init -q && git add -A && git -c user.email=t@t -c user.name=t commit -qm init',
+        {
+          cwd: repo,
+        }
+      );
+      const code = await skillInstallCommand(`file://${repo}`, {}, { skillsDir });
+      expect(code).toBe(0);
+      expect(existsSync(join(skillsDir, 'beta', 'SKILL.md'))).toBe(true);
+      expect(existsSync(join(skillsDir, 'beta', '.git'))).toBe(false);
+    } finally {
+      output.restore();
+    }
+  }, 30_000);
+
+  it('lists discovered skills with state and approval status', () => {
+    const output = capture();
+    try {
+      const project = join(work, 'project');
+      makeSkill(join(project, '.larecode', 'skills'), 'active-skill');
+      makeSkill(join(project, '.larecode', 'skills'), 'drafting', 'draft');
+      const skills = new Skills({
+        projectDir: project,
+        consentPath: join(work, 'consent.json'),
+      });
+      expect(skillListCommand({}, { skills })).toBe(0);
+      const text = output.out.join('');
+      expect(text).toContain('active-skill  active/pending');
+      expect(text).toContain('drafting  draft/pending');
+      expect(text).toContain('hidden until approved');
+
+      expect(skillListCommand({ json: true }, { skills })).toBe(0);
+      const entries = JSON.parse(output.out.at(-1) ?? '') as Array<{
+        name: string;
+        state: string;
+        status: string;
+      }>;
+      expect(entries.find((skill) => skill.name === 'drafting')?.state).toBe('draft');
     } finally {
       output.restore();
     }

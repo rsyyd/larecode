@@ -156,13 +156,17 @@ Check for a newer larecode release.
 
 ## larecode skill
 
-Author a reusable skill from a completed session.
+Author a reusable skill from a completed session, install skills shared by others, and list what is discovered.
 
 ```text
 larecode skill author <session-id> [--provider <name>] [--model <name>] [--json]
+larecode skill install <source> [--json]
+larecode skill list [--json]
 ```
 
 The session needs at least four user/assistant turns and three tool calls. The command asks the selected model for a name, description, and body, then writes `.larecode/skills/<name>/SKILL.md` with `state: draft`. Review it and change the state to `active` when it is ready.
+
+`install` copies skills from a git URL or a local directory into `~/.larecode/skills/`, skipping names that already exist. `list` shows each discovered skill with its `state/approval` status.
 
 ## larecode completion
 

@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - TUI `/search`, `/copy`, and `/export` commands, plus an `@` file picker that skips generated directories.
 - TUI `/sessions <query>` filters the session browser by title or id.
 - `larecode completion bash|zsh|fish` shell completion.
+- `larecode skill author` turns a complex session into a draft skill; draft skills stay out of the catalog until marked active, and `state: disabled` skills are skipped.
+- `larecode skill install` copies community skills from a git URL or local directory, and `larecode skill list` shows the catalog with approval status.
+- Opt-in smoke runs: `bun run test:live` for a real provider request and `bun run test:lsp` against a local `clangd`; a manual **Live smoke** GitHub workflow reads provider secrets.
 
 ## [0.3.0] - 2026-10-22
 
