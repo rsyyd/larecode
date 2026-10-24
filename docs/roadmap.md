@@ -25,7 +25,11 @@ Built on `main` ahead of the tag: TUI markdown/diff/compact panels, `/search`, `
 
 ## Planned — 0.5.0
 
-Team and automation surface expansion after the 0.4 stability window.
+Hardening and performance after the 0.4 stability window.
+
+Built on `main` ahead of the tag: the repeatable benchmark suite (`bun run bench`), the CLI startup budget, and the index/memory budget behind a CI gate.
+
+0.5.0 also requires an external security audit; the audit cannot be self-performed and is the long lead item before the tag.
 
 ## 1.0.0 gates
 
