@@ -40,9 +40,18 @@ describe('installHints', () => {
 describe('updateCommand', () => {
   it('reports an available update and how to upgrade', async () => {
     const { out, fetchImpl, write } = harness({ version: '9.9.9' });
-    await updateCommand({}, { fetchImpl, write, version: '0.0.0' });
+    await updateCommand({}, { fetchImpl, write, version: '0.0.0', execPath: '/usr/local/bin/bun' });
     expect(out.join('')).toContain('update available: 0.0.0 -> 9.9.9');
     expect(out.join('')).toContain('npm install -g larecode@9.9.9');
+  });
+
+  it('suggests brew when larecode was installed with homebrew', async () => {
+    const { out, fetchImpl, write } = harness({ version: '9.9.9' });
+    await updateCommand(
+      {},
+      { fetchImpl, write, version: '0.0.0', execPath: '/opt/homebrew/bin/bun' }
+    );
+    expect(out.join('')).toContain('brew upgrade larecode');
   });
 
   it('reports only the fact with --check', async () => {
