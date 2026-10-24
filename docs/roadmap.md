@@ -19,6 +19,8 @@ No release dates are promised. Each version ships when its exit criteria pass.
 
 Rendering and interaction depth: safe markdown/code rendering, diff view, compact tool panels, in-conversation search, copy/export, `@` file mentions.
 
+Built on `main` ahead of the tag: TUI markdown/diff/compact panels, `/search`, `/copy`, `/export`, `@file` mentions, `/sessions <query>` filtering, shell completion, `larecode skill author|install|list` with draft-state and consent gating, the CDP browser tool with a fake-endpoint test, opt-in live provider and `clangd` smoke runs, the `en/id` onboarding locale, and the regenerated demo cast.
+
 0.4.0 cannot ship before 0.3.0 has been stable for 14 days (not before 2026-11-05).
 
 ## Planned — 0.5.0

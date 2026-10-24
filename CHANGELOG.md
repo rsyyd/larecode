@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `larecode skill install` copies community skills from a git URL or local directory, and `larecode skill list` shows the catalog with approval status.
 - Opt-in smoke runs: `bun run test:live` for a real provider request and `bun run test:lsp` against a local `clangd`; a manual **Live smoke** GitHub workflow reads provider secrets.
 - `locale: en|id` (or `LARECODE_LOCALE`) translates first-run and setup messages; the rest of the interface stays English.
+- Demo: `bun run demo` re-records `docs/assets/demo.cast` from a real TUI session and the docs front page plays it.
 
 ## [0.3.0] - 2026-10-22
 

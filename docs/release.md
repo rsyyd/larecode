@@ -12,6 +12,7 @@ A release is a tagged commit that passes every gate below. Patch releases fix de
 
 - [ ] Every required task for the target version is complete.
 - [ ] `CHANGELOG.md` has an entry for every user-visible change.
+- [ ] `bun run demo` was re-recorded so `docs/assets/demo.cast` matches the released TUI.
 - [ ] CI is green on `main`, including the macOS, Windows, Node, coverage, performance, and security jobs.
 - [ ] `bun audit --audit-level=high` is clean.
 - [ ] No open security advisory affects the release.

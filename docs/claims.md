@@ -19,7 +19,10 @@ This matrix keeps the README honest. A claim is either backed by a test that run
 | Subagents and skills                       | `subagent.test.ts`, `skill.test.ts`, TUI `@general` test                                       |
 | Checkpoints and session search             | `checkpoint.test.ts`, `session/search.test.ts`, chat persistence tests                         |
 | Session files survive concurrent writers   | `session.test.ts` lock and stale-lock tests                                                    |
-| Structural search and LSP                  | `astgrep.test.ts`, `lsp` tool tests                                                            |
+| Structural search and LSP                  | `astgrep.test.ts`, `lsp` tool tests, opt-in `clangd` integration in `lsp.test.ts`              |
+| Skill authoring, install, and consent      | `author.test.ts`, draft-state tests, `skill.ts` CLI install/list tests                         |
+| Live provider and language-server smoke    | `scripts/live-smoke.test.ts` (env-gated), `test:lsp`, manual **Live smoke** workflow           |
+| en/id onboarding locale                    | `i18n.test.ts`, `setup.test.ts` Indonesian prompt tests, config validation                     |
 | MCP client and server                      | `packages/core/src/mcp/mcp.test.ts`, MCP server mode tests                                     |
 | HTTP server, shares, cron, gateway         | `server.test.ts`, `share` tests, `cron.test.ts`, `telegram.test.ts`                            |
 | Context is sanitized and budgeted          | `context/inject.test.ts`, `context/compact.test.ts`, `/context` report tests                   |
