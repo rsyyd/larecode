@@ -1,12 +1,19 @@
+import { execFile } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
+import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Context } from '../packages/core/src/context/context.js';
+
+const ROOT = join(import.meta.dirname, '..');
+const BUN = basename(process.execPath).includes('bun') ? process.execPath : 'bun';
+const run = promisify(execFile);
 
 const FILE_COUNT = 300;
 const INDEX_BUDGET_MS = 15_000;
 const MEMORY_BUDGET_BYTES = 256 * 1024 * 1024;
+const STARTUP_BUDGET_MS = 20_000;
 
 let root: string;
 
@@ -44,4 +51,15 @@ describe('context performance budget', () => {
     expect(elapsed).toBeLessThan(INDEX_BUDGET_MS);
     expect(heapDelta).toBeLessThan(MEMORY_BUDGET_BYTES);
   });
+});
+
+describe('startup performance budget', () => {
+  it('starts the CLI and prints the version inside the budget', async () => {
+    const started = performance.now();
+    const { stdout } = await run(BUN, [join(ROOT, 'packages/cli/src/index.ts'), '--version']);
+    const elapsed = performance.now() - started;
+    process.stdout.write(`cli startup (--version): ${elapsed.toFixed(0)}ms\n`);
+    expect(stdout.trim()).toMatch(/\d+\.\d+\.\d+/);
+    expect(elapsed).toBeLessThan(STARTUP_BUDGET_MS);
+  }, 60_000);
 });

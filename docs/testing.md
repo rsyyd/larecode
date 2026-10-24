@@ -78,7 +78,9 @@ Baseline on 2026-10-22 after the Vitest 4 / V8 AST-aware remapping, 86 files and
 
 The Vitest 4 V8 provider counts implicit branches and functions more granularly than the 2.x baseline, so these numbers are lower than the 0.2.0 report even though the tests did not regress. Coverage is a merge gate in the **node** job. `vitest.config.ts` enforces global statements at 83%, branches at 72%, functions at 85%, lines at 85%, and at least 80% statements/lines and 75% branches, 80% functions for core. A change may raise a threshold; lowering one needs a reason in the pull request and a follow-up issue.
 
-`bun run test:perf` indexes 300 generated TypeScript files and fails above 15 seconds or 256 MB of heap growth. The budget is intentionally loose so shared CI runners do not flake; it catches order-of-magnitude regressions, not small ones. Run it locally before changing the context indexer.
+`bun run test:perf` indexes 300 generated TypeScript files and fails above 15 seconds or 256 MB of heap growth. It also starts the CLI (`--version`) and fails above 20 seconds, so an accidental heavy import at module load is caught. The budgets are intentionally loose so shared CI runners do not flake; they catch order-of-magnitude regressions, not small ones. Run it locally before changing the context indexer or the CLI entry point.
+
+`bun run bench` is the repeatable benchmark suite behind those budgets. It reports the average cost of three representative operations — context indexing, context search, and a session save/load round trip — in a table, or as JSON with `--json`. Numbers vary by machine; compare runs on the same machine, and treat the perf test budgets as the enforced baseline.
 
 `bun run test:live` makes one real OpenAI-compatible request. It skips unless `LARECODE_LIVE_SMOKE=1`, `LARECODE_LIVE_BASE_URL`, `LARECODE_LIVE_MODEL`, and `LARECODE_LIVE_API_KEY` are set. The **Live smoke** GitHub workflow is manual and reads `LIVE_BASE_URL`, `LIVE_MODEL`, and `LIVE_API_KEY` from repository secrets, so the default CI never needs a provider key.
 
