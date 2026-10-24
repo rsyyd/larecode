@@ -203,6 +203,10 @@ export function App({
   const [mentionIndex, setMentionIndex] = useState(0);
   const [sessionFilter, setSessionFilter] = useState('');
   const filesLoaded = useRef(false);
+  const mentionPickRef = useRef<{ matches: string[]; selected: number }>({
+    matches: [],
+    selected: 0,
+  });
   const [queue, setQueue] = useState<string[]>([]);
   const queueRef = useRef<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -260,6 +264,7 @@ export function App({
   const mention = mentionQuery(input.text, input.cursor);
   const mentionMatches = !popup && !streaming && mention !== null ? matchFiles(files, mention) : [];
   const selectedMention = Math.min(mentionIndex, Math.max(0, mentionMatches.length - 1));
+  mentionPickRef.current = { matches: mentionMatches, selected: selectedMention };
   const listedSessions = sessionFilter
     ? sessions.filter((session) =>
         `${sessionTitle(session)} ${session.id}`.toLowerCase().includes(sessionFilter)
@@ -606,17 +611,18 @@ export function App({
       return;
     }
 
-    if (mentionMatches.length > 0) {
+    const pick = mentionPickRef.current;
+    if (pick.matches.length > 0) {
       if (key.upArrow) {
-        setMentionIndex(Math.max(0, selectedMention - 1));
+        setMentionIndex(Math.max(0, pick.selected - 1));
         return;
       }
       if (key.downArrow) {
-        setMentionIndex(Math.min(mentionMatches.length - 1, selectedMention + 1));
+        setMentionIndex(Math.min(pick.matches.length - 1, pick.selected + 1));
         return;
       }
       if (key.tab || key.return) {
-        const path = mentionMatches[selectedMention];
+        const path = pick.matches[pick.selected];
         if (path) {
           updateInput(insertMention(inputRef.current.text, inputRef.current.cursor, path));
           setMentionIndex(0);
