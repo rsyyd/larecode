@@ -9,6 +9,23 @@ description: Open-source, provider-neutral AI coding agent for the terminal
 
 Lare Code is an open-source AI coding agent for the terminal. It runs on your machine, works with any OpenAI-compatible provider, and checks every tool call against a permission policy before it runs.
 
+## Demo
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.css" />
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.min.js"></script>
+<div id="lare-demo"></div>
+<script>
+  AsciinemaPlayer.create('/assets/demo.cast', document.getElementById('lare-demo'), {
+    cols: 80,
+    rows: 24,
+    autoPlay: true,
+    loop: true,
+    idleTimeLimit: 1,
+  });
+</script>
+
+The recording shows one streaming turn: type a prompt, the answer streams as markdown, and every tool call in a real turn still goes through the permission policy. Regenerate it per release with `bun run demo`.
+
 ## Quick start
 
 ```bash
