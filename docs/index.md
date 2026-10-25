@@ -15,14 +15,14 @@ It is an early release (0.3.0). There are sharp edges; the [roadmap](roadmap.md)
 
 ## Demo
 
-<video controls muted playsinline preload="metadata" width="960" height="540" poster="/assets/demo-poster.jpg" aria-label="Lare Code demo: a terminal session where the agent asks for permission before running a command">
-  <source src="/assets/demo.mp4" type="video/mp4" />
+<video controls muted playsinline preload="metadata" width="960" height="540" poster="{{ '/assets/demo-poster.jpg' | relative_url }}" aria-label="Lare Code demo: a terminal session where the agent asks for permission before running a command">
+  <source src="{{ '/assets/demo.mp4' | relative_url }}" type="video/mp4" />
   Your browser cannot play this video. The transcript below covers the same session.
 </video>
 
 The recording is a real session with the released CLI. The model behind it is a local stub, so the demo regenerates without an API key. When the agent wants to run a command, the permission gate asks first; the `y` that follows is a decision, not a formality.
 
-<details>
+<details markdown="1">
 <summary>Transcript</summary>
 
 ```console
