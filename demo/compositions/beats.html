@@ -1,0 +1,98 @@
+<template id="beats-template">
+  <div data-composition-id="beats" data-width="1920" data-height="1080">
+    <div id="beat-1" class="clip" data-start="0" data-duration="4" data-track-index="1">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <path
+          d="M14 24h30M38 16l8 8-8 8"
+          stroke="#5c9cf5"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M50 40H20M26 32l-8 8 8 8"
+          stroke="#5c9cf5"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <h2>Bring your own provider</h2>
+      <p>OpenAI-compatible, Anthropic, Ollama,<br />OpenRouter, or your own endpoint</p>
+    </div>
+    <div id="beat-2" class="clip" data-start="0" data-duration="4" data-track-index="1">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <path
+          d="M32 8l20 8v14c0 13-8.5 21.5-20 26-11.5-4.5-20-13-20-26V16l20-8z"
+          stroke="#f5a742"
+          stroke-width="4"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M23 31l7 7 12-13"
+          stroke="#f5a742"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <h2>Approve every tool call</h2>
+      <p>Nothing runs without passing<br />the permission gate first</p>
+    </div>
+    <div id="beat-3" class="clip" data-start="0" data-duration="4" data-track-index="1">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <rect x="8" y="14" width="48" height="30" rx="4" stroke="#7fd88f" stroke-width="4" />
+        <path d="M22 56h20" stroke="#7fd88f" stroke-width="4" stroke-linecap="round" />
+        <rect x="26" y="26" width="12" height="10" rx="2" stroke="#7fd88f" stroke-width="4" />
+      </svg>
+      <h2>Stays on your machine</h2>
+      <p>Sessions, audit log, and metrics<br />never leave the device</p>
+    </div>
+
+    <style>
+      [data-composition-id='beats'] .clip {
+        position: absolute;
+        top: 470px;
+        width: 460px;
+        margin-left: -230px;
+        text-align: center;
+      }
+      [data-composition-id='beats'] #beat-1 {
+        left: 33%;
+      }
+      [data-composition-id='beats'] #beat-2 {
+        left: 50%;
+      }
+      [data-composition-id='beats'] #beat-3 {
+        left: 67%;
+      }
+      [data-composition-id='beats'] svg {
+        display: block;
+        margin: 0 auto 26px;
+      }
+      [data-composition-id='beats'] h2 {
+        margin: 0;
+        font-size: 33px;
+        font-weight: 600;
+      }
+      [data-composition-id='beats'] p {
+        margin: 14px 0 0;
+        font-size: 22px;
+        font-weight: 400;
+        color: #808080;
+        line-height: 1.45;
+      }
+    </style>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines.beats = tl;
+
+      tl.from('#beat-1', { opacity: 0, y: 26, duration: 0.55, ease: 'power3.out' }, 0.2);
+      tl.from('#beat-2', { opacity: 0, y: 26, duration: 0.55, ease: 'power3.out' }, 1.0);
+      tl.from('#beat-3', { opacity: 0, y: 26, duration: 0.55, ease: 'power3.out' }, 1.8);
+      tl.to(['#beat-1', '#beat-2', '#beat-3'], { opacity: 0, duration: 0.4 }, 3.5);
+    </script>
+  </div>
+</template>

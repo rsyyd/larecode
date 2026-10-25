@@ -7,24 +7,56 @@ description: Open-source, provider-neutral AI coding agent for the terminal
 
 # Lare Code
 
-Lare Code is an open-source AI coding agent for the terminal. It runs on your machine, works with any OpenAI-compatible provider, and checks every tool call against a permission policy before it runs.
+Lare Code is a coding agent that lives in your terminal. Point it at the provider you already use, anything OpenAI-compatible plus Anthropic, Ollama, OpenRouter, or your own endpoint, and it reads, edits, and runs your code under a permission policy you control.
+
+The permission policy is the point. Every tool call maps to a group, the default is deny, and destructive operations always need a confirmation from you. Each decision lands in a local audit log that `larecode audit` can verify. Nothing leaves the machine: no telemetry, no account, no cloud.
+
+It is an early release (0.3.0). There are sharp edges; the [roadmap](roadmap.md) says what changes next.
 
 ## Demo
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.css" />
-<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.min.js"></script>
-<div id="lare-demo"></div>
-<script>
-  AsciinemaPlayer.create('/assets/demo.cast', document.getElementById('lare-demo'), {
-    cols: 80,
-    rows: 24,
-    autoPlay: true,
-    loop: true,
-    idleTimeLimit: 1,
-  });
-</script>
+<video controls muted playsinline preload="metadata" width="960" height="540" poster="/assets/demo-poster.jpg" aria-label="Lare Code demo: a terminal session where the agent asks for permission before running a command">
+  <source src="/assets/demo.mp4" type="video/mp4" />
+  Your browser cannot play this video. The transcript below covers the same session.
+</video>
 
-The recording shows one streaming turn: type a prompt, the answer streams as markdown, and every tool call in a real turn still goes through the permission policy. Regenerate it per release with `bun run demo`.
+The recording is a real session with the released CLI. The model behind it is a local stub, so the demo regenerates without an API key. When the agent wants to run a command, the permission gate asks first; the `y` that follows is a decision, not a formality.
+
+<details>
+<summary>Transcript</summary>
+
+```console
+› summarize this repository
+
+Let me look at the repository first.
+
+⎿ bash · ls
+  permission: shell · bash · y/n
+  ls
+  y allow  n deny
+
+✓ bash · ls
+
+This is Lare Code, a coding agent that runs in your terminal and asks before it
+acts.
+
+- packages/core holds the agent loop, the tools, and the permission engine
+- packages/cli and packages/tui provide the commands and the interface
+- local first: no telemetry, no accounts
+
+Every tool call passes the permission gate you just approved.
+
+Get started:
+
+  larecode setup
+  larecode doctor
+
+Docs: rsyyd.github.io/larecode
+```
+
+</details>
+
+Regenerate the recording with `bun run demo`; `sh demo/render.sh` rebuilds the video with [HyperFrames](https://github.com/heygen-com/hyperframes).
 
 ## Quick start
 
@@ -35,7 +67,7 @@ larecode doctor
 larecode run "explain this repository"
 ```
 
-Other install options, including Homebrew, Scoop, and a curl installer, are on the [install options](install.md) page.
+`setup` writes `~/.larecode/config.json`, `doctor` checks the config and the provider, and `run` streams one task with token and cost totals. Other install options, including Homebrew, Scoop, and a curl installer, are on the [install options](install.md) page.
 
 ## Documentation
 

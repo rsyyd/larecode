@@ -1,0 +1,119 @@
+<template id="session-template">
+  <div data-composition-id="session" data-width="1920" data-height="1080">
+    <div id="window" class="clip" data-start="0" data-duration="18.4" data-track-index="0">
+      <div id="titlebar">
+        <div id="dot-r" class="dot"></div>
+        <div id="dot-y" class="dot"></div>
+        <div id="dot-g" class="dot"></div>
+        <div id="titlebar-label">larecode</div>
+      </div>
+    </div>
+    <video
+      id="terminal-video"
+      class="clip"
+      data-start="0.4"
+      data-duration="17.4"
+      data-track-index="0"
+      src="assets/terminal.mp4"
+      muted
+      playsinline
+    ></video>
+    <div id="caption" class="clip" data-start="4.6" data-duration="5.4" data-track-index="1">
+      <b>permission: shell · bash · y/n</b> — nothing runs until you approve it
+    </div>
+
+    <style>
+      @font-face {
+        font-family: 'Lare Mono';
+        src: url('assets/fonts/jetbrains-mono-var.woff2') format('woff2');
+        font-weight: 100 800;
+        font-style: normal;
+      }
+      [data-composition-id='session'] #window {
+        position: absolute;
+        left: 280px;
+        top: 40px;
+        width: 1360px;
+        height: 980px;
+        border-radius: 18px;
+        background: #101013;
+        border: 1px solid #2a2a30;
+        box-shadow:
+          0 30px 90px rgba(0, 0, 0, 0.65),
+          0 4px 18px rgba(0, 0, 0, 0.5);
+      }
+      [data-composition-id='session'] #titlebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        height: 44px;
+        border-bottom: 1px solid #212127;
+      }
+      [data-composition-id='session'] .dot {
+        position: absolute;
+        top: 15px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+      }
+      [data-composition-id='session'] #dot-r {
+        left: 18px;
+        background: #ff5f57;
+      }
+      [data-composition-id='session'] #dot-y {
+        left: 42px;
+        background: #febc2e;
+      }
+      [data-composition-id='session'] #dot-g {
+        left: 66px;
+        background: #28c840;
+      }
+      [data-composition-id='session'] #titlebar-label {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 11px;
+        text-align: center;
+        font-family: 'Lare Mono', monospace;
+        font-size: 17px;
+        color: #808080;
+      }
+      [data-composition-id='session'] #terminal-video {
+        position: absolute;
+        left: 30px;
+        top: 64px;
+        width: 1300px;
+        height: 889px;
+        border-radius: 8px;
+        background: #0a0a0a;
+      }
+      [data-composition-id='session'] #caption {
+        position: absolute;
+        top: 1036px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 26px;
+        font-weight: 400;
+        color: #a8a8a8;
+      }
+      [data-composition-id='session'] #caption b {
+        color: #f5a742;
+        font-weight: 600;
+      }
+    </style>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines.session = tl;
+
+      tl.from('#window', { opacity: 0, y: 46, duration: 0.8, ease: 'power3.out' }, 0);
+      tl.from('#terminal-video', { opacity: 0, duration: 0.6 }, 0.4);
+      tl.from('#caption', { opacity: 0, y: 12, duration: 0.5, ease: 'power2.out' }, 4.7);
+      tl.to('#caption', { opacity: 0, duration: 0.45 }, 9.5);
+      tl.to('#window', { opacity: 0, y: -30, duration: 0.5, ease: 'power2.in' }, 17.8);
+    </script>
+  </div>
+</template>

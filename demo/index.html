@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lare Code demo</title>
+    <style>
+      @font-face {
+        font-family: 'Lare Sans';
+        src: url('assets/fonts/lare-sans.woff2') format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Lare Mono';
+        src: url('assets/fonts/jetbrains-mono-var.woff2') format('woff2');
+        font-weight: 100 800;
+        font-style: normal;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0a0a0a;
+      }
+      #stage {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(900px 520px at 50% 18%, #131519 0%, rgba(10, 10, 10, 0) 70%), #0a0a0a;
+        font-family: 'Lare Sans', 'DejaVu Sans', sans-serif;
+        color: #eeeeee;
+      }
+      .sub {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+    <script src="assets/vendor/gsap.min.js"></script>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="demo"
+      data-start="0"
+      data-width="1920"
+      data-height="1080"
+      data-fps="30"
+      data-duration="30.4"
+    >
+      <div
+        id="scene-title"
+        class="sub"
+        data-composition-id="title"
+        data-composition-src="compositions/title.html"
+        data-start="0"
+        data-duration="3.4"
+        data-track-index="1"
+      ></div>
+      <div
+        id="scene-beats"
+        class="sub"
+        data-composition-id="beats"
+        data-composition-src="compositions/beats.html"
+        data-start="3.4"
+        data-duration="4"
+        data-track-index="1"
+      ></div>
+      <div
+        id="scene-session"
+        class="sub"
+        data-composition-id="session"
+        data-composition-src="compositions/session.html"
+        data-start="7.2"
+        data-duration="18.4"
+        data-track-index="0"
+      ></div>
+      <div
+        id="scene-end"
+        class="sub"
+        data-composition-id="end"
+        data-composition-src="compositions/end.html"
+        data-start="26"
+        data-duration="4.4"
+        data-track-index="1"
+      ></div>
+      <script>
+        window.__timelines = window.__timelines || {};
+        window.__timelines.demo = gsap.timeline({ paused: true });
+      </script>
+    </div>
+  </body>
+</html>

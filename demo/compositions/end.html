@@ -1,0 +1,77 @@
+<template id="end-template">
+  <div data-composition-id="end" data-width="1920" data-height="1080">
+    <div id="end-word" class="clip" data-start="0" data-duration="4.4" data-track-index="1">
+      Lare Code
+    </div>
+    <div id="end-chip-wrap" class="clip" data-start="0" data-duration="4.4" data-track-index="1">
+      <div id="end-chip"><span class="dollar">$ </span>npm install -g larecode</div>
+    </div>
+    <div id="end-docs" class="clip" data-start="0" data-duration="4.4" data-track-index="1">
+      rsyyd.github.io/larecode
+    </div>
+    <div id="end-license" class="clip" data-start="0" data-duration="4.4" data-track-index="1">
+      open source · MIT
+    </div>
+
+    <style>
+      @font-face {
+        font-family: 'Lare Mono';
+        src: url('assets/fonts/jetbrains-mono-var.woff2') format('woff2');
+        font-weight: 100 800;
+        font-style: normal;
+      }
+      [data-composition-id='end'] .clip {
+        position: absolute;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
+      [data-composition-id='end'] #end-word {
+        top: 330px;
+        font-size: 74px;
+        font-weight: 700;
+        letter-spacing: -1.5px;
+      }
+      [data-composition-id='end'] #end-chip-wrap {
+        top: 470px;
+      }
+      [data-composition-id='end'] #end-chip {
+        margin: 0 auto;
+        width: 720px;
+        padding: 26px 0;
+        border: 1px solid #484848;
+        border-radius: 14px;
+        background: #141414;
+        font-family: 'Lare Mono', monospace;
+        font-size: 30px;
+        color: #eeeeee;
+      }
+      [data-composition-id='end'] .dollar {
+        color: #808080;
+      }
+      [data-composition-id='end'] #end-docs {
+        top: 596px;
+        font-size: 27px;
+        font-weight: 400;
+        color: #5c9cf5;
+      }
+      [data-composition-id='end'] #end-license {
+        top: 668px;
+        font-size: 21px;
+        font-weight: 400;
+        color: #808080;
+      }
+    </style>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines.end = tl;
+
+      tl.from('#end-word', { opacity: 0, y: 30, duration: 0.7, ease: 'power3.out' }, 0.1);
+      tl.from('#end-chip-wrap', { opacity: 0, y: 22, duration: 0.7, ease: 'power3.out' }, 0.5);
+      tl.from('#end-docs', { opacity: 0, y: 16, duration: 0.6, ease: 'power3.out' }, 0.9);
+      tl.from('#end-license', { opacity: 0, duration: 0.6 }, 1.4);
+    </script>
+  </div>
+</template>

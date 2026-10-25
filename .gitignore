@@ -6,3 +6,6 @@ coverage/
 .env
 .env.*
 larecode.json
+.hyperframes/
+renders/
+demo-terminal.gif
