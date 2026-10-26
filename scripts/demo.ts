@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createServer, type Server as HttpServer } from 'node:http';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -15,8 +15,8 @@ const ROWS = 30;
 const PROMPT = 'summarize this repository';
 const PERMISSION_NEEDLE = 'permission: shell';
 const LAST_MARKER = 'rsyyd.github.io/larecode';
+const INTRO = 'Let me look at the repository first.';
 
-const INTRO = 'Let me look at the repository first.\n\n';
 const ANSWER_CHUNKS = [
   'This is **Lare Code**, a coding agent that runs in your terminal\n',
   ' and asks before it acts.\n\n',
@@ -33,36 +33,25 @@ const ANSWER_CHUNKS = [
 ];
 
 function tmux(args: string[]): string {
-  return execFileSync('tmux', args, { encoding: 'utf8' });
+  return execFileSync('tmux', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 }
 
 function capture(): string {
-  return tmux(['capture-pane', '-p', '-e', '-S', '-', '-t', SESSION]);
+  return tmux(['capture-pane', '-p', '-t', SESSION]);
 }
 
-async function waitFor(
-  needle: string,
-  timeoutMs: number,
-  record: (frame: string) => void
-): Promise<void> {
+async function waitVisible(needle: string, timeoutMs: number): Promise<void> {
   const deadline = Date.now() + timeoutMs;
-  let last = '';
   while (Date.now() < deadline) {
     try {
-      const frame = capture();
-      if (frame !== last) {
-        record(frame);
-        last = frame;
-      }
+      if (capture().includes(needle)) return;
     } catch {
       // session not ready yet
     }
-    if (last.includes(needle)) return;
     await delay(150);
   }
-  throw new Error(`timed out waiting for "${needle}" in the recording`);
+  throw new Error(`timed out waiting for "${needle}" in the pane`);
 }
-
 function sseEvent(payload: unknown): string {
   return `data: ${JSON.stringify(payload)}\n\n`;
 }
@@ -94,7 +83,7 @@ function fakeProvider(): Promise<{ url: string; close: () => Promise<void> }> {
       // first round: say hello, then ask to run ls (shell group, so it prompts)
       void (async () => {
         await delay(60);
-        res.write(sseEvent({ choices: [{ delta: { content: INTRO } }] }));
+        res.write(sseEvent({ choices: [{ delta: { content: `${INTRO}\n\n` } }] }));
         await delay(500);
         res.write(
           sseEvent({
@@ -130,8 +119,74 @@ function fakeProvider(): Promise<{ url: string; close: () => Promise<void> }> {
   });
 }
 
+type CastEvent = [number, string, string];
+
+function postProcess(): void {
+  const lines = readFileSync(OUT, 'utf8').trim().split('\n');
+  const header = lines[0];
+  const events = lines.slice(1).map((line) => JSON.parse(line) as CastEvent);
+
+  // cut the alt-screen teardown so the clip ends on the final answer frame
+  const exitIndex = events.findIndex(
+    ([, type, data]) => type === 'o' && data.includes('\x1b[?1049l')
+  );
+  if (exitIndex > 0) events.length = exitIndex;
+
+  // the first turn indexes the workspace while the spinner keeps the stream
+  // alive, so idle limiting cannot shorten it; squeeze that wait and pull the
+  // rest of the session forward to match
+  const typedIndex = events.findIndex((event) => event[1] === 'o' && event[2].includes(PROMPT));
+  const introIndex = events.findIndex((event) => event[1] === 'o' && event[2].includes(INTRO));
+  if (typedIndex >= 0 && introIndex > typedIndex) {
+    const from = events[typedIndex][0];
+    const span = events[introIndex][0] - from;
+    const scale = Math.min(1, 2.5 / Math.max(0.001, span));
+    if (scale < 1) {
+      for (let index = typedIndex; index < introIndex; index += 1) {
+        events[index][0] = Number((from + (events[index][0] - from) * scale).toFixed(6));
+      }
+      const shift = Number((span * scale - span).toFixed(6));
+      for (let index = introIndex; index < events.length; index += 1) {
+        events[index][0] = Number((events[index][0] + shift).toFixed(6));
+      }
+    }
+  }
+
+  // the permission hold is a deliberate on-camera beat, but the TUI renders
+  // nothing while it waits, so agg's idle limit would cut it to one second;
+  // re-emit the last panel event through the gap to keep the window alive
+  const permissionIndex = events.findIndex(
+    (event) => event[1] === 'o' && event[2].includes('permission: shell')
+  );
+  if (permissionIndex >= 0) {
+    let last = permissionIndex;
+    while (last + 1 < events.length && events[last + 1][0] - events[last][0] < 0.5) {
+      last += 1;
+    }
+    if (last + 1 < events.length) {
+      const start = events[last][0];
+      const end = events[last + 1][0];
+      const injected: CastEvent[] = [];
+      for (let t = start + 0.35; t < end - 0.15; t += 0.35) {
+        injected.push([Number(t.toFixed(6)), 'o', events[last][2]]);
+      }
+      if (injected.length > 0) {
+        events.splice(last + 1, 0, ...injected);
+        console.log(`injected ${injected.length} hold events into ${(end - start).toFixed(1)}s`);
+      }
+    }
+  }
+
+  writeFileSync(OUT, `${header}\n${events.map((event) => JSON.stringify(event)).join('\n')}\n`);
+  console.log(`wrote ${OUT} (${events.length} events, ${(events.at(-1)?.[0] ?? 0).toFixed(1)}s)`);
+}
+
 async function main(): Promise<void> {
   execFileSync('tmux', ['-V'], { stdio: 'ignore' });
+  execFileSync('asciinema', ['--version'], { stdio: 'ignore' });
+  // cold storage can need over a minute to page in the module graph; warm it
+  // before the recording so the cast does not sit on a dead startup
+  execFileSync(BUN, [join(ROOT, 'packages/cli/src/index.ts'), '--version'], { stdio: 'ignore' });
   const home = mkdtempSync(join(tmpdir(), 'lare-demo-'));
   const provider = await fakeProvider();
   writeFileSync(
@@ -150,96 +205,36 @@ async function main(): Promise<void> {
   const launcher = join(home, 'launch.sh');
   writeFileSync(
     launcher,
-    `#!/bin/sh\nCI=false FORCE_COLOR=3 LARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat\n`,
+    `#!/bin/sh\nCI=false FORCE_COLOR=3 LARECODE_LOG_LEVEL=error LARECODE_HOME='${home}' '${BUN}' '${join(ROOT, 'packages/cli/src/index.ts')}' chat\n`,
     { mode: 0o755 }
   );
 
-  const started = Date.now();
-  const events: Array<[number, string, string]> = [];
-  const record = (frame: string): void => {
-    events.push([Number(((Date.now() - started) / 1000).toFixed(3)), 'o', `\x1b[H\x1b[2J${frame}`]);
-  };
-  // frames that differ only by the footer spinner glyph or by cursor escapes
-  // carry no information; keep the first, every third, and the last of each
-  // run so long waits stay short on camera
-  const SPINNER_GLYPHS = /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]/g;
-  const stripAnsi = (text: string): string =>
-    text
-      // eslint-disable-next-line no-control-regex
-      .replace(/\x1b\[[0-9;]*[A-Za-z]/g, '')
-      // eslint-disable-next-line no-control-regex
-      .replace(/\x1b\][^\x07]*\x07/g, '')
-      .replace(SPINNER_GLYPHS, '·');
-  const compressSpinnerRuns = (
-    entries: Array<[number, string, string]>
-  ): Array<[number, string, string]> => {
-    const keep: boolean[] = entries.map(() => true);
-    let start = 0;
-    for (let i = 1; i <= entries.length; i += 1) {
-      if (i === entries.length || stripAnsi(entries[i][2]) !== stripAnsi(entries[i - 1][2])) {
-        if (i - start > 6) {
-          for (let j = start + 1; j < i - 1; j += 1) keep[j] = (j - start) % 3 === 0;
-        }
-        start = i;
-      }
-    }
-    return entries.filter((_, index) => keep[index]);
-  };
-  // wall-clock timing is not reproducible across machines, so the final cast
-  // gets fixed per-frame holds driven by content, not by when frames arrived
-  const PHASES: Array<{ enter: string; hold: number }> = [
-    { enter: PROMPT, hold: 0.3 }, // submitted, spinner while it thinks
-    { enter: INTRO.trim(), hold: 0.6 }, // tool panel and permission prompt
-    { enter: '✓ bash', hold: 0.42 }, // summary streams in
-  ];
-  const storyboard = (
-    entries: Array<[number, string, string]>
-  ): Array<[number, string, string]> => {
-    if (entries.length === 0) return entries;
-    const firstVisible = entries.findIndex(([, , data]) => stripAnsi(data).trim().length > 0);
-    const trimmed = firstVisible > 0 ? entries.slice(firstVisible) : entries;
-    const paced: Array<[number, string, string]> = [];
-    let time = 0.1;
-    let phase = -1;
-    for (let index = 0; index < trimmed.length; index += 1) {
-      const entry = trimmed[index];
-      paced.push([time, entry[1], entry[2]]);
-      while (phase + 1 < PHASES.length && entry[2].includes(PHASES[phase + 1].enter)) phase += 1;
-      if (index === trimmed.length - 1) break;
-      const hold = entry[2].includes(PERMISSION_NEEDLE)
-        ? 2.4 // the pane is static while the user decides, so hold it on camera
-        : phase === -1
-          ? 1.1
-          : PHASES[phase].hold;
-      time = Number((time + hold).toFixed(3));
-    }
-    const last = paced.at(-1);
-    if (last) paced.push([Number((last[0] + 1.6).toFixed(3)), last[1], last[2]]);
-    return paced;
-  };
+  rmSync(OUT, { force: true });
+  tmux([
+    'new-session',
+    '-d',
+    '-s',
+    SESSION,
+    '-x',
+    String(COLS),
+    '-y',
+    String(ROWS),
+    `asciinema rec -q -c "'${launcher}'" '${OUT}'`,
+  ]);
 
   try {
-    tmux([
-      'new-session',
-      '-d',
-      '-s',
-      SESSION,
-      '-x',
-      String(COLS),
-      '-y',
-      String(ROWS),
-      `'${launcher}'`,
-    ]);
-    await waitFor('Ask anything', 30_000, record);
-    await delay(1000);
+    await waitVisible('Ask anything', 120_000);
+    await delay(1200);
     tmux(['send-keys', '-l', '-t', SESSION, PROMPT]);
     await delay(600);
     tmux(['send-keys', '-t', SESSION, 'C-m']);
-    await waitFor(PERMISSION_NEEDLE, 30_000, record);
+    await waitVisible(PERMISSION_NEEDLE, 120_000);
     await delay(2800);
     tmux(['send-keys', '-t', SESSION, 'y']);
-    await waitFor(LAST_MARKER, 30_000, record);
+    await waitVisible(LAST_MARKER, 120_000);
     await delay(2000);
+    tmux(['send-keys', '-t', SESSION, 'C-c']);
+    await delay(1500);
   } catch (error) {
     try {
       console.error(`--- pane at failure ---\n${capture()}\n--- end pane ---`);
@@ -256,20 +251,7 @@ async function main(): Promise<void> {
     await provider.close();
   }
 
-  const header = JSON.stringify({
-    version: 2,
-    width: COLS,
-    height: ROWS,
-    timestamp: Math.floor(Date.now() / 1000),
-    env: { TERM: 'xterm-256color', SHELL: '/bin/sh' },
-  });
-  const paced = storyboard(compressSpinnerRuns(events));
-  const cast = `${header}\n${paced.map((event) => JSON.stringify(event)).join('\n')}\n`;
-  mkdirSync(join(ROOT, 'docs', 'assets'), { recursive: true });
-  writeFileSync(OUT, cast);
-  console.log(
-    `wrote ${OUT} (${paced.length} events, ${(cast.length / 1024).toFixed(1)} kB, ${(paced.at(-1)?.[0] ?? 0).toFixed(1)}s)`
-  );
+  postProcess();
   rmSync(home, { recursive: true, force: true });
 }
 

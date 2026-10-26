@@ -1,25 +1,30 @@
 # Demo video
 
-`docs/assets/demo.mp4` is a 30-second, 1920x1080, 30 fps intro video for the docs
+`docs/assets/demo.mp4` is a ~30-second, 1920x1080, 30 fps intro video for the docs
 front page. This folder holds the HyperFrames composition that renders it.
 
 ## How it is made
 
-1. `scripts/demo.ts` records a real TUI session in tmux against a local
-   OpenAI-compatible stub provider and writes `docs/assets/demo.cast`. The
-   recording shows a real permission prompt: the stub asks to run `ls`, the
-   session approves it with `y`, and the summary streams in. The stub keeps the
-   video deterministic and needs no API key.
+1. `scripts/demo.ts` records a real TUI session with
+   [asciinema](https://asciinema.org) against a local OpenAI-compatible stub
+   provider. The session types a prompt, the agent asks to run `ls`, the
+   permission gate prompts, the session approves it with `y`, and the summary
+   streams in. The stub keeps the video deterministic and needs no API key.
+   The recording is a plain streaming asciicast; the only post-processing
+   drops the alt-screen teardown and squeezes the first-turn indexing wait,
+   which would otherwise linger on camera.
 2. `demo/render.sh` turns the cast into a terminal clip with
    [agg](https://github.com/asciinema/agg) and FFmpeg, using the TUI theme
-   colors, then composes the final video with
-   [HyperFrames](https://github.com/heygen-com/hyperframes) (pinned version, run
-   through `npx`).
-3. `demo/index.html` is the composition: a title card, three beats, the
-   terminal session in a window with a caption timed to the permission prompt,
-   and an end card. Fonts (Inter, JetBrains Mono), GSAP, and the terminal clip
-   are vendored in `demo/assets/`, so the composition loads no CDN assets.
-   HyperFrames itself fetches its default font once and caches it.
+   colors. Long silent stretches (a slow tool run, the post-tool context
+   pass) collapse to one second each through agg's `--idle-time-limit`.
+   The GIF is coalesced into self-contained PNG frames before encoding,
+   because ffmpeg's GIF decoder drops agg's delta frames.
+3. The final video is composed and rendered with
+   [HyperFrames](https://github.com/heygen-com/hyperframes) (pinned version,
+   run through `npx`): a title card, three beats, the terminal session in a
+   window with a caption timed to the permission prompt, and an end card.
+   Fonts (Inter, JetBrains Mono), GSAP, and the terminal clip are vendored in
+   `demo/assets/`, so the composition loads no CDN assets.
 
 ## Regenerate
 
@@ -27,9 +32,9 @@ front page. This folder holds the HyperFrames composition that renders it.
 sh demo/render.sh
 ```
 
-Prerequisites: Node 22+, tmux, FFmpeg, Chromium, and the `agg` binary on PATH.
-Telemetry and update checks are disabled by the script; the composition loads
-only local assets.
+Prerequisites: Node 22+, tmux, asciinema, FFmpeg, gifsicle, Chromium, and the
+`agg` binary on PATH. Telemetry and update checks are disabled by the script;
+the composition loads only local assets.
 
 ## Files
 

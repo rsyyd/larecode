@@ -1,6 +1,6 @@
 <template id="session-template">
   <div data-composition-id="session" data-width="1920" data-height="1080">
-    <div id="window" class="clip" data-start="0" data-duration="18.4" data-track-index="0">
+    <div id="window" class="clip" data-start="0" data-duration="18.9" data-track-index="0">
       <div id="titlebar">
         <div id="dot-r" class="dot"></div>
         <div id="dot-y" class="dot"></div>
@@ -12,13 +12,13 @@
       id="terminal-video"
       class="clip"
       data-start="0.4"
-      data-duration="17.4"
+      data-duration="18"
       data-track-index="0"
       src="assets/terminal.mp4"
       muted
       playsinline
     ></video>
-    <div id="caption" class="clip" data-start="4.6" data-duration="5.4" data-track-index="1">
+    <div id="caption" class="clip" data-start="5.4" data-duration="3.8" data-track-index="1">
       <b>permission: shell · bash · y/n</b> — nothing runs until you approve it
     </div>
 
@@ -111,9 +111,9 @@
 
       tl.from('#window', { opacity: 0, y: 46, duration: 0.8, ease: 'power3.out' }, 0);
       tl.from('#terminal-video', { opacity: 0, duration: 0.6 }, 0.4);
-      tl.from('#caption', { opacity: 0, y: 12, duration: 0.5, ease: 'power2.out' }, 4.7);
-      tl.to('#caption', { opacity: 0, duration: 0.45 }, 9.5);
-      tl.to('#window', { opacity: 0, y: -30, duration: 0.5, ease: 'power2.in' }, 17.8);
+      tl.from('#caption', { opacity: 0, y: 12, duration: 0.5, ease: 'power2.out' }, 5.5);
+      tl.to('#caption', { opacity: 0, duration: 0.45 }, 8.7);
+      tl.to('#window', { opacity: 0, y: -30, duration: 0.5, ease: 'power2.in' }, 18.3);
     </script>
   </div>
 </template>

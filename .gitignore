@@ -9,3 +9,5 @@ larecode.json
 .hyperframes/
 renders/
 demo-terminal.gif
+docs/assets/.demo.hf-transaction-*
+docs/assets/work-*
