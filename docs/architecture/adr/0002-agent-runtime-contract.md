@@ -1,6 +1,7 @@
 ---
-title: ADR-0002 Agent runtime contract
-nav_order: 11
+title: ADR-0002: Agent runtime contract
+parent: Architecture
+nav_order: 3
 description: One runtime contract for the TUI, CLI, server, ACP, gateway, cron, and SDK
 ---
 

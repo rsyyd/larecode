@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-nav_order: 11
+nav_order: 12
 description: Fix common configuration, provider, permission, and session errors
 ---
 

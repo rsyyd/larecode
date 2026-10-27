@@ -1,0 +1,22 @@
+@import './color_schemes/dark';
+
+// Lare Code brand scheme: the terminal TUI palette on top of the proven
+// just-the-docs dark scheme
+$color-scheme: dark;
+$body-background-color: #0a0a0a;
+$sidebar-color: #0e0e0f;
+$feedback-color: darken($sidebar-color, 3%);
+$link-color: #5c9cf5;
+$nav-child-link-color: #8a8a8e;
+$base-button-color: #16161a;
+$btn-primary-color: #5c9cf5;
+$code-background-color: #101013;
+$code-linenumber-color: #808080;
+$table-background-color: #101013;
+$search-background-color: #16161a;
+$search-result-preview-color: #b9b9be;
+$border-color: #232327;
+$body-heading-color: #f2f2f2;
+$body-text-color: #c9c9ce;
+
+@import './vendor/accessible-pygments/github-dark';

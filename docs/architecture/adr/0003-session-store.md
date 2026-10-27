@@ -1,3 +1,10 @@
+---
+title: ADR-0003: Session store
+parent: Architecture
+nav_order: 4
+description: Sessions survive restarts as lockable files shared by every surface
+---
+
 # ADR-0003: Session store
 
 Status: accepted

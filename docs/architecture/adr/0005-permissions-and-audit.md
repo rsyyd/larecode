@@ -1,3 +1,10 @@
+---
+title: ADR-0005: Permissions and audit
+parent: Architecture
+nav_order: 6
+description: Grouped tool calls, default-deny, and a tamper-evident audit chain
+---
+
 # ADR-0005: Permissions and audit
 
 Status: accepted

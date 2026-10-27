@@ -1,6 +1,7 @@
 ---
 title: Surface contract
-nav_order: 13
+parent: Architecture
+nav_order: 1
 description: How each surface starts, streams, cancels, and stops a runtime turn
 ---
 

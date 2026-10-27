@@ -1,6 +1,6 @@
 ---
 title: Accessibility
-nav_order: 16
+nav_order: 18
 description: How the TUI and CLI support keyboard-only and low-vision use
 ---
 

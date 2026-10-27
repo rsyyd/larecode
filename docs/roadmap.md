@@ -1,6 +1,6 @@
 ---
 title: Roadmap
-nav_order: 15
+nav_order: 17
 description: What is released, what is in progress, and what gates the 1.0 release
 ---
 

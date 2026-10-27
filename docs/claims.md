@@ -1,6 +1,6 @@
 ---
 title: README claims
-nav_order: 14
+nav_order: 20
 description: Each public claim and the test or workflow that proves it
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Testing
-nav_order: 10
+nav_order: 14
 description: Test layers, commands, and what CI enforces
 ---
 

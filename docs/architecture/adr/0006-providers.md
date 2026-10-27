@@ -1,3 +1,10 @@
+---
+title: ADR-0006: Providers
+parent: Architecture
+nav_order: 7
+description: One config shape and one failure story across provider APIs
+---
+
 # ADR-0006: Providers
 
 Status: accepted

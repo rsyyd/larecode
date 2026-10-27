@@ -1,0 +1,149 @@
+// Lare Code docs: hero, feature cards, and media styling on top of the
+// just-the-docs larecode color scheme
+
+// site header wordmark sits on a near-black sidebar; keep it legible
+.site-header {
+  background-color: transparent;
+}
+
+// ---- hero (front page) ----
+.hero {
+  padding: 2.5rem 0 2rem;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+
+  p.hero-tagline {
+    font-size: 1.15rem;
+    color: $body-text-color;
+    max-width: 46rem;
+    margin: 0 0 1.5rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-hint {
+    font-size: 0.85rem;
+    color: #8a8a8e;
+    margin: 0;
+  }
+}
+
+.install-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #101013;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-family: $mono-font-family;
+  font-size: 0.95rem;
+  color: $body-heading-color;
+  white-space: nowrap;
+
+  .chip-dollar {
+    color: #8a8a8e;
+  }
+}
+
+.btn-landing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+
+  &.btn-primary {
+    background: $link-color;
+    color: #0a0a0a;
+  }
+
+  &.btn-secondary {
+    border: 1px solid $border-color;
+    color: $body-heading-color;
+  }
+}
+
+// ---- feature cards ----
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+  padding-left: 0;
+  list-style: none;
+
+  li.card {
+    border: 1px solid $border-color;
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem;
+    background: #0e0e0f;
+
+    h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      color: $body-heading-color;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: $body-text-color;
+    }
+  }
+}
+
+// ---- demo video ----
+.video-frame {
+  video {
+    width: 100%;
+    max-width: 58rem;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid $border-color;
+    display: block;
+    background: $code-background-color;
+  }
+}
+
+// give main content a little more room on wide screens
+.main-content {
+  max-width: 52rem;
+}
+
+// soften the giant link walls on the landing page
+.landing-links {
+  h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8a8a8e;
+  }
+
+  ul {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media print {
+  .side-bar,
+  .page-header {
+    display: none;
+  }
+}

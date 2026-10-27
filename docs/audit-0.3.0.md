@@ -1,6 +1,6 @@
 ---
 title: 0.3.0 audit
-nav_order: 16
+nav_order: 21
 description: P0/P1 review, evidence, residual risk, and sign-off for the 0.3.0 release
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Dependency policy
-nav_order: 13
+nav_order: 15
 description: How dependencies are added, updated, and audited
 ---
 

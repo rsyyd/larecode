@@ -1,6 +1,6 @@
 ---
 title: Release checklist
-nav_order: 12
+nav_order: 16
 description: Preconditions and steps for a tagged larecode release
 ---
 

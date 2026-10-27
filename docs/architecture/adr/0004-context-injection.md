@@ -1,3 +1,10 @@
+---
+title: ADR-0004: Context injection
+parent: Architecture
+nav_order: 5
+description: What the model sees each turn: budgeted, sanitized, and inspectable
+---
+
 # ADR-0004: Context injection
 
 Status: accepted

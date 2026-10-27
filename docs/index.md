@@ -5,20 +5,29 @@ nav_order: 1
 description: Open-source, provider-neutral AI coding agent for the terminal
 ---
 
-# Lare Code
+<div class="hero">
+  <h1>A coding agent that asks before it acts.</h1>
+  <p class="hero-tagline">
+    Lare Code runs in your terminal, works with the provider you already use,
+    and keeps every decision on your machine. Every tool call passes a
+    permission gate first; nothing runs, reads, or writes without your say-so.
+  </p>
+  <div class="hero-actions">
+    <span class="install-chip"><span class="chip-dollar">$</span> npm install -g larecode</span>
+    <a class="btn-landing btn-primary" href="{{ '/getting-started.html' | relative_url }}">Get started</a>
+    <a class="btn-landing btn-secondary" href="https://github.com/rsyyd/larecode">GitHub</a>
+  </div>
+  <p class="hero-hint">Open source, MIT. No telemetry, no account, no cloud. Works with OpenAI-compatible endpoints, Anthropic, Ollama, OpenRouter, and custom providers.</p>
+</div>
 
-Lare Code is a coding agent that lives in your terminal. Point it at the provider you already use, anything OpenAI-compatible plus Anthropic, Ollama, OpenRouter, or your own endpoint, and it reads, edits, and runs your code under a permission policy you control.
+## Watch it work
 
-The permission policy is the point. Every tool call maps to a group, the default is deny, and destructive operations always need a confirmation from you. Each decision lands in a local audit log that `larecode audit` can verify. Nothing leaves the machine: no telemetry, no account, no cloud.
-
-It is an early release (0.3.0). There are sharp edges; the [roadmap](roadmap.md) says what changes next.
-
-## Demo
-
-<video controls muted playsinline preload="metadata" width="960" height="540" poster="{{ '/assets/demo-poster.jpg' | relative_url }}" aria-label="Lare Code demo: a terminal session where the agent asks for permission before running a command">
-  <source src="{{ '/assets/demo.mp4' | relative_url }}" type="video/mp4" />
-  Your browser cannot play this video. The transcript below covers the same session.
-</video>
+<div class="video-frame">
+  <video controls muted playsinline preload="metadata" poster="{{ '/assets/demo-poster.jpg' | relative_url }}" aria-label="Lare Code demo: a terminal session where the agent asks for permission before running a command">
+    <source src="{{ '/assets/demo.mp4' | relative_url }}" type="video/mp4" />
+    Your browser cannot play this video. The transcript below covers the same session.
+  </video>
+</div>
 
 The recording is a real session with the released CLI. The model behind it is a local stub, so the demo regenerates without an API key. When the agent wants to run a command, the permission gate asks first; the `y` that follows is a decision, not a formality.
 
@@ -56,7 +65,26 @@ Docs: rsyyd.github.io/larecode
 
 </details>
 
-Regenerate the recording with `bun run demo`; `sh demo/render.sh` rebuilds the video with [HyperFrames](https://github.com/heygen-com/hyperframes).
+## Why people pick it up
+
+<ul class="cards">
+  <li class="card">
+    <h3>Permission gate, not rubber stamp</h3>
+    <p>Tool calls map to groups, the default is deny, destructive operations always need your confirmation, and every decision lands in a tamper-evident audit log.</p>
+  </li>
+  <li class="card">
+    <h3>Bring your own provider</h3>
+    <p>OpenAI-compatible, Anthropic, Ollama, OpenRouter, Z.ai, or your own endpoint, with per-run <code>--provider</code> and <code>--model</code> overrides and explicit fallback chains.</p>
+  </li>
+  <li class="card">
+    <h3>Local first</h3>
+    <p>Sessions, memory, metrics, and the audit log stay on the device. No telemetry, no accounts, and no cloud sync to opt out of.</p>
+  </li>
+  <li class="card">
+    <h3>Automate without losing control</h3>
+    <p>An HTTP API, share links, cron jobs, and a Telegram gateway run under the same permission policy as your interactive turns.</p>
+  </li>
+</ul>
 
 ## Quick start
 
@@ -67,39 +95,29 @@ larecode doctor
 larecode run "explain this repository"
 ```
 
-`setup` writes `~/.larecode/config.json`, `doctor` checks the config and the provider, and `run` streams one task with token and cost totals. Other install options, including Homebrew, Scoop, and a curl installer, are on the [install options](install.md) page.
+`setup` writes `~/.larecode/config.json`, `doctor` checks the config and the provider, and `run` streams one task with token and cost totals. Other install options, including Homebrew, Scoop, and a curl installer, are on the [install options]({{ '/install.html' | relative_url }}) page.
+
+<div class="landing-links" markdown="1">
 
 ## Documentation
 
-**Start here**
+**Learn**
 
-- [Getting started](getting-started.md): install, first run, and where things live
-- [Install options](install.md): npm, curl, Homebrew, Scoop, PKGBUILD, manual
-- [Configuration](configuration.md): config files, execution backends, environment variables
+- [Getting started]({{ '/getting-started.html' | relative_url }}): install, first run, where things live
+- [Install options]({{ '/install.html' | relative_url }}): npm, curl, Homebrew, Scoop, PKGBUILD, manual
+- [Configuration]({{ '/configuration.html' | relative_url }}): config files, backends, environment variables
 
-**Guides**
+**Use**
 
-- [Providers](providers.md): OpenAI-compatible, Anthropic, Ollama, OpenRouter, custom
-- [TUI](tui.md): keys, slash commands, terminal support
-- [Permissions](permissions.md): groups, modes, unattended flows, audit log
-- [Tools](tools.md): built-in tools and their permission groups
-- [MCP](mcp.md): client and server modes
-- [Extensions](extensions.md): skills, subagents, and plugins
-- [Automation](automation.md): HTTP server, share links, cron, Telegram gateway
-- [SDK and editors](sdk.md): `@larecode/sdk` and the ACP adapter
+- [Providers]({{ '/providers.html' | relative_url }}) · [Permissions]({{ '/permissions.html' | relative_url }}) · [Tools]({{ '/tools.html' | relative_url }}) · [TUI]({{ '/tui.html' | relative_url }})
+- [MCP]({{ '/mcp.html' | relative_url }}) · [Extensions]({{ '/extensions.html' | relative_url }}) · [Automation]({{ '/automation.html' | relative_url }}) · [SDK and editors]({{ '/sdk.html' | relative_url }})
 
 **Reference**
 
-- [CLI reference](cli.md): every command and option
-- [Testing](testing.md): test layers, commands, and CI gates
-- [Observability](observability.md): usage, metrics, debug bundles, audit log
-- [Dependency policy](dependencies.md): cadence, audits, and advisories
-- [Troubleshooting](troubleshooting.md): fix provider, permission, and session errors
-- [Release checklist](release.md): version bump, smoke test, tag, and rollback
-- [0.3.0 audit](audit-0.3.0.md): P0/P1 review and sign-off for this release
-- [README claims](claims.md): every public claim and the test behind it
-- [Surface contract](architecture/surfaces.md): start, stream, cancel, stop, and status per surface
-- [ADR-0001: Desktop app deferred](architecture/adr/0001-desktop-app-deferred.md): why v1 ends at the CLI
-- [ADR-0002: Agent runtime contract](architecture/adr/0002-agent-runtime-contract.md): one runtime for every surface
+- [CLI]({{ '/cli.html' | relative_url }}) · [Observability]({{ '/observability.html' | relative_url }}) · [Troubleshooting]({{ '/troubleshooting.html' | relative_url }})
+- [Testing]({{ '/testing.html' | relative_url }}) · [Dependency policy]({{ '/dependencies.html' | relative_url }}) · [Release checklist]({{ '/release.html' | relative_url }})
+- [Architecture]({{ '/architecture.html' | relative_url }}) · [Claims and evidence]({{ '/claims.html' | relative_url }}) · [Roadmap]({{ '/roadmap.html' | relative_url }})
 
-See the [security policy and trust model](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for what larecode guards and what it does not.
+</div>
+
+It is an early release (0.3.0); there are sharp edges and the [roadmap]({{ '/roadmap.html' | relative_url }}) says what changes next. See the [security policy](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for what larecode guards and what it does not.

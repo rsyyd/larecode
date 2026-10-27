@@ -1,6 +1,7 @@
 ---
-title: ADR-0001 Desktop app deferred
-nav_order: 10
+title: ADR-0001: Desktop app deferred
+parent: Architecture
+nav_order: 2
 description: Why v1 ends at the CLI, gateway, and share links
 ---
 

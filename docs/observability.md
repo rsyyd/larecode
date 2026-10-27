@@ -1,6 +1,6 @@
 ---
 title: Observability
-nav_order: 11
+nav_order: 13
 description: Local metrics, usage, debug bundles, crash reports, and the audit log
 ---
 

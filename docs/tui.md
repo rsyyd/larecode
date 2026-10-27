@@ -1,6 +1,6 @@
 ---
 title: TUI
-nav_order: 5
+nav_order: 6
 description: Keyboard-first chat interface for larecode
 ---
 

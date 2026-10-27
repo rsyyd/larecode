@@ -1,6 +1,6 @@
 ---
 title: MCP
-nav_order: 6
+nav_order: 7
 description: Use larecode as an MCP client, or expose it as an MCP server
 ---
 

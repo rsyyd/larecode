@@ -1,6 +1,6 @@
 ---
 title: CLI reference
-nav_order: 9
+nav_order: 11
 description: Every larecode command and option
 ---
 
