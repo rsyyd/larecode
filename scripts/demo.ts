@@ -165,7 +165,10 @@ function postProcess(): void {
     }
     if (last + 1 < events.length) {
       const start = events[last][0];
-      const end = events[last + 1][0];
+      // the deliberate hold is ~3s; a frozen tool run can stretch the quiet
+      // window far beyond it, so only keep that beat alive and let agg's idle
+      // limit compress whatever follows
+      const end = Math.min(events[last + 1][0], start + 3.0);
       const injected: CastEvent[] = [];
       for (let t = start + 0.35; t < end - 0.15; t += 0.35) {
         injected.push([Number(t.toFixed(6)), 'o', events[last][2]]);
