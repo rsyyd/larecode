@@ -27,7 +27,7 @@
     "dev": "bun run packages/cli/src/index.ts"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
+    "@types/node": "^26.6.5",
     "@vitest/coverage-v8": "4.1.12",
     "oxlint": "^0.15.0",
     "prettier": "^3.3.0",
