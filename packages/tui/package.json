@@ -20,7 +20,7 @@
     "@types/react": "^18.3.0",
     "ink-testing-library": "4",
     "react-devtools-core": "^8.0.0",
-    "typescript": "^5.5.0",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.12"
   }
 }
