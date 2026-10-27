@@ -120,4 +120,4 @@ larecode run "explain this repository"
 
 </div>
 
-It is an early release (0.3.0); there are sharp edges and the [roadmap]({{ '/roadmap.html' | relative_url }}) says what changes next. See the [security policy](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for what larecode guards and what it does not.
+It is an early release (0.4.0); there are sharp edges and the [roadmap]({{ '/roadmap.html' | relative_url }}) says what changes next. See the [security policy](https://github.com/rsyyd/larecode/blob/main/SECURITY.md) for what larecode guards and what it does not.

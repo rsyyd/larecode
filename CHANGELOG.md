@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-27
+
 ### Changed
 
 - CLI logs now write to stderr instead of stdout, so `run --json` output stays parseable; `chat` also silences info logs unless `LARECODE_LOG_LEVEL` is set, so the TUI never flashes log lines while a tool runs.

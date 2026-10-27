@@ -15,7 +15,7 @@ Lare Code is a coding agent for your terminal. It runs on your machine, talks to
 
 **[Watch a 30-second demo](https://rsyyd.github.io/larecode/)** — a real session where the agent asks for permission before running a command.
 
-Status: early release (0.3.0). See the [changelog](CHANGELOG.md) for what changed and what is planned.
+Status: early release (0.4.0). See the [changelog](CHANGELOG.md) for what changed and what is planned.
 
 ## Features
 
