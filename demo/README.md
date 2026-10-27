@@ -34,7 +34,9 @@ sh demo/render.sh
 
 Prerequisites: Node 22+, tmux, asciinema, FFmpeg, gifsicle, Chromium, and the
 `agg` binary on PATH. Telemetry and update checks are disabled by the script;
-the composition loads only local assets.
+the composition loads only local assets. The clip timing shifts a little with
+each recording, so after regenerating, re-check the caption and fade times in
+`compositions/session.html` against the new clip before rendering.
 
 ## Files
 
