@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- CLI logs now write to stderr instead of stdout, so `run --json` output stays parseable; `chat` also silences info logs unless `LARECODE_LOG_LEVEL` is set, so the TUI never flashes log lines while a tool runs.
+
 ### Security
 
 - Forced `body-parser` to 2.4.0 through a root resolution to fix GHSA-27r3-jxmh-p828 (request-body DoS), reached transitively through the MCP SDK's express server; drop the resolution once express raises its minimum.

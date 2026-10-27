@@ -106,10 +106,12 @@ export function createConsoleHandler(format: 'json' | 'pretty' = 'pretty'): LogH
     const level = entry.level.toUpperCase().padEnd(5);
     const ctx = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
     const err = entry.error ? `\n  ${entry.error.stack ?? entry.error.message}` : '';
+    // logs belong on stderr so stdout stays clean for data (run --json) and
+    // for the TUI, which owns the terminal's main stream
     if (format === 'json') {
-      console.log(JSON.stringify({ ...entry, timestamp: ts }));
+      process.stderr.write(`${JSON.stringify({ ...entry, timestamp: ts })}\n`);
     } else {
-      console.log(`${ts} ${level} ${entry.message}${ctx}${err}`);
+      process.stderr.write(`${ts} ${level} ${entry.message}${ctx}${err}\n`);
     }
   };
 }

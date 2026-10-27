@@ -6,6 +6,7 @@ import {
   Sessions,
   connectMcpTools,
   createSubagents,
+  defaultLogger,
   loadEffectiveConfig,
   McpTrust,
   providersFromConfig,
@@ -72,6 +73,10 @@ export async function chatCommand(options: ChatCommandOptions = {}): Promise<num
     );
     return 1;
   }
+
+  // the TUI owns the screen; keep info logs from flashing over it unless the
+  // user asked for a specific level through the environment
+  if (!process.env.LARECODE_LOG_LEVEL) defaultLogger.setLevel('error');
 
   const config = loadEffectiveConfig();
   firstRunHint();

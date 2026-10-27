@@ -50,11 +50,14 @@ describe('Logger', () => {
 
   it('createConsoleHandler pretty format works', () => {
     const entries: string[] = [];
-    const originalLog = console.log;
-    console.log = (...args: any[]) => entries.push(args.join(' '));
+    const originalWrite = process.stderr.write.bind(process.stderr);
+    process.stderr.write = ((chunk: any) => {
+      entries.push(String(chunk));
+      return true;
+    }) as typeof process.stderr.write;
     const handler = createConsoleHandler('pretty');
     handler({ timestamp: Date.now(), level: 'info', message: 'test', context: { a: 1 } });
-    console.log = originalLog;
+    process.stderr.write = originalWrite;
     expect(entries[0]).toContain('INFO');
     expect(entries[0]).toContain('test');
     expect(entries[0]).toContain('a');
@@ -62,11 +65,14 @@ describe('Logger', () => {
 
   it('createConsoleHandler json format works', () => {
     const entries: any[] = [];
-    const originalLog = console.log;
-    console.log = (...args: any[]) => entries.push(JSON.parse(args[0]));
+    const originalWrite = process.stderr.write.bind(process.stderr);
+    process.stderr.write = ((chunk: any) => {
+      entries.push(JSON.parse(String(chunk)));
+      return true;
+    }) as typeof process.stderr.write;
     const handler = createConsoleHandler('json');
     handler({ timestamp: 123, level: 'warn', message: 'x', context: { b: 2 } });
-    console.log = originalLog;
+    process.stderr.write = originalWrite;
     expect(entries[0].level).toBe('warn');
     expect(entries[0].context.b).toBe(2);
   });
