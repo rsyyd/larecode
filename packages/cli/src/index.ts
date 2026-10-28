@@ -16,6 +16,8 @@ import { debugCommand, feedbackCommand, usageCommand } from './commands/diagnost
 import { completionCommand } from './commands/completion.js';
 import { skillAuthorCommand, skillInstallCommand, skillListCommand } from './commands/skill.js';
 import { auditLogCommand, auditVerifyCommand } from './commands/audit.js';
+import { hookCommand } from './commands/hook.js';
+import { pluginCommand } from './commands/plugin.js';
 import {
   sessionsExportCommand,
   sessionsListCommand,
@@ -237,6 +239,79 @@ skill
   .option('--json', 'print the catalog as JSON')
   .action((options: { json?: boolean }) => {
     process.exitCode = skillListCommand(options);
+  });
+
+const hook = program.command('hook').description('Manage lifecycle hooks');
+
+hook
+  .command('list')
+  .description('List configured hooks')
+  .option('--json', 'output as JSON')
+  .action(async (options: { json?: boolean }) => {
+    process.exitCode = (await import('./commands/hook.js')).hookListCommand(options);
+  });
+
+hook
+  .command('enable <name>')
+  .description('Enable a hook')
+  .action(async (name: string) => {
+    process.exitCode = (await import('./commands/hook.js')).hookEnableCommand(name);
+  });
+
+hook
+  .command('disable <name>')
+  .description('Disable a hook')
+  .action(async (name: string) => {
+    process.exitCode = (await import('./commands/hook.js')).hookDisableCommand(name);
+  });
+
+hook
+  .command('init <name>')
+  .description('Create a new hook configuration')
+  .option('--type <type>', 'hook type: pre-tool, post-tool, session-start, session-end', 'pre-tool')
+  .action(async (name: string, options: { type?: string }) => {
+    process.exitCode = (await import('./commands/hook.js')).hookInitCommand({ name, type: options.type });
+  });
+
+const plugin = program.command('plugin').description('Manage plugins');
+
+plugin
+  .command('list')
+  .description('List installed plugins')
+  .option('--json', 'output as JSON')
+  .action(async (options: { json?: boolean }) => {
+    process.exitCode = (await import('./commands/plugin.js')).pluginListCommand(options);
+  });
+
+plugin
+  .command('install <source>')
+  .description('Install a plugin from a local directory')
+  .option('--trust <level>', 'trust level: trusted or untrusted', 'untrusted')
+  .option('--name <name>', 'override plugin name')
+  .action(async (source: string, options: { trust?: string; name?: string }) => {
+    process.exitCode = (await import('./commands/plugin.js')).pluginInstallCommand(source, { trust: options.trust as 'trusted' | 'untrusted', name: options.name });
+  });
+
+plugin
+  .command('remove <name>')
+  .description('Remove an installed plugin')
+  .action(async (name: string) => {
+    process.exitCode = (await import('./commands/plugin.js')).pluginRemoveCommand(name);
+  });
+
+plugin
+  .command('trust <name> <level>')
+  .description('Set trust level for a plugin (trusted|untrusted)')
+  .action(async (name: string, trust: string) => {
+    process.exitCode = (await import('./commands/plugin.js')).pluginTrustCommand(name, trust as 'trusted' | 'untrusted');
+  });
+
+plugin
+  .command('init <name>')
+  .description('Create a new plugin scaffold')
+  .option('--dir <path>', 'directory to create plugin in')
+  .action(async (name: string, options: { dir?: string }) => {
+    process.exitCode = (await import('./commands/plugin.js')).pluginInitCommand({ name, dir: options.dir });
   });
 
 program
