@@ -173,7 +173,7 @@ export class ContextBuilder {
     let retrievalFiles = 0;
     let retrieval = '';
     if (this.useRetrieval) {
-      const result = this.index.search({
+      const result = await this.index.search({
         query: prompt,
         budgetTokens: CONTEXT_BUDGET_TOKENS,
       });

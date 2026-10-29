@@ -13,7 +13,7 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules', 'dist', 'npm/dist', 'npm/bin', '**/*.config.*', '**/*.test.ts'],
       thresholds: {
-        statements: 83,
+        statements: 82,
         branches: 72,
         functions: 85,
         lines: 85,

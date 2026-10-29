@@ -43,7 +43,7 @@ describe('retrieval eval harness', () => {
   it('meets the recall threshold on the fixture repo', async () => {
     const context = new Context();
     await context.index(root);
-    const report = evaluateRetrieval(context, [
+    const report = await evaluateRetrieval(context, [
       { query: 'session token expiry', expected: 'src/auth/session.ts' },
       { query: 'invoice total amount', expected: 'src/billing/invoice.ts' },
       { query: 'request route path', expected: 'src/http/router.ts' },
@@ -62,7 +62,7 @@ describe('retrieval eval harness', () => {
   it('reports misses with the files it ranked instead', async () => {
     const context = new Context();
     await context.index(root);
-    const report = evaluateRetrieval(context, [
+    const report = await evaluateRetrieval(context, [
       { query: 'zzzz nonsense token', expected: 'src/missing.ts' },
     ]);
     expect(report).toMatchObject({ total: 1, hits: 0, recall: 0 });

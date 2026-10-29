@@ -26,18 +26,18 @@ describe('context engine', () => {
     const count = await context.index(project);
     expect(count).toBe(3);
 
-    const byTerm = context.search({ query: 'parseQuery' });
+    const byTerm = await context.search({ query: 'parseQuery' });
     expect(byTerm.files[0].file).toBe('src/parser.ts');
     expect(byTerm.files[0].score).toBeGreaterThan(byTerm.files[1].score);
 
-    const byPath = context.search({ query: 'parser' });
+    const byPath = await context.search({ query: 'parser' });
     expect(byPath.files[0].file).toBe('src/parser.ts');
   });
 
   it('returns snippets with the matching line number', async () => {
     const context = new Context();
     await context.index(project);
-    const result = context.search({ query: 'unrelated' });
+    const result = await context.search({ query: 'unrelated' });
     expect(result.files[0]).toMatchObject({ file: 'src/other.ts', line: 1 });
     expect(result.files[0].snippet).toContain('unrelated');
   });
@@ -51,7 +51,7 @@ describe('context engine', () => {
     }
     const context = new Context();
     await context.index(project);
-    const result = context.search({ query: 'widget', budgetTokens: 30 });
+    const result = await context.search({ query: 'widget', budgetTokens: 30 });
     expect(result.files.length).toBeGreaterThan(0);
     expect(result.files.length).toBeLessThan(7);
     expect(result.budgetUsed).toBeLessThanOrEqual(30);
@@ -62,7 +62,7 @@ describe('context engine', () => {
     const context = new Context();
     const count = await context.index(project);
     expect(count).toBe(3);
-    expect(context.search({ query: 'blob' }).files).toEqual([]);
-    expect(context.search({ query: '' }).files).toEqual([]);
+    expect((await context.search({ query: 'blob' })).files).toEqual([]);
+    expect((await context.search({ query: '' })).files).toEqual([]);
   });
 });

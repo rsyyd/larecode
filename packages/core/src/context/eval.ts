@@ -19,22 +19,21 @@ export interface RetrievalReport {
   results: RetrievalCaseResult[];
 }
 
-export function evaluateRetrieval(
+export async function evaluateRetrieval(
   context: Pick<Context, 'search'>,
   cases: RetrievalCase[],
   topK = 3
-): RetrievalReport {
-  const results = cases.map((entry) => {
-    const files = context
-      .search({ query: entry.query, maxFiles: topK })
-      .files.map((hit) => hit.file);
+): Promise<RetrievalReport> {
+  const results = await Promise.all(cases.map(async (entry) => {
+    const result = await context.search({ query: entry.query, maxFiles: topK });
+    const files = result.files.map((hit) => hit.file);
     return {
       query: entry.query,
       expected: entry.expected,
       found: files.includes(entry.expected),
       files,
     };
-  });
+  }));
   const hits = results.filter((result) => result.found).length;
   return {
     total: results.length,
