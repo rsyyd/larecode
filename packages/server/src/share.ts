@@ -15,12 +15,20 @@ export interface ShareLink {
   token: string;
   sessionId: string;
   createdAt: Date;
+  expiresAt?: Date;
+  maxViews?: number;
+  viewCount: number;
+  passwordHash?: string;
 }
 
 interface StoredShare {
   token: string;
   sessionId: string;
   createdAt: string;
+  expiresAt?: string;
+  maxViews?: number;
+  viewCount: number;
+  passwordHash?: string;
 }
 
 export function sharesPath(): string {
@@ -41,6 +49,10 @@ export class Shares {
           token: entry.token,
           sessionId: entry.sessionId,
           createdAt: new Date(entry.createdAt),
+          expiresAt: entry.expiresAt ? new Date(entry.expiresAt) : undefined,
+          maxViews: entry.maxViews,
+          viewCount: entry.viewCount ?? 0,
+          passwordHash: entry.passwordHash,
         }));
     } catch {
       return [];
@@ -53,6 +65,10 @@ export class Shares {
       token: link.token,
       sessionId: link.sessionId,
       createdAt: link.createdAt.toISOString(),
+      expiresAt: link.expiresAt?.toISOString(),
+      maxViews: link.maxViews,
+      viewCount: link.viewCount,
+      passwordHash: link.passwordHash,
     }));
     const temp = `${this.file}.${process.pid}.tmp`;
     writeFileSync(temp, JSON.stringify(stored, null, 2) + '\n', { mode: 0o600 });
@@ -60,19 +76,55 @@ export class Shares {
     renameSync(temp, this.file);
   }
 
-  create(sessionId: string): ShareLink {
+  create(
+    sessionId: string,
+    options: { expiresAt?: Date; maxViews?: number; password?: string } = {}
+  ): ShareLink {
     const link: ShareLink = {
       token: randomBytes(16).toString('hex'),
       sessionId,
       createdAt: new Date(),
+      expiresAt: options.expiresAt,
+      maxViews: options.maxViews,
+      viewCount: 0,
+      passwordHash: options.password ? this.hashPassword(options.password) : undefined,
     };
     this.write([...this.read(), link]);
     return link;
   }
 
+  private hashPassword(password: string): string {
+    // Simple hash for demo; in production use bcrypt or argon2
+    return require('node:crypto').createHash('sha256').update(password).digest('hex');
+  }
+
+  verifyPassword(token: string, password: string): boolean {
+    const link = this.get(token);
+    if (!link || !link.passwordHash) return false;
+    return link.passwordHash === this.hashPassword(password);
+  }
+
   get(token: string): ShareLink | undefined {
     if (!SHARE_TOKEN_RE.test(token)) return undefined;
-    return this.read().find((link) => link.token === token);
+    const link = this.read().find((link) => link.token === token);
+    if (!link) return undefined;
+    if (link.expiresAt && link.expiresAt < new Date()) {
+      this.remove(token);
+      return undefined;
+    }
+    if (link.maxViews !== undefined && link.viewCount >= link.maxViews) {
+      this.remove(token);
+      return undefined;
+    }
+    return link;
+  }
+
+  view(token: string): ShareLink | undefined {
+    const link = this.get(token);
+    if (!link) return undefined;
+    link.viewCount += 1;
+    this.write([...this.read().map(l => l.token === token ? link : l)]);
+    return link;
   }
 
   list(): ShareLink[] {

@@ -23,7 +23,7 @@ export interface ExecutionBackend {
 }
 
 export interface ExecutionConfig {
-  backend: 'local' | 'docker' | 'ssh';
+  backend: 'local' | 'docker' | 'ssh' | 'powershell' | 'cmd';
   docker?: { image: string; network?: boolean; args?: string[]; user?: string };
   ssh?: { host: string; user?: string; port?: number; identityFile?: string };
 }
@@ -38,6 +38,18 @@ interface RunOptions {
   cwd: string;
   timeoutMs: number;
   abortSignal: AbortSignal;
+}
+
+function isWindows(): boolean {
+  return process.platform === 'win32';
+}
+
+function getDefaultShell(): { command: string; args: string[] } {
+  if (isWindows()) {
+    // Prefer PowerShell if available, fallback to cmd.exe
+    return { command: 'powershell.exe', args: ['-NoProfile', '-NonInteractive', '-Command'] };
+  }
+  return { command: 'sh', args: ['-c'] };
 }
 
 export function runProcess(spec: SpawnSpec, options: RunOptions): Promise<ExecResult> {
@@ -126,8 +138,9 @@ export class LocalBackend implements ExecutionBackend {
   readonly name = 'local';
 
   exec(request: ExecRequest): Promise<ExecResult> {
+    const shell = getDefaultShell();
     return runProcess(
-      { command: request.command, shell: true },
+      { command: shell.command, args: [...shell.args, request.command] },
       { cwd: request.cwd, timeoutMs: request.timeoutMs, abortSignal: request.abortSignal }
     );
   }
@@ -230,6 +243,29 @@ export class SshBackend implements ExecutionBackend {
   }
 }
 
+export class PowerShellBackend implements ExecutionBackend {
+  readonly name = 'powershell';
+
+  exec(request: ExecRequest): Promise<ExecResult> {
+    const args = ['-NoProfile', '-NonInteractive', '-Command', request.command];
+    return runProcess(
+      { command: 'powershell.exe', args: ['-NoProfile', '-NonInteractive', '-Command', request.command] },
+      { cwd: request.cwd, timeoutMs: request.timeoutMs, abortSignal: request.abortSignal }
+    );
+  }
+}
+
+export class CmdBackend implements ExecutionBackend {
+  readonly name = 'cmd';
+
+  exec(request: ExecRequest): Promise<ExecResult> {
+    return runProcess(
+      { command: 'cmd.exe', args: ['/c', request.command] },
+      { cwd: request.cwd, timeoutMs: request.timeoutMs, abortSignal: request.abortSignal }
+    );
+  }
+}
+
 export function backendFromConfig(config: { execution?: ExecutionConfig }): ExecutionBackend {
   const execution = config.execution ?? { backend: 'local' as const };
   if (execution.backend === 'docker') {
@@ -246,6 +282,12 @@ export function backendFromConfig(config: { execution?: ExecutionConfig }): Exec
       throw new LareError('CONFIG_INVALID', 'execution.ssh.host is required for the ssh backend');
     }
     return new SshBackend(execution.ssh);
+  }
+  if (execution.backend === 'powershell') {
+    return new PowerShellBackend();
+  }
+  if (execution.backend === 'cmd') {
+    return new CmdBackend();
   }
   return new LocalBackend();
 }
