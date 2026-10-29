@@ -75,7 +75,7 @@ export class Context {
     const paths: string[] = [];
     for await (const file of walkFiles(root)) paths.push(file);
     const loaded = await readFilesConcurrent(root, paths, { maxBytes: MAX_INDEX_BYTES });
-    
+
     // First pass: build lexical index
     for (const { file, buf } of loaded) {
       if (looksBinary(buf)) continue;
@@ -113,11 +113,11 @@ export class Context {
   private async computeEmbeddings(): Promise<void> {
     if (!this.embeddingService) return;
 
-    const texts = this.files.map(f => {
+    const texts = this.files.map((f) => {
       const snippet = this.snippets.get(f.file);
       return f.file + '\n' + (snippet ? snippet.join('\n') : '');
     });
-    
+
     try {
       const embeddings = await this.embeddingService.embed(texts);
       for (let i = 0; i < this.files.length; i++) {
@@ -164,7 +164,7 @@ export class Context {
     if (useSemantic && this.embeddingService) {
       try {
         const queryEmbedding = await this.embeddingService.embedQuery(query.query);
-        
+
         for (let i = 0; i < this.files.length; i++) {
           const file = this.files[i];
           if (file.embedding) {
@@ -200,9 +200,9 @@ export class Context {
       const file = this.files[index];
       const { line, snippet } = this.bestSnippet(file.file, queryTerms);
       const cost = estimateTokens(`${file.file}:${line} ${snippet}`) + 1;
-      
+
       if (files.length > 0 && budgetUsed + cost > budget) break;
-      
+
       const lexicalScore = queryTerms.length > 0 ? (scores.get(index) ?? 0) : 0;
       const semanticScore = useSemantic ? (semanticScores.get(index) ?? 0) : 0;
 

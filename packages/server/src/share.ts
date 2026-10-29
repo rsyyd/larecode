@@ -123,7 +123,7 @@ export class Shares {
     const link = this.get(token);
     if (!link) return undefined;
     link.viewCount += 1;
-    this.write([...this.read().map(l => l.token === token ? link : l)]);
+    this.write([...this.read().map((l) => (l.token === token ? link : l))]);
     return link;
   }
 

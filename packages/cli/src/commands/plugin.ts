@@ -1,6 +1,21 @@
-import { Plugins, discoverPlugins, pluginRoots, type PluginInfo, type PluginTrust } from '@larecode/core';
+import {
+  Plugins,
+  discoverPlugins,
+  pluginRoots,
+  type PluginInfo,
+  type PluginTrust,
+} from '@larecode/core';
 import { larecodeHome } from '@larecode/core';
-import { mkdirSync, readdirSync, rmSync, existsSync, cpSync, readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import {
+  mkdirSync,
+  readdirSync,
+  rmSync,
+  existsSync,
+  cpSync,
+  readFileSync,
+  writeFileSync,
+  mkdtempSync,
+} from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -29,32 +44,40 @@ function loadManifest(pluginDir: string) {
 export function pluginListCommand(_options: { json?: boolean } = {}): number {
   const globalDir = getPluginsDir();
   const projectDir = getProjectPluginsDir(process.cwd());
-  
-  const allPlugins: Array<{ info: ReturnType<typeof loadManifest>; dir: string; origin: 'user' | 'project' }> = [];
-  
+
+  const allPlugins: Array<{
+    info: ReturnType<typeof loadManifest>;
+    dir: string;
+    origin: 'user' | 'project';
+  }> = [];
+
   for (const dir of [globalDir, projectDir]) {
     if (!existsSync(dir)) continue;
     for (const name of readdirSync(dir)) {
       const pluginDir = join(dir, name);
       const manifest = loadManifest(pluginDir);
       if (manifest) {
-        allPlugins.push({ info: manifest, dir: pluginDir, origin: dir === globalDir ? 'user' : 'project' });
+        allPlugins.push({
+          info: manifest,
+          dir: pluginDir,
+          origin: dir === globalDir ? 'user' : 'project',
+        });
       }
     }
   }
-  
+
   if (allPlugins.length === 0) {
     console.log('No plugins installed');
     return 0;
   }
-  
+
   console.log('Installed plugins:');
   for (const { info, origin } of allPlugins) {
     const trustMark = info.trust === 'trusted' ? '✓' : '○';
     console.log(`  ${trustMark} ${info.name}@${info.version} (${info.trust}) [${origin}]`);
     if (info.description) console.log(`    ${info.description}`);
   }
-  
+
   return 0;
 }
 
@@ -63,51 +86,51 @@ export function pluginInstallCommand(
   options: { trust?: 'trusted' | 'untrusted'; name?: string } = {}
 ): number {
   const sourcePath = resolve(source);
-  
+
   if (!existsSync(sourcePath)) {
     console.error(`Source not found: ${sourcePath}`);
     return 1;
   }
-  
+
   const pkgPath = join(sourcePath, 'package.json');
   if (!existsSync(pkgPath)) {
     console.error('Plugin must have a package.json');
     return 1;
   }
-  
+
   const manifest = JSON.parse(readFileSync(pkgPath, 'utf8'));
   const pluginName = options.name ?? manifest.name;
-  
+
   if (!manifest.larecode?.plugin) {
     console.error('package.json must have a "larecode.plugin" field');
     return 1;
   }
-  
+
   const targetDir = join(larecodeHome(), 'plugins', manifest.name);
-  
+
   if (existsSync(targetDir)) {
     console.error(`Plugin ${manifest.name} already installed`);
     return 1;
   }
-  
+
   mkdirSync(targetDir, { recursive: true });
   cpSync(sourcePath, targetDir, { recursive: true });
-  
+
   // Update manifest with trust level
   const updatedManifest = { ...manifest, trust: options.trust ?? 'untrusted' };
   writeFileSync(join(targetDir, 'package.json'), JSON.stringify(updatedManifest, null, 2));
-  
+
   console.log(`Installed ${manifest.name}@${manifest.version} to ${targetDir}`);
   console.log(`Trust level: ${options.trust ?? 'untrusted'}`);
   console.log('Run "larecode plugin list" to verify');
-  
+
   return 0;
 }
 
 export function pluginRemoveCommand(name: string): number {
   const globalDir = join(larecodeHome(), 'plugins', name);
   const projectDir = join(process.cwd(), '.larecode', 'plugins', name);
-  
+
   let removed = false;
   if (existsSync(globalDir)) {
     rmSync(globalDir, { recursive: true, force: true });
@@ -117,12 +140,12 @@ export function pluginRemoveCommand(name: string): number {
     rmSync(projectDir, { recursive: true, force: true });
     removed = true;
   }
-  
+
   if (!removed) {
     console.error(`Plugin ${name} not found`);
     return 1;
   }
-  
+
   console.log(`Removed plugin ${name}`);
   return 0;
 }
@@ -130,7 +153,7 @@ export function pluginRemoveCommand(name: string): number {
 export function pluginTrustCommand(name: string, trust: 'trusted' | 'untrusted'): number {
   const globalDir = join(larecodeHome(), 'plugins', name);
   const projectDir = join(process.cwd(), '.larecode', 'plugins', name);
-  
+
   let found = false;
   for (const dir of [globalDir, projectDir]) {
     const pkgPath = join(dir, 'package.json');
@@ -142,12 +165,12 @@ export function pluginTrustCommand(name: string, trust: 'trusted' | 'untrusted')
       console.log(`Set trust level for ${name} to ${trust}`);
     }
   }
-  
+
   if (!found) {
     console.error(`Plugin ${name} not found`);
     return 1;
   }
-  
+
   return 0;
 }
 
@@ -156,48 +179,51 @@ export function pluginInitCommand(options: { name: string; dir?: string } = { na
     console.error('Plugin name required');
     return 1;
   }
-  
-  const targetDir = options.dir ? resolve(options.dir, options.name) : join(tmpdir(), `larecode-plugin-${options.name}`);
-  
+
+  const targetDir = options.dir
+    ? resolve(options.dir, options.name)
+    : join(tmpdir(), `larecode-plugin-${options.name}`);
+
   mkdirSync(targetDir, { recursive: true });
-  
+
   const manifest = {
     name: options.name,
     version: '0.1.0',
     description: '',
     main: 'index.js',
     scripts: {
-      test: 'echo "Error: no test specified" && exit 1'
+      test: 'echo "Error: no test specified" && exit 1',
     },
     larecode: {
       plugin: {
         entry: 'index.js',
-        hooks: ['pre-tool', 'post-tool']
-      }
+        hooks: ['pre-tool', 'post-tool'],
+      },
     },
     trust: 'untrusted',
     keywords: ['larecode-plugin'],
-    license: 'MIT'
+    license: 'MIT',
   };
-  
+
   writeFileSync(join(targetDir, 'package.json'), JSON.stringify(manifest, null, 2));
-  writeFileSync(join(targetDir, 'index.js'), `export function handle(method, params) {
+  writeFileSync(
+    join(targetDir, 'index.js'),
+    `export function handle(method, params) {
   switch (method) {
     case 'activate':
       return { ready: true };
     default:
       throw new Error('Unknown method: ' + method);
   }
-}`);
-  
+}`
+  );
+
   console.log(`Created plugin scaffold at ${targetDir}`);
   return 0;
 }
 
 function pluginCommand(program: any) {
-  const plugin = program
-    .command('plugin')
-    .description('Manage plugins');
+  const plugin = program.command('plugin').description('Manage plugins');
 
   plugin
     .command('list')
@@ -213,7 +239,10 @@ function pluginCommand(program: any) {
     .option('--trust <level>', 'trust level: trusted or untrusted', 'untrusted')
     .option('--name <name>', 'override plugin name')
     .action(async (source: string, options: { trust?: string; name?: string }) => {
-      process.exitCode = pluginInstallCommand(source, { trust: options.trust as any, name: options.name });
+      process.exitCode = pluginInstallCommand(source, {
+        trust: options.trust as any,
+        name: options.name,
+      });
     });
 
   plugin

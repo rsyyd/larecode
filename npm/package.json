@@ -1,6 +1,6 @@
 {
   "name": "larecode",
-  "version": "0.5.0",
+  "version": "0.9.0",
   "description": "Provider-neutral AI coding agent for the terminal",
   "license": "MIT",
   "type": "module",

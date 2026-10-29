@@ -249,7 +249,10 @@ export class PowerShellBackend implements ExecutionBackend {
   exec(request: ExecRequest): Promise<ExecResult> {
     const args = ['-NoProfile', '-NonInteractive', '-Command', request.command];
     return runProcess(
-      { command: 'powershell.exe', args: ['-NoProfile', '-NonInteractive', '-Command', request.command] },
+      {
+        command: 'powershell.exe',
+        args: ['-NoProfile', '-NonInteractive', '-Command', request.command],
+      },
       { cwd: request.cwd, timeoutMs: request.timeoutMs, abortSignal: request.abortSignal }
     );
   }

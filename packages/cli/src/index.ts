@@ -270,7 +270,10 @@ hook
   .description('Create a new hook configuration')
   .option('--type <type>', 'hook type: pre-tool, post-tool, session-start, session-end', 'pre-tool')
   .action(async (name: string, options: { type?: string }) => {
-    process.exitCode = (await import('./commands/hook.js')).hookInitCommand({ name, type: options.type });
+    process.exitCode = (await import('./commands/hook.js')).hookInitCommand({
+      name,
+      type: options.type,
+    });
   });
 
 const plugin = program.command('plugin').description('Manage plugins');
@@ -289,7 +292,10 @@ plugin
   .option('--trust <level>', 'trust level: trusted or untrusted', 'untrusted')
   .option('--name <name>', 'override plugin name')
   .action(async (source: string, options: { trust?: string; name?: string }) => {
-    process.exitCode = (await import('./commands/plugin.js')).pluginInstallCommand(source, { trust: options.trust as 'trusted' | 'untrusted', name: options.name });
+    process.exitCode = (await import('./commands/plugin.js')).pluginInstallCommand(source, {
+      trust: options.trust as 'trusted' | 'untrusted',
+      name: options.name,
+    });
   });
 
 plugin
@@ -303,7 +309,10 @@ plugin
   .command('trust <name> <level>')
   .description('Set trust level for a plugin (trusted|untrusted)')
   .action(async (name: string, trust: string) => {
-    process.exitCode = (await import('./commands/plugin.js')).pluginTrustCommand(name, trust as 'trusted' | 'untrusted');
+    process.exitCode = (await import('./commands/plugin.js')).pluginTrustCommand(
+      name,
+      trust as 'trusted' | 'untrusted'
+    );
   });
 
 plugin
@@ -311,7 +320,10 @@ plugin
   .description('Create a new plugin scaffold')
   .option('--dir <path>', 'directory to create plugin in')
   .action(async (name: string, options: { dir?: string }) => {
-    process.exitCode = (await import('./commands/plugin.js')).pluginInitCommand({ name, dir: options.dir });
+    process.exitCode = (await import('./commands/plugin.js')).pluginInitCommand({
+      name,
+      dir: options.dir,
+    });
   });
 
 program

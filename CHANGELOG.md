@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.9.0] - TBD
+
+### Added
+
+- Windows first-class terminal support (PowerShell, cmd.exe backends)
+- Platform extensions live: plugin/hook CLI with trust levels
+- Semantic retrieval with ONNX + transformers (hybrid search)
+- Gateway/share-link hardening (expiration, max views, password protection)
+- Accessibility pass over TUI and documentation site
+- Performance budget tightened from 0.5 baselines
+- API freeze candidates for 1.0: public interfaces documented, tested, marked stable/experimental
+
+### Changed
+
+- TUI startup now Windows-aware (detects Windows Terminal, PowerShell 7+, ConEmu)
+- Execution backend now supports PowerShell and cmd.exe on Windows
+- Plugin/hook CLI commands added (list, install, remove, trust, enable, disable, init)
+- Share links support expiration, max views, password protection
+
+### Security
+
+- External security audit engagement opened; findings triaged and fixed
+
+## [0.8.0] - 2026-10-27
+
 ## [0.5.0] - TBD
 
 ### Added

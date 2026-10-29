@@ -67,7 +67,8 @@ export class LocalEmbeddingService implements EmbeddingService {
       const { InferenceSession } = await import('onnxruntime-node');
       const { AutoTokenizer } = await import('@xenova/transformers');
 
-      const modelInfo = EMBEDDING_MODELS.find(m => m.name === this.config.model) ?? EMBEDDING_MODELS[0];
+      const modelInfo =
+        EMBEDDING_MODELS.find((m) => m.name === this.config.model) ?? EMBEDDING_MODELS[0];
       const modelPath = await this.ensureModel(modelInfo);
 
       this.session = await InferenceSession.create(modelPath);
@@ -167,9 +168,9 @@ export class LocalEmbeddingService implements EmbeddingService {
   }
 
   private normalize(embeddings: number[][]): number[][] {
-    return embeddings.map(vec => {
+    return embeddings.map((vec) => {
       const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
-      return norm > 0 ? vec.map(v => v / norm) : vec;
+      return norm > 0 ? vec.map((v) => v / norm) : vec;
     });
   }
 
