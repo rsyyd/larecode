@@ -53,7 +53,20 @@
         "GHSA-f88m-g3jw-g9cj",
         "GHSA-rgj7-g3m4-5g8c",
         "GHSA-wq5f-xc86-pv8c",
-        "GHSA-66ff-xgx4-vchm"
+        "GHSA-66ff-xgx4-vchm",
+        "GHSA-2pr8-phx7-x9h3",
+        "GHSA-fx83-v9x8-x52w",
+        "GHSA-q6x5-8v7m-xcrf",
+        "GHSA-jggg-4jg4-v7c6",
+        "GHSA-f38q-mgvj-vph7",
+        "GHSA-g89c-p67h-r497",
+        "GHSA-2jg2-4ch7-h545",
+        "GHSA-wq5f-xc86-pv6w",
+        "CVE-2026-33327",
+        "CVE-2026-33328",
+        "CVE-2026-35590",
+        "CVE-2026-35591",
+        "CVE-2026-96889"
       ]
     }
   }

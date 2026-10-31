@@ -1,7 +1,6 @@
-import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { fileURLToPath } from 'node:url';
 
 export interface EmbeddingConfig {
   enabled: boolean;
@@ -55,35 +54,56 @@ export class LocalEmbeddingService implements EmbeddingService {
   private session: any = null;
   private tokenizer: any = null;
   private ready: boolean = false;
+  private initializationError: Error | null = null;
+  private InferenceSession: any = null;
+  private AutoTokenizer: any = null;
 
   constructor(config: Partial<EmbeddingConfig> = {}) {
     this.config = { ...DEFAULT_EMBEDDING_CONFIG, ...config };
   }
 
-  async initialize(): Promise<void> {
-    if (this.ready) return;
+  private async loadNativeModules(): Promise<void> {
+    if (this.InferenceSession && this.AutoTokenizer) return;
 
     try {
-      const { InferenceSession } = await import('onnxruntime-node');
-      const { AutoTokenizer } = await import('@xenova/transformers');
+      const onnxModule = await import('onnxruntime-node');
+      const transformersModule = await import('@xenova/transformers');
+      this.InferenceSession = onnxModule.InferenceSession;
+      this.AutoTokenizer = transformersModule.AutoTokenizer;
+    } catch (error) {
+      throw new Error(
+        'Native bindings unavailable: ' + (error instanceof Error ? error.message : String(error))
+      );
+    }
+  }
+
+  async initialize(): Promise<void> {
+    if (this.ready) return;
+    if (this.initializationError) throw this.initializationError;
+
+    try {
+      await this.loadNativeModules();
 
       const modelInfo =
         EMBEDDING_MODELS.find((m) => m.name === this.config.model) ?? EMBEDDING_MODELS[0];
       const modelPath = await this.ensureModel(modelInfo);
 
-      this.session = await InferenceSession.create(modelPath);
-      this.tokenizer = await AutoTokenizer.from_pretrained(`Xenova/${modelInfo.name}`);
+      this.session = await this.InferenceSession.create(modelPath);
+      this.tokenizer = await this.AutoTokenizer.from_pretrained('Xenova/' + modelInfo.name);
       this.ready = true;
     } catch (error) {
-      console.warn('Failed to initialize embedding service:', error);
+      console.warn(
+        'Failed to initialize embedding service (native bindings may be unavailable):',
+        error
+      );
+      this.initializationError = error instanceof Error ? error : new Error(String(error));
       this.ready = false;
-      throw error;
     }
   }
 
   private async ensureModel(modelInfo: EmbeddingModel): Promise<string> {
     const cacheDir = this.config.cacheDir;
-    const modelFile = join(cacheDir, `${modelInfo.name}.onnx`);
+    const modelFile = join(cacheDir, modelInfo.name + '.onnx');
 
     if (existsSync(modelFile)) {
       return modelFile;
@@ -92,7 +112,7 @@ export class LocalEmbeddingService implements EmbeddingService {
     mkdirSync(cacheDir, { recursive: true });
 
     const response = await fetch(modelInfo.url);
-    if (!response.ok) throw new Error(`Failed to download model: ${modelInfo.url}`);
+    if (!response.ok) throw new Error('Failed to download model: ' + modelInfo.url);
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -103,7 +123,12 @@ export class LocalEmbeddingService implements EmbeddingService {
 
   async embed(texts: string[]): Promise<number[][]> {
     if (!this.ready) await this.initialize();
-    if (!this.ready) throw new Error('Embedding service not ready');
+    if (!this.ready || this.initializationError) {
+      throw new Error(
+        'Embedding service not ready: ' +
+          (this.initializationError?.message || 'Native bindings unavailable')
+      );
+    }
 
     const results: number[][] = [];
 
@@ -179,7 +204,9 @@ export class LocalEmbeddingService implements EmbeddingService {
     return results[0];
   }
 
-  dimensions: number = 384;
+  get dimensions(): number {
+    return this.config.dimensions;
+  }
 
   isReady(): boolean {
     return this.ready;
@@ -190,7 +217,7 @@ export class LocalEmbeddingService implements EmbeddingService {
   }
 }
 
-export function createEmbeddingService(config?: Partial<EmbeddingConfig>): EmbeddingService {
+export function createEmbeddingService(config: Partial<EmbeddingConfig> = {}): EmbeddingService {
   return new LocalEmbeddingService(config);
 }
 

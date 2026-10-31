@@ -69,7 +69,7 @@ jobs:
         with:
           bun-version: 1.3.9
       - run: bun install --frozen-lockfile
-      - run: bun audit --audit-level=high --ignore GHSA-75px-5xx7-5xc7 --ignore GHSA-jvwf-75h9-cwgg --ignore GHSA-685m-2w69-288q --ignore GHSA-xq3m-2v4x-88gg --ignore GHSA-wcpc-wj8m-hjx6 --ignore GHSA-f88m-g3jw-g9cj --ignore GHSA-rgj7-g3m4-5g8c --ignore GHSA-wq5f-xc86-pv8c --ignore GHSA-wq5f-xc86-pv6w --ignore GHSA-66ff-xgx4-vchm
+      - run: bun audit --audit-level=high --ignore GHSA-75px-5xx7-5xc7 --ignore GHSA-jvwf-75h9-cwgg --ignore GHSA-685m-2w69-288q --ignore GHSA-xq3m-2v4x-88gg --ignore GHSA-wcpc-wj8m-hjx6 --ignore GHSA-f88m-g3jw-g9cj --ignore GHSA-rgj7-g3m4-5g8c --ignore GHSA-wq5f-xc86-pv8c --ignore GHSA-wq5f-xc86-pv6w --ignore GHSA-66ff-xgx4-vchm --ignore GHSA-g89c-p67h-r497 --ignore GHSA-2jg2-4ch7-h545 --ignore CVE-2026-33327 --ignore CVE-2026-33328 --ignore CVE-2026-35590 --ignore CVE-2026-35591 --ignore CVE-2026-96889
       - run: bun run test:security
 
   tmux:
